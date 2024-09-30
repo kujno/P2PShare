@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35312.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "P2PShare", "P2PShare\P2PShare.csproj", "{0937969A-79AA-4667-8D7D-548696F3EF36}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "P2PShare.CLI", "P2PShare\P2PShare.CLI.csproj", "{0937969A-79AA-4667-8D7D-548696F3EF36}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "P2PShare.Libs", "P2PShare.Libs\P2PShare.Libs.csproj", "{4AC8BCB9-FAB8-4301-B709-0B9C4569552C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{0937969A-79AA-4667-8D7D-548696F3EF36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0937969A-79AA-4667-8D7D-548696F3EF36}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0937969A-79AA-4667-8D7D-548696F3EF36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4AC8BCB9-FAB8-4301-B709-0B9C4569552C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4AC8BCB9-FAB8-4301-B709-0B9C4569552C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4AC8BCB9-FAB8-4301-B709-0B9C4569552C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4AC8BCB9-FAB8-4301-B709-0B9C4569552C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
