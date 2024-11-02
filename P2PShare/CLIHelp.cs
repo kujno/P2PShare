@@ -14,6 +14,8 @@ namespace P2PShare.CLI
             
             do
             {
+                Console.Write(message);
+                
                 output = Console.ReadLine();
 
                 if (String.IsNullOrEmpty(output))

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using P2PShare.CLI;
+using System;
 using System.Net.Sockets;
 
 namespace P2PShare
@@ -7,12 +8,8 @@ namespace P2PShare
     {
         static void Main(string[] args)
         {
-            string ip;
-            
-            Console.Write("IP addresss: ");
+            string ip = CLIHelp.getString("IP addresss: ");
 
-            ip = Console.ReadLine();
-            
             Console.ReadKey();
         }
     }
