@@ -7,9 +7,11 @@ namespace P2PShare
     {
         static void Main(string[] args)
         {
+            string ip;
+            
             Console.Write("IP addresss: ");
 
-            //string ip = Console
+            ip = Console.ReadLine();
             
             Console.ReadKey();
         }
