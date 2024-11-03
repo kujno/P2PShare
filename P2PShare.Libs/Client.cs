@@ -4,22 +4,38 @@ using System.Net.Sockets;
 
 namespace P2PShare.Libs
 {
-    public class Connection
+    public class Client
     {
-        public static async Task<TcpClient?> Connect(string ip, NetworkInterfaceType @interface)
+        public static TcpClient? Connect(string ip, NetworkInterfaceType @interface)
         {
             IPAddress? ipLocal = GetLocalIPv4(@interface);
-            TcpClient? client = null;
+            TcpClient? client = new TcpClient();
 
             if (ipLocal is null)
             {
-                return client;
+                client.Dispose();
+
+                return null;
             }
 
-            client = new TcpClient();
+            try
+            {
+                client.Connect(ip, FindPort(ipLocal));
 
-            await client.ConnectAsync(ip, FindPort(ipLocal));
-            
+                if (!client.Connected)
+                {
+                    client.Dispose();
+
+                    return null;
+                }
+            }
+            catch
+            {
+                client.Dispose();
+
+                return null;
+            }
+
             return client;
         }
 
@@ -27,21 +43,12 @@ namespace P2PShare.Libs
         {
             Random random = new Random();
             int port;
-            int test;
 
             do
             {
-                TcpListener listener;
-                TcpClient testClient;
-                NetworkStream stream;
                 port = random.Next(49152, 65536);
-
-                listener = new TcpListener(ip, port);
-                testClient = listener.AcceptTcpClient();
-                stream = testClient.GetStream();
-                test = stream.Read(new byte[1], 0, 1);
             }
-            while (test != 0);
+            while (!IsPortAvailable(ip, port));
 
             return port;
         }
@@ -66,6 +73,23 @@ namespace P2PShare.Libs
             }
 
             return output;
+        }
+
+        private static bool IsPortAvailable(IPAddress ip, int port)
+        {
+            try
+            {
+                TcpListener listener = new TcpListener(ip, port);
+                
+                listener.Start();
+                listener.Stop();
+                
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
