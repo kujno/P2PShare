@@ -4,12 +4,13 @@ using System.Net.Sockets;
 
 namespace P2PShare.Libs
 {
-    public class Client
+    public class ClientConnection
     {
-        public static TcpClient? Connect(string ip, NetworkInterfaceType @interface)
+        public static TcpClient? Connect(string ip, NetworkInterfaceType @interface, out int? port)
         {
             IPAddress? ipLocal = GetLocalIPv4(@interface);
             TcpClient? client = new TcpClient();
+            port = null;
 
             if (ipLocal is null)
             {
@@ -18,13 +19,16 @@ namespace P2PShare.Libs
                 return null;
             }
 
+            port = FindPort(ipLocal);
+
             try
             {
-                client.Connect(ip, FindPort(ipLocal));
+                client.Connect(ip, (int)port);
 
                 if (!client.Connected)
                 {
                     client.Dispose();
+                    port = null;
 
                     return null;
                 }
@@ -32,6 +36,7 @@ namespace P2PShare.Libs
             catch
             {
                 client.Dispose();
+                port = null;
 
                 return null;
             }
