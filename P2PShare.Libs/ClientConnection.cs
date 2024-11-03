@@ -6,11 +6,11 @@ namespace P2PShare.Libs
 {
     public class ClientConnection
     {
-        public static TcpClient? Connect(string ip, NetworkInterfaceType @interface, out int? port)
+        public static TcpClient? Connect(string ip, NetworkInterfaceType @interface, ref int? port)
         {
             IPAddress? ipLocal = GetLocalIPv4(@interface);
             TcpClient? client = new TcpClient();
-            port = null;
+            bool customPort = port.HasValue;
 
             if (ipLocal is null)
             {
@@ -19,23 +19,37 @@ namespace P2PShare.Libs
                 return null;
             }
 
-            port = FindPort(ipLocal);
+            switch (port.HasValue)
+            {
+                case true:
+                    if (!IsPortAvailable(ipLocal, (int)port))
+                    {
+                        client.Dispose();
+
+                        return null;
+                    }
+                    
+                    break;
+
+                case false:
+                    port = FindPort(ipLocal);
+
+                    break;
+            }
 
             try
             {
                 client.Connect(ip, (int)port);
-
-                if (!client.Connected)
-                {
-                    client.Dispose();
-                    port = null;
-
-                    return null;
-                }
             }
             catch
             {
                 client.Dispose();
+
+                if (customPort)
+                {
+                    return null;
+                }
+
                 port = null;
 
                 return null;

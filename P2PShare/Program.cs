@@ -8,8 +8,8 @@ namespace P2PShare
     {
         static void Main(string[] args)
         {
-            string ip = CLIHelp.getString("IP addresss: ");
-
+            string ip = CLIHelp.getString("IP address: ");
+            
             Console.ReadKey();
         }
     }
