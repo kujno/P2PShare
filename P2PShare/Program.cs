@@ -1,6 +1,8 @@
 ﻿using P2PShare.CLI;
 using System;
 using System.Net.Sockets;
+using P2PShare.Libs;
+using System.Net.NetworkInformation;
 
 namespace P2PShare
 {
@@ -8,24 +10,52 @@ namespace P2PShare
     {
         static void Main()
         {
-            WaitOrConnectEnum choice;
-            int[] waitOrConnectValues = (int[])Enum.GetValuesAsUnderlyingType(typeof(WaitOrConnectEnum));
-            string[] waitOrConnectNames = Enum.GetNames(typeof(WaitOrConnectEnum));
+            NetworkInterface?[] interfacesNullable = NetworkInterface.GetAllNetworkInterfaces();
 
-            // design
             Console.ForegroundColor = ConsoleColor.White;
             Console.Title = "P2PShare";
-
-            Console.WriteLine("Welcome to P2PShare software");
-
-            for (int i = 0; i < waitOrConnectValues.Length; i++)
+            
+            // interfaces check
+            if (interfacesNullable is null)
             {
-                Console.WriteLine($"{waitOrConnectValues[i]} - {waitOrConnectNames[i]}");
+                Console.WriteLine("No network interfaces found");
+                
+                return;
             }
 
-            choice = (WaitOrConnectEnum)Enum.ToObject(typeof(WaitOrConnectEnum), CLIHelp.getInt("Choose: ", waitOrConnectValues[0], waitOrConnectValues[waitOrConnectValues.Length - 1]));
+            NetworkInterface[] interfaces = interfacesNullable.Where(ni => ni != null).Cast<NetworkInterface>().ToArray();
+            List<NetworkInterface> interfacesUp = new List<NetworkInterface>();
 
-            //switch (choice)
+            // up interfaces check
+            for (int i = 0; i < interfaces.Length; i++)
+            {
+                if (interfaces[i].OperationalStatus != OperationalStatus.Up)
+                {
+                    interfacesUp.Add(interfaces[i]);
+                }
+            }
+            if (interfacesUp.Count == 0)
+            {
+                Console.WriteLine("No up network interfaces found");
+
+                return;
+            }
+
+            NetworkInterfaceType interfaceType;
+            int? port;
+
+            Console.WriteLine("Welcome to P2PShare software\n");
+
+            Console.WriteLine("Up network interfaces:\n--------------------");
+            for (int i = 0; i < interfacesUp.Count; i++)
+            {
+                Console.WriteLine($"{i + 1} - {interfacesUp[i].Name} ({interfacesUp[i].NetworkInterfaceType})");
+            }
+            interfaceType = (NetworkInterfaceType)(CLIHelp.getInt("\nChoose a network interface: ", 1, interfacesUp.Count) - 1);
+
+            port = CLIHelp.getNullableInt("If you would like to wait for a connection / choose a custom port, type a port number\nIf not press [Enter] key\n\nType a port number: ");
+
+            //if ()
             //{
 
             //}

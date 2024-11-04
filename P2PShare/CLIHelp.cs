@@ -54,5 +54,28 @@ namespace P2PShare.CLI
 
             return output;
         }
+
+        public static int? getNullableInt(string message)
+        {
+            string? input;
+            int output;
+
+            do
+            {
+                Console.Write(message);
+                input = Console.ReadLine();
+                if (!String.IsNullOrEmpty(input))
+                {
+                    input = input.Trim();
+                }
+                if (String.IsNullOrEmpty(input))
+                {
+                    return null;
+                }
+            }
+            while (!int.TryParse(input, out output) || output < 49152 || );
+
+            return output;
+        }
     }
 }

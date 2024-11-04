@@ -39,6 +39,8 @@ namespace P2PShare.Libs
 
             try
             {
+                client.Client.Bind(new IPEndPoint(ipLocal, (int)port));
+                
                 client.Connect(ip, (int)port);
             }
             catch
