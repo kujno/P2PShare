@@ -29,5 +29,30 @@ namespace P2PShare.CLI
 
             return output;
         }
+
+        public static int getInt(string message)
+        {
+            int output;
+
+            while (!int.TryParse(getString(message), out output))
+            {
+
+            }
+
+            return output;
+        }
+
+        public static int getInt(string message, int min, int max)
+        {
+            int output;
+
+            do
+            {
+                output = getInt(message);
+            }
+            while (output < min || output > max);
+
+            return output;
+        }
     }
 }
