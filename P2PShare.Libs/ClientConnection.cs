@@ -43,7 +43,7 @@ namespace P2PShare.Libs
                 
                 client.Connect(ip, (int)port);
             }
-            catch
+            catch (SocketException)
             {
                 client.Dispose();
 
@@ -78,7 +78,8 @@ namespace P2PShare.Libs
         public static IPAddress? GetLocalIPv4(NetworkInterfaceType @interface)
         {
             IPAddress? output = null;
-            
+
+            // finds the ip address of the selected network interface
             foreach (NetworkInterface item in NetworkInterface.GetAllNetworkInterfaces())
             {
                 if (item.NetworkInterfaceType == @interface && item.OperationalStatus == OperationalStatus.Up)
@@ -107,7 +108,7 @@ namespace P2PShare.Libs
                 
                 return true;
             }
-            catch
+            catch (Exception)
             {
                 return false;
             }

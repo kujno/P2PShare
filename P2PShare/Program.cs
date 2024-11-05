@@ -8,7 +8,7 @@ namespace P2PShare
 {
     class Program
     {
-        static void Main()
+        static async Task Main()
         {
             NetworkInterface?[] interfacesNullable = NetworkInterface.GetAllNetworkInterfaces();
 
@@ -29,7 +29,7 @@ namespace P2PShare
             // up interfaces check
             for (int i = 0; i < interfaces.Length; i++)
             {
-                if (interfaces[i].OperationalStatus != OperationalStatus.Up)
+                if (interfaces[i].OperationalStatus == OperationalStatus.Up)
                 {
                     interfacesUp.Add(interfaces[i]);
                 }
@@ -43,6 +43,7 @@ namespace P2PShare
 
             NetworkInterfaceType interfaceType;
             int? port;
+            TcpClient? client;
 
             Console.WriteLine("Welcome to P2PShare software\n");
 
@@ -55,10 +56,10 @@ namespace P2PShare
 
             port = CLIHelp.getNullablePortInt("If you would like to wait for a connection / choose a custom port, type a port number\nIf not press [Enter] key\n\nType a port number: ", interfaceType);
 
-            //if ()
-            //{
-
-            //}
+            if (port is not null)
+            {
+                client = await ListenerConnection.WaitForConnection((int)port, interfaceType);
+            }
 
             Console.ReadKey();
         }
