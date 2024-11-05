@@ -53,7 +53,7 @@ namespace P2PShare
             }
             interfaceType = (NetworkInterfaceType)(CLIHelp.getInt("\nChoose a network interface: ", 1, interfacesUp.Count) - 1);
 
-            port = CLIHelp.getNullableInt("If you would like to wait for a connection / choose a custom port, type a port number\nIf not press [Enter] key\n\nType a port number: ");
+            port = CLIHelp.getNullablePortInt("If you would like to wait for a connection / choose a custom port, type a port number\nIf not press [Enter] key\n\nType a port number: ", interfaceType);
 
             //if ()
             //{

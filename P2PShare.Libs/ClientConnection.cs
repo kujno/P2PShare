@@ -75,7 +75,7 @@ namespace P2PShare.Libs
         }
 
         // https://stackoverflow.com/questions/6803073/get-local-ip-address
-        private static IPAddress? GetLocalIPv4(NetworkInterfaceType @interface)
+        public static IPAddress? GetLocalIPv4(NetworkInterfaceType @interface)
         {
             IPAddress? output = null;
             
@@ -96,7 +96,7 @@ namespace P2PShare.Libs
             return output;
         }
 
-        private static bool IsPortAvailable(IPAddress ip, int port)
+        public static bool IsPortAvailable(IPAddress ip, int port)
         {
             try
             {

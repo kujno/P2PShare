@@ -1,6 +1,9 @@
-﻿using System;
+﻿using P2PShare.Libs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -73,9 +76,34 @@ namespace P2PShare.CLI
                     return null;
                 }
             }
-            while (!int.TryParse(input, out output) || output < 49152 || );
+            while (!int.TryParse(input, out output));
 
             return output;
+        }
+
+        public static int? getNullablePortInt(string message, NetworkInterfaceType interfaceType)
+        {
+            int? input;
+            IPAddress? ip;
+
+            do
+            {
+                input = getNullableInt(message);
+                ip = ClientConnection.GetLocalIPv4(interfaceType);
+
+                // checks
+                if (input is null)
+                {
+                    return null;
+                }
+                if (ip is null)
+                {
+                    return null;
+                }
+            }
+            while (input < 49152 || !ClientConnection.IsPortAvailable(ip, (int)input));
+
+            return input;
         }
     }
 }
