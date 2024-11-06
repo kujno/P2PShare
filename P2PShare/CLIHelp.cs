@@ -81,6 +81,24 @@ namespace P2PShare.CLI
             return output;
         }
 
+        public static int? getNullableInt(string message, int min, int max)
+        {
+            int? input;
+
+            do
+            {
+                input = getNullableInt(message);
+
+                if (input is null)
+                {
+                    return null;
+                }
+            }
+            while (input < min || input > max);
+
+            return input;
+        }
+
         public static int? getNullablePortInt(string message, NetworkInterfaceType interfaceType)
         {
             int? input;
