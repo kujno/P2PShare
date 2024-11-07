@@ -7,9 +7,9 @@ namespace P2PShare.Libs
 {
     public class ClientConnection
     {
-        public static TcpClient? Connect(string ip, NetworkInterfaceType @interface, ref int? port)
+        public static TcpClient? Connect(IPAddress ip, NetworkInterfaceType @interface, int? port)
         {
-            IPAddress? ipLocal = GetLocalIPv4(@interface);
+            IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
             TcpClient? client = new TcpClient();
             bool customPort = port.HasValue;
 
@@ -23,7 +23,7 @@ namespace P2PShare.Libs
             switch (port.HasValue)
             {
                 case true:
-                    if (!IsPortAvailable(ipLocal, (int)port))
+                    if (!PortHandling.IsPortAvailable(ipLocal, (int)port))
                     {
                         client.Dispose();
 
@@ -33,7 +33,7 @@ namespace P2PShare.Libs
                     break;
 
                 case false:
-                    port = FindPort(ipLocal);
+                    port = PortHandling.FindPort(ipLocal);
 
                     break;
             }
@@ -59,189 +59,6 @@ namespace P2PShare.Libs
             }
 
             return client;
-        }
-
-        private static int FindPort(IPAddress ip)
-        {
-            Random random = new Random();
-            int port;
-
-            do
-            {
-                port = random.Next(49152, 65536);
-            }
-            while (!IsPortAvailable(ip, port));
-
-            return port;
-        }
-
-        // https://stackoverflow.com/questions/6803073/get-local-ip-address
-        public static IPAddress? GetLocalIPv4(NetworkInterfaceType @interface)
-        {
-            IPAddress? output = null;
-
-            // finds the ip address of the selected network interface
-            foreach (NetworkInterface item in NetworkInterface.GetAllNetworkInterfaces())
-            {
-                if (item.NetworkInterfaceType == @interface && item.OperationalStatus == OperationalStatus.Up)
-                {
-                    foreach (UnicastIPAddressInformation ip in item.GetIPProperties().UnicastAddresses)
-                    {
-                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
-                        {
-                            output = ip.Address;
-                        }
-                    }
-                }
-            }
-
-            return output;
-        }
-
-        public static bool IsPortAvailable(IPAddress ip, int port)
-        {
-            try
-            {
-                TcpListener listener = new TcpListener(ip, port);
-                
-                listener.Start();
-                listener.Stop();
-                
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        public static bool SendFile(TcpClient client, FileInfo fileInfo)
-        {
-            NetworkStream stream;
-
-
-            try
-            {
-                stream = client.GetStream();
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-
-            long fileLength = fileInfo.Length;
-            string fileName = fileInfo.Name;
-            string invite = $"File: {fileName} ({fileLength} bytes)\nDo you want to accept it? [y/n]: ";
-            byte[] inviteBytes = Encoding.UTF8.GetBytes(invite);
-            string reply;
-            byte[] buffer = new byte[3];
-
-            try
-            {
-                stream.Write(inviteBytes, 0, inviteBytes.Length);
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-
-            try
-            {
-                stream.Read(buffer, 0, 3);
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-            reply = Encoding.UTF8.GetString(buffer);
-
-            if (reply == "n")
-            {
-                return false;
-            }
-
-            byte[] fileBytes = File.ReadAllBytes(fileInfo.FullName);
-
-            try
-            {
-                stream.Read(buffer, 0, 3);
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public static async Task<string?> ReceiveInvite(TcpClient client)
-        {
-            NetworkStream stream;
-
-            try
-            {
-                stream = client.GetStream();
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            try
-            {
-                bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-
-            return Encoding.UTF8.GetString(buffer, 0, bytesRead);
-        }
-
-        public static FileInfo? ReceiveFile(TcpClient client, int fileLength, string filePath)
-        {
-            NetworkStream stream;
-
-            try
-            {
-                stream = client.GetStream();
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-
-            byte[] buffer = new byte[fileLength];
-
-            try
-            {
-                stream.Write(Encoding.UTF8.GetBytes("y"), 0, 3);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-
-            int bytesRead;
-
-            try
-            {
-                bytesRead = stream.Read(buffer, 0, fileLength);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-
-            using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                fileStream.Write(buffer, 0, bytesRead);
-            }
-
-            return new FileInfo(filePath);
         }
     }
 }

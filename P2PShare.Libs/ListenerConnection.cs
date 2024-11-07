@@ -14,7 +14,7 @@ namespace P2PShare.Libs
     {
         public static async Task<TcpClient?> WaitForConnection(int port, NetworkInterfaceType interfaceType)
         {
-            IPAddress? ipLocal = ClientConnection.GetLocalIPv4(interfaceType);
+            IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(interfaceType);
             
             if (ipLocal is null)
             {

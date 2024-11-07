@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,7 +12,7 @@ namespace P2PShare.CLI
 {
     public class CLIHelp
     {
-        public static string getString(string message)
+        public static string GetString(string? message)
         {
             string? output;
             
@@ -33,11 +34,11 @@ namespace P2PShare.CLI
             return output;
         }
 
-        public static int getInt(string message)
+        public static int GetInt(string message)
         {
             int output;
 
-            while (!int.TryParse(getString(message), out output))
+            while (!int.TryParse(GetString(message), out output))
             {
 
             }
@@ -45,20 +46,20 @@ namespace P2PShare.CLI
             return output;
         }
 
-        public static int getInt(string message, int min, int max)
+        public static int GetInt(string message, int min, int max)
         {
             int output;
 
             do
             {
-                output = getInt(message);
+                output = GetInt(message);
             }
             while (output < min || output > max);
 
             return output;
         }
 
-        public static int? getNullableInt(string message)
+        public static int? GetNullableInt(string message)
         {
             string? input;
             int output;
@@ -81,13 +82,13 @@ namespace P2PShare.CLI
             return output;
         }
 
-        public static int? getNullableInt(string message, int min, int max)
+        public static int? GetNullableInt(string message, int min, int max)
         {
             int? input;
 
             do
             {
-                input = getNullableInt(message);
+                input = GetNullableInt(message);
 
                 if (input is null)
                 {
@@ -99,15 +100,20 @@ namespace P2PShare.CLI
             return input;
         }
 
-        public static int? getNullablePortInt(string message, NetworkInterfaceType interfaceType)
+        public static int? GetNullablePortInt(string message, NetworkInterfaceType interfaceType)
         {
             int? input;
-            IPAddress? ip;
+            int i = 0;
+            IPAddress? ip = IPv4Handling.GetLocalIPv4(interfaceType); ;
 
             do
             {
-                input = getNullableInt(message);
-                ip = ClientConnection.GetLocalIPv4(interfaceType);
+                if (i > 0)
+                {
+                    Console.WriteLine("Selected port is unavailiable. Please Select another one!\n");
+                }
+
+                input = GetNullableInt(message);
 
                 // checks
                 if (input is null)
@@ -118,8 +124,10 @@ namespace P2PShare.CLI
                 {
                     return null;
                 }
+
+                i++;
             }
-            while (input < 49152 || !ClientConnection.IsPortAvailable(ip, (int)input));
+            while (input < 49152 || !PortHandling.IsPortAvailable(ip, (int)input));
 
             return input;
         }
@@ -130,7 +138,7 @@ namespace P2PShare.CLI
 
             do
             {
-                output = new FileInfo(getString(message));
+                output = new FileInfo(GetString(message));
             }
             while (!output.Exists);
 
@@ -140,6 +148,40 @@ namespace P2PShare.CLI
         public static void PrintFileInfo(FileInfo fileInfo)
         {
             Console.WriteLine($"File informations:\n-------------------\nFile path: {fileInfo.FullName}\nSize: {fileInfo.Length}\n");
+        }
+
+        public static IPAddress GetIPv4(string message)
+        {
+            string input;
+            IPAddress? output;
+
+            do
+            {
+                input = GetString(message);
+            }
+            while (!IPAddress.TryParse(input, out output));
+
+            return output;
+        }
+
+        public static bool GetBool(string message)
+        {
+            string input;
+
+            do
+            {
+                input = GetString(message).ToLower();
+            }
+            while (input != "y" && input != "n");
+
+            switch (input)
+            {
+                case "y":
+                    return true;
+                
+                default:
+                    return false;
+            }
         }
     }
 }
