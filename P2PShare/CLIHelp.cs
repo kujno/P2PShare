@@ -123,5 +123,23 @@ namespace P2PShare.CLI
 
             return input;
         }
+
+        public static FileInfo GetFileInfo(string message)
+        {
+            FileInfo output;
+
+            do
+            {
+                output = new FileInfo(getString(message));
+            }
+            while (!output.Exists);
+
+            return output;
+        }
+
+        public static void PrintFileInfo(FileInfo fileInfo)
+        {
+            Console.WriteLine($"File informations:\n-------------------\nFile path: {fileInfo.FullName}\nSize: {fileInfo.Length}\n");
+        }
     }
 }

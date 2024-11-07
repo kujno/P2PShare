@@ -8,14 +8,13 @@ namespace P2PShare
 {
     class Program
     {
-        static async Task Main()
-        { 
+        static void Main()
+        {
             Console.ForegroundColor = ConsoleColor.White;
             Console.Title = "P2PShare";
-            
+
             NetworkInterfaceType interfaceType;
             int? port;
-            TcpClient? client;
             int? interfaceInt;
 
             do
@@ -62,17 +61,100 @@ namespace P2PShare
 
             port = CLIHelp.getNullablePortInt("If you would like to wait for a connection / choose a custom port, type a port number\nIf not press [Enter] key\n\nType a port number: ", interfaceType);
 
-            if (port is not null)
-            {
-                client = await ListenerConnection.WaitForConnection((int)port, interfaceType);
-
-                if (client is null)
-                {
-                    // vymysliet ako urobit nekonecny loop async
-                }
-            }
+            
 
             Console.ReadKey();
         }
+
+        private static async Task<TcpClient> listenLoop(int port, NetworkInterfaceType interfaceType)
+        {
+            while (true)
+            {
+                TcpClient? client = await ListenerConnection.WaitForConnection(port, interfaceType);
+
+                if (client is null)
+                {
+                    Console.WriteLine("A device failed to connect\n");
+
+                    continue;
+                }
+
+                Console.WriteLine("Connection established\n");
+
+                return client;
+            }
+        }
+
+        private static async void receiveInviteLoop(TcpClient client)
+        {
+            while (true)
+            {
+                string? invite = await ClientConnection.ReceiveInvite(client);
+
+                if (invite is null)
+                {
+                    Console.WriteLine("The connection was lost\n");
+
+                    continue;
+                }
+
+                char reply;
+
+                while (char.TryParse(CLIHelp.getString(invite).ToLower(), out reply) || (reply != 'y' && reply != 'n'))
+                {
+                    Console.WriteLine("Wrong input\n");
+                }
+
+                if (reply == 'n')
+                {
+                    Console.WriteLine("The file was not accepted\n");
+
+                    continue;
+                }
+
+                int indexOfClosure = invite.IndexOf('(') + 1;
+                int fileLength = int.Parse(invite.Substring(indexOfClosure, invite.IndexOf(')') - indexOfClosure));
+                string filePath = CLIHelp.GetFileInfo("Insert the file path to save the file: ").FullName;
+                FileInfo? fileInfo;
+
+                Console.Clear();
+                Console.WriteLine("The file will be received in a while...");
+
+                fileInfo = ClientConnection.ReceiveFile(client, fileLength, filePath);
+
+                if (fileInfo is null)
+                {
+                    Console.WriteLine("The file transfer failed\n");
+
+                    continue;
+                }
+
+                Console.Clear();
+                Console.WriteLine("The file was received successfully\n");
+
+                CLIHelp.PrintFileInfo(fileInfo);
+            }
+        }
+
+        private static void sharing(int? port, NetworkInterfaceType interfaceType)
+        {
+            do
+            {
+                
+            }
+            while (true);
+        }
+
+        //private static async Task<TcpClient> GetClient(int? port, NetworkInterfaceType interfaceType)
+        //{
+        //    TcpClient client;
+            
+        //    if (port is not null)
+        //    {
+        //        client = await listenLoop((int)port, interfaceType);
+        //    }
+
+        //    // treba dokoncit nacitanie ip adresy
+        //}
     }
 }
