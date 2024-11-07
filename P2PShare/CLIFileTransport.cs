@@ -61,25 +61,35 @@ namespace P2PShare.CLI
         {
             TcpClient? client = await CLIConnection.GetClient(port, @interface);
             bool sent;
+            Task inviteLoop;
 
             if (client is null)
             {
                 return;
             }
-            
-            await receiveInviteLoop(client);
 
-            sent = FileTransport.SendFile(client, CLIHelp.GetFileInfo("Insert the file path to send the file or wait for a file transfer invite: "));
-
-            switch (sent)
+            switch (CLIHelp.GetBool("Would you like to send(y) or receive(n): "))
             {
                 case true:
-                    Console.WriteLine("The file was sent successfully\n");
+                    sent = FileTransport.SendFile(client, CLIHelp.GetFileInfo("Insert the file path to send the file or wait for a file transfer invite: "));
+
+                    switch (sent)
+                    {
+                        case true:
+                            Console.WriteLine("The file was sent successfully\n");
+
+                            break;
+
+                        case false:
+                            Console.WriteLine("The file transfer failed\n");
+
+                            break;
+                    }
 
                     break;
 
                 case false:
-                    Console.WriteLine("The file transfer failed\n");
+                    inviteLoop = receiveInviteLoop(client);
 
                     break;
             }
