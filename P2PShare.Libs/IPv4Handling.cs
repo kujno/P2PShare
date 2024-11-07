@@ -13,14 +13,14 @@ namespace P2PShare.Libs
     public class IPv4Handling
     {
         // https://stackoverflow.com/questions/6803073/get-local-ip-address
-        public static IPAddress? GetLocalIPv4(NetworkInterfaceType @interface)
+        public static IPAddress? GetLocalIPv4(NetworkInterface @interface)
         {
             IPAddress? output = null;
 
             // finds the ip address of the selected network interface
             foreach (NetworkInterface item in NetworkInterface.GetAllNetworkInterfaces())
             {
-                if (item.NetworkInterfaceType == @interface && item.OperationalStatus == OperationalStatus.Up)
+                if (item.Name == @interface.Name && item.OperationalStatus == OperationalStatus.Up)
                 {
                     foreach (UnicastIPAddressInformation ip in item.GetIPProperties().UnicastAddresses)
                     {

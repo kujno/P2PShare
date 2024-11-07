@@ -11,7 +11,7 @@ namespace P2PShare.CLI
 {
     public class CLIFileTransport
     {
-        private static async void receiveInviteLoop(TcpClient client)
+        private static async Task receiveInviteLoop(TcpClient client)
         {
             while (true)
             {
@@ -57,12 +57,17 @@ namespace P2PShare.CLI
             }
         }
 
-        public static void Sharing(int? port, NetworkInterfaceType interfaceType)
+        public static async Task Sharing(int? port, NetworkInterface @interface)
         {
-            TcpClient client = CLIConnection.GetClient(port, interfaceType).Result;
+            TcpClient? client = await CLIConnection.GetClient(port, @interface);
             bool sent;
 
-            receiveInviteLoop(client);
+            if (client is null)
+            {
+                return;
+            }
+            
+            await receiveInviteLoop(client);
 
             sent = FileTransport.SendFile(client, CLIHelp.GetFileInfo("Insert the file path to send the file or wait for a file transfer invite: "));
 

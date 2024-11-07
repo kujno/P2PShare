@@ -13,11 +13,11 @@ namespace P2PShare.CLI
 {
     public class CLIConnection
     {
-        private static async Task<TcpClient> listenLoop(int port, NetworkInterfaceType interfaceType)
+        private static async Task<TcpClient> listenLoop(int port, NetworkInterface @interface)
         {
             while (true)
             {
-                TcpClient? client = await ListenerConnection.WaitForConnection(port, interfaceType);
+                TcpClient? client = await ListenerConnection.WaitForConnection(port, @interface);
 
                 if (client is null)
                 {
@@ -32,13 +32,15 @@ namespace P2PShare.CLI
             }
         }
 
-        public static async Task<TcpClient> GetClient(int? port, NetworkInterfaceType interfaceType)
+        public static async Task<TcpClient?> GetClient(int? port, NetworkInterface @interface)
         {
             IPAddress ip;
+            TcpClient? client = null;
+            Task<TcpClient>? listenTask = null;
 
             if (port is not null)
             {
-                return await listenLoop((int)port, interfaceType);
+                listenTask = listenLoop((int)port, @interface);
             }
             if (port is not null)
             {
@@ -47,13 +49,21 @@ namespace P2PShare.CLI
             
             ip = CLIHelp.GetIPv4("Insert the IP address of the device you want to connect to: ");
 
-            TcpClient? client;
-
-            do
+            while (client is null && (listenTask is null || !listenTask.IsCompleted))
             {
-                client = ClientConnection.Connect(ip, interfaceType, port);
+                client = ClientConnection.Connect(ip, @interface, port);
             }
-            while (client is null);
+            // toto treba dokoncit
+
+            if (client is not null)
+            {
+                return client;
+            }
+
+            if (listenTask is not null)
+            {
+                client = await listenTask;
+            }
 
             return client;
         }

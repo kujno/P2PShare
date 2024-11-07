@@ -100,11 +100,11 @@ namespace P2PShare.CLI
             return input;
         }
 
-        public static int? GetNullablePortInt(string message, NetworkInterfaceType interfaceType)
+        public static int? GetNullablePortInt(string message, NetworkInterface @interface)
         {
             int? input;
             int i = 0;
-            IPAddress? ip = IPv4Handling.GetLocalIPv4(interfaceType); ;
+            IPAddress? ip = IPv4Handling.GetLocalIPv4(@interface); ;
 
             do
             {

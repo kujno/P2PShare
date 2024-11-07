@@ -12,9 +12,9 @@ namespace P2PShare.Libs
 {
     public class ListenerConnection
     {
-        public static async Task<TcpClient?> WaitForConnection(int port, NetworkInterfaceType interfaceType)
+        public static async Task<TcpClient?> WaitForConnection(int port, NetworkInterface @interface)
         {
-            IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(interfaceType);
+            IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
             
             if (ipLocal is null)
             {
@@ -29,7 +29,7 @@ namespace P2PShare.Libs
                 listener.Start();
                 client = await listener.AcceptTcpClientAsync();
             }
-            catch (SocketException)
+            catch
             {
                 return null;
             }

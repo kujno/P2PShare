@@ -8,19 +8,20 @@ namespace P2PShare
 {
     class Program
     {
-        static void Main()
+        static async Task Main()
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.Title = "P2PShare";
 
-            NetworkInterfaceType interfaceType;
+            NetworkInterface @interface;
             int? port;
             int? interfaceInt;
+            List<NetworkInterface> interfacesUp;
 
             do
             {
-                List<NetworkInterface> interfacesUp = new List<NetworkInterface>();
                 NetworkInterface?[] interfacesNullable = NetworkInterface.GetAllNetworkInterfaces();
+                interfacesUp = new List<NetworkInterface>();
 
                 Console.Clear();
 
@@ -57,15 +58,16 @@ namespace P2PShare
                 Console.WriteLine();
             }
             while (interfaceInt is null);
-            interfaceType = (NetworkInterfaceType)interfaceInt;
 
-            port = CLIHelp.GetNullablePortInt("If you would like to wait for a connection / choose a custom port, type a port number\nIf not press [Enter] key\n\nType a port number: ", interfaceType);
+            @interface = interfacesUp[(int)interfaceInt - 1];
+
+            port = CLIHelp.GetNullablePortInt("If you would like to wait for a connection / choose a custom port, type a port number\nIf not press [Enter] key\n\nType a port number: ", @interface);
 
             do
             {
                 Console.WriteLine();
-                
-                CLIFileTransport.Sharing(port, interfaceType);
+
+                await CLIFileTransport.Sharing(port, @interface);
             }
             while (CLIHelp.GetBool("Would you like to send/receive any other file?: "));
 

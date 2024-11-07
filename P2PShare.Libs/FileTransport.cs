@@ -18,7 +18,7 @@ namespace P2PShare.Libs
             {
                 stream = client.GetStream();
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }
@@ -34,7 +34,7 @@ namespace P2PShare.Libs
             {
                 stream.Write(inviteBytes, 0, inviteBytes.Length);
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }
@@ -43,7 +43,7 @@ namespace P2PShare.Libs
             {
                 stream.Read(buffer, 0, 3);
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }
@@ -60,7 +60,7 @@ namespace P2PShare.Libs
             {
                 stream.Read(buffer, 0, 3);
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }
@@ -76,7 +76,7 @@ namespace P2PShare.Libs
             {
                 stream = client.GetStream();
             }
-            catch (Exception)
+            catch
             {
                 return null;
             }
@@ -87,7 +87,7 @@ namespace P2PShare.Libs
             {
                 bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
             }
-            catch (Exception)
+            catch
             {
                 return null;
             }
@@ -103,7 +103,7 @@ namespace P2PShare.Libs
             {
                 stream = client.GetStream();
             }
-            catch (Exception)
+            catch
             {
                 return null;
             }
@@ -114,7 +114,7 @@ namespace P2PShare.Libs
             {
                 stream.Write(Encoding.UTF8.GetBytes("y"), 0, 3);
             }
-            catch (Exception)
+            catch
             {
                 return null;
             }
@@ -125,7 +125,7 @@ namespace P2PShare.Libs
             {
                 bytesRead = stream.Read(buffer, 0, fileLength);
             }
-            catch (Exception)
+            catch
             {
                 return null;
             }

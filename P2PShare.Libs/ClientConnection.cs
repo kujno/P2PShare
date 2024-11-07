@@ -7,7 +7,7 @@ namespace P2PShare.Libs
 {
     public class ClientConnection
     {
-        public static TcpClient? Connect(IPAddress ip, NetworkInterfaceType @interface, int? port)
+        public static TcpClient? Connect(IPAddress ip, NetworkInterface @interface, int? port)
         {
             IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
             TcpClient? client = new TcpClient();
@@ -44,7 +44,7 @@ namespace P2PShare.Libs
                 
                 client.Connect(ip, (int)port);
             }
-            catch (SocketException)
+            catch
             {
                 client.Dispose();
 
