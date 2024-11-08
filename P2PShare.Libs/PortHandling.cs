@@ -35,7 +35,7 @@ namespace P2PShare.Libs
 
                 return true;
             }
-            catch
+            catch (Exception)
             {
                 return false;
             }

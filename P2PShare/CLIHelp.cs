@@ -164,6 +164,32 @@ namespace P2PShare.CLI
             return output;
         }
 
+        public static IPAddress? GetIPv4Nullable(string message)
+        {
+            IPAddress? output;
+            string? input;
+            
+            do
+            {
+                Console.Write(message);
+
+                input = Console.ReadLine();
+
+                if (!String.IsNullOrEmpty(input))
+                {
+                    input = input.Trim();
+                }
+
+                if (String.IsNullOrEmpty(input))
+                {
+                    return null;
+                }
+            }
+            while (!IPAddress.TryParse(input, out output));
+
+            return output;
+        }
+
         public static bool GetBool(string message)
         {
             string input;

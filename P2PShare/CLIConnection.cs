@@ -34,7 +34,7 @@ namespace P2PShare.CLI
 
         public static async Task<TcpClient?> GetClient(int? port, NetworkInterface @interface)
         {
-            IPAddress ip;
+            IPAddress? ip;
             TcpClient? client = null;
             Task<TcpClient>? listenTask = null;
 
@@ -44,20 +44,40 @@ namespace P2PShare.CLI
             }
             if (port is not null)
             {
-                Console.WriteLine("Wait for a device to connect or");
+                Console.WriteLine("Press [Enter] key to wait for connection or");
             }
             
-            ip = CLIHelp.GetIPv4("Insert the IP address of the device you want to connect to: ");
+            ip = CLIHelp.GetIPv4Nullable("Insert the IP address of the device you want to connect to: ");
 
-            while (client is null && (listenTask is null || !listenTask.IsCompleted))
+            if (port is null)
             {
-                client = ClientConnection.Connect(ip, @interface, port);
+                IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
+
+                if (ipLocal is not null)
+                {
+                    port = PortHandling.FindPort(ipLocal);
+                }
             }
-            // toto treba dokoncit
+
+            if (ip is not null)
+            {
+                while (client is null && (listenTask is null || !listenTask.IsCompleted))
+                {
+                    Console.WriteLine(port);
+
+                    client = ClientConnection.Connect(ip, @interface, ref port);
+                }
+            }
+            // toto treba dokoncit a refaktorovat asi
 
             if (client is not null)
             {
                 return client;
+            }
+
+            while (listenTask is null && ip is null)
+            {
+
             }
 
             if (listenTask is not null)
