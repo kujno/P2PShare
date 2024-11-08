@@ -39,7 +39,7 @@ namespace P2PShare.Libs
             }
 
             // lock the client to the local IP (interface) and port
-            client.Client.Bind(new IPEndPoint(ipLocal, port));
+            //client.Client.Bind(new IPEndPoint(ipLocal, port));
 
             return client;
         }
