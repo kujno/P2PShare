@@ -26,9 +26,11 @@ namespace P2PShare.Libs
 
         public static bool IsPortAvailable(IPAddress ip, int port)
         {
+            TcpListener? listener = null;
+            
             try
             {
-                TcpListener listener = new TcpListener(ip, port);
+                listener = new TcpListener(ip, port);
 
                 listener.Start();
                 listener.Stop();
@@ -38,6 +40,14 @@ namespace P2PShare.Libs
             catch (Exception)
             {
                 return false;
+            }
+            finally
+            {
+                if (listener is not null)
+                {
+                    listener.Server.Dispose();
+                    listener.Stop();
+                }
             }
         }
     }

@@ -32,7 +32,7 @@ namespace P2PShare.Libs
                         return null;
                     }
                     
-                    break;
+                        break;
 
                 case false:
                     port = PortHandling.FindPort(ipLocal);
