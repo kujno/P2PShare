@@ -57,16 +57,17 @@ namespace P2PShare.CLI
             }
         }
 
-        public static async Task Sharing(int? port, NetworkInterface @interface)
+        public static void Sharing(int? port, NetworkInterface @interface)
         {
-            TcpClient? client = await CLIConnection.GetClient(port, @interface);
-            bool sent;
+            TcpClient? client = CLIConnection.GetClient(port, @interface).Result;
             Task inviteLoop;
 
             if (client is null)
             {
                 return;
             }
+
+            bool sent;
 
             switch (CLIHelp.GetBool("Would you like to send(y) or receive(n): "))
             {

@@ -32,60 +32,58 @@ namespace P2PShare.CLI
             }
         }
 
-        public static async Task<TcpClient?> GetClient(int? port, NetworkInterface @interface)
+        public static Task<TcpClient> GetClient(int? port, NetworkInterface @interface)
         {
-            IPAddress? ip;
-            TcpClient? client = null;
-            Task<TcpClient>? listenTask = null;
-
-            if (port is not null)
+            return Task.Run(() =>
             {
-                listenTask = listenLoop((int)port, @interface);
-            }
-            if (port is not null)
-            {
-                Console.WriteLine("Press [Enter] key to wait for connection or");
-            }
-            
-            ip = CLIHelp.GetIPv4Nullable("Insert the IP address of the device you want to connect to: ");
+                IPAddress? ip;
+                TcpClient? client = null;
+                Task<TcpClient>? listenTask = null;
 
-            if (port is null)
-            {
-                IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
-
-                if (ipLocal is not null)
+                if (port is not null)
                 {
-                    port = PortHandling.FindPort(ipLocal);
+                    listenTask = listenLoop((int)port, @interface);
                 }
-            }
 
-            if (ip is not null)
-            {
-                while (client is null && (listenTask is null || !listenTask.IsCompleted))
+                if (port is null)
                 {
-                    Console.WriteLine(port);
+                    IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
 
-                    client = ClientConnection.Connect(ip, @interface, ref port);
+                    if (ipLocal is not null)
+                    {
+                        port = PortHandling.FindPort(ipLocal);
+                    }
                 }
-            }
-            // toto treba dokoncit a refaktorovat asi
 
-            if (client is not null)
-            {
-                return client;
-            }
+                while (true)
+                {
+                    if (listenTask is not null && listenTask.IsCompleted)
+                    {
+                        Console.WriteLine("A foreign device has established connection with your device");
 
-            while (listenTask is null && ip is null)
-            {
+                        return listenTask.Result;
+                    }
 
-            }
+                    if (port is not null)
+                    {
+                        Console.WriteLine("Press [Enter] key to chceck for any outer connection or ");
+                    }
 
-            if (listenTask is not null)
-            {
-                client = await listenTask;
-            }
+                    ip = CLIHelp.GetIPv4("Insert the IP address of the device you want to connect to: ");
 
-            return client;
+                    if (listenTask is null)
+                    {
+                        client = ClientConnection.Connect(ip, @interface, port);
+                    }
+
+                    if (client is not null)
+                    {
+                        return client;
+                    }
+
+                    Console.WriteLine("Could not establish connection\n");
+                }
+            });
         }
     }
 }

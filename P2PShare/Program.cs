@@ -8,7 +8,7 @@ namespace P2PShare
 {
     class Program
     {
-        static async Task Main()
+        static void Main()
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.Title = "P2PShare";
@@ -67,7 +67,7 @@ namespace P2PShare
             {
                 Console.WriteLine();
 
-                await CLIFileTransport.Sharing(port, @interface);
+                CLIFileTransport.Sharing(port, @interface);
             }
             while (CLIHelp.GetBool("Would you like to send/receive any other file?: "));
 
