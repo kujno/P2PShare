@@ -11,31 +11,29 @@ namespace P2PShare.CLI
 {
     public class CLIFileTransport
     {
-        private static async Task receiveInviteLoop(TcpClient client)
+        private static void receiveInviteLoop(TcpClient client)
         {
             while (true)
             {
-                string? invite = await FileTransport.ReceiveInvite(client);
+                string? invite = FileTransport.ReceiveInvite(client).Result;
 
                 if (invite is null)
                 {
-                    Console.WriteLine("The connection was lost\n");
-
                     continue;
                 }
 
-                bool accepted = CLIHelp.GetBool(invite);
+                bool accepted = CLIHelp.GetBool(invite.Substring(0, invite.IndexOf('#')));
 
                 if (!accepted)
                 {
                     Console.WriteLine("The file was not accepted\n");
 
-                    continue;
+                    return;
                 }
 
-                int indexOfClosure = invite.IndexOf('(') + 1;
-                int fileLength = int.Parse(invite.Substring(indexOfClosure, invite.IndexOf(')') - indexOfClosure));
-                string filePath = CLIHelp.GetFileInfo("Insert the file path to save the file: ").FullName;
+                int indexOfHashtag = invite.IndexOf('#') + 1;
+                int fileLength = int.Parse(invite.Substring(indexOfHashtag, invite.LastIndexOf('#') - indexOfHashtag));
+                string filePath = CLIHelp.GetFileInfo("Insert the file path where to save the file: ").FullName;
                 FileInfo? fileInfo;
 
                 Console.Clear();
@@ -47,11 +45,11 @@ namespace P2PShare.CLI
                 {
                     Console.WriteLine("The file transfer failed\n");
 
-                    continue;
+                    return;
                 }
 
                 Console.Clear();
-                Console.WriteLine("The file was received successfully\n");
+                Console.WriteLine($"The file {fileInfo.Name} was received successfully\n");
 
                 CLIHelp.PrintFileInfo(fileInfo);
             }
@@ -60,18 +58,19 @@ namespace P2PShare.CLI
         public static void Sharing(int? port, NetworkInterface @interface)
         {
             TcpClient client = CLIConnection.GetClient(port, @interface).Result;
-            Task inviteLoop;
             bool sent;
+            FileInfo fileInfo = CLIHelp.GetFileInfo("Insert the file path to send the file: ");
+
 
             switch (CLIHelp.GetBool("Would you like to send[y] or receive[n]: "))
             {
                 case true:
-                    sent = FileTransport.SendFile(client, CLIHelp.GetFileInfo("Insert the file path to send the file: "));
+                    sent = FileTransport.SendFile(client, fileInfo);
 
                     switch (sent)
                     {
                         case true:
-                            Console.WriteLine("The file was sent successfully\n");
+                            Console.WriteLine($"The file {fileInfo.Name} was sent successfully\n");
 
                             break;
 
@@ -84,7 +83,9 @@ namespace P2PShare.CLI
                     break;
 
                 case false:
-                    inviteLoop = receiveInviteLoop(client);
+                    Console.WriteLine("Waiting for file share invite...\n");
+                    
+                    receiveInviteLoop(client);
 
                     break;
             }

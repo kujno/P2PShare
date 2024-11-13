@@ -13,7 +13,6 @@ namespace P2PShare.Libs
         {
             NetworkStream stream;
 
-
             try
             {
                 stream = client.GetStream();
@@ -23,7 +22,18 @@ namespace P2PShare.Libs
                 return false;
             }
 
-            byte[] inviteBytes = Encoding.UTF8.GetBytes($"File: {fileInfo.Name} ({fileInfo.Length} bytes)\nDo you want to accept it? [y/n]: ");
+            byte[] fileBytes;
+
+            try
+            {
+                fileBytes = File.ReadAllBytes(fileInfo.FullName);
+            }
+            catch
+            {
+                return false;
+            }
+
+            byte[] inviteBytes = Encoding.UTF8.GetBytes($"File: {fileInfo.Name} ({fileInfo.Length} bytes)\nDo you want to accept it? [y/n]: #{fileBytes.Length}#");
             byte[] buffer = new byte[Encoding.UTF8.GetBytes("y").Length];
 
             try
@@ -47,18 +57,6 @@ namespace P2PShare.Libs
             string reply = Encoding.UTF8.GetString(buffer);
 
             if (reply == "n")
-            {
-                return false;
-            }
-
-            byte[] fileBytes;
-
-
-            try
-            {
-                fileBytes = File.ReadAllBytes(fileInfo.FullName);
-            }
-            catch
             {
                 return false;
             }
@@ -115,31 +113,40 @@ namespace P2PShare.Libs
                 return null;
             }
 
-            byte[] buffer = new byte[fileLength];
+            byte[] reply = Encoding.UTF8.GetBytes("y");
 
             try
             {
-                stream.Write(Encoding.UTF8.GetBytes("y"), 0, 3);
+                stream.Write(reply, 0, reply.Length);
             }
             catch
             {
                 return null;
             }
 
-            int bytesRead;
-
             try
             {
-                bytesRead = stream.Read(buffer, 0, fileLength);
+                FileStream fileStream = new FileStream(filePath, FileMode.Create);
+
+                while (stream.DataAvailable)
+                {
+                    byte[] buffer = new byte[1024];
+                    
+                    if (fileLength < 1024)
+                    {
+                        buffer = new byte[fileLength];
+                    }
+                    
+                    stream.Read(buffer, 0, buffer.Length);
+
+                    fileStream.Write(buffer, 0, buffer.Length);
+
+                    fileLength -= buffer.Length;
+                }
             }
             catch
             {
                 return null;
-            }
-
-            using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                fileStream.Write(buffer, 0, bytesRead);
             }
 
             return new FileInfo(filePath);

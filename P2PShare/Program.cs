@@ -69,7 +69,7 @@ namespace P2PShare
 
                 CLIFileTransport.Sharing(port, @interface);
             }
-            while (CLIHelp.GetBool("Would you like to send/receive any other file?: "));
+            while (CLIHelp.GetBool("Would you like to send/receive any other file? [y/n]: "));
 
             Console.WriteLine("Goodbye");
 
