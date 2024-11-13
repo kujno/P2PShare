@@ -13,77 +13,62 @@ namespace P2PShare.CLI
 {
     public class CLIConnection
     {
-        private static async Task<TcpClient> listenLoop(int port, NetworkInterface @interface)
+        public static async Task<TcpClient> GetClient(int? port, NetworkInterface @interface)
         {
+            IPAddress? ip;
+            TcpClient? client = null;
+            Task<TcpClient>? listenTask = null;
+
+            if (port is not null)
+            {
+                listenTask = ListenerConnection.ListenLoop((int)port, @interface);
+            }
+
+            if (port is null)
+            {
+                IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
+
+                if (ipLocal is not null)
+                {
+                    port = PortHandling.FindPort(ipLocal);
+                }
+            }
+
             while (true)
             {
-                TcpClient? client = await ListenerConnection.WaitForConnection(port, @interface);
-
-                if (client is null)
+                if (listenTask is not null && listenTask.IsCompleted)
                 {
-                    Console.WriteLine("A device failed to connect\n");
+                    Console.WriteLine("A foreign device has established connection with your device");
 
-                    continue;
+                    return listenTask.Result;
                 }
-
-                Console.WriteLine("Connection established\n");
-
-                return client;
-            }
-        }
-
-        public static Task<TcpClient> GetClient(int? port, NetworkInterface @interface)
-        {
-            return Task.Run(() =>
-            {
-                IPAddress? ip;
-                TcpClient? client = null;
-                Task<TcpClient>? listenTask = null;
 
                 if (port is not null)
                 {
-                    listenTask = listenLoop((int)port, @interface);
+                    Console.WriteLine("Press [Enter] key to chceck for any outer connection or ");
                 }
 
-                if (port is null)
+                ip = CLIHelp.GetIPv4Nullable("Insert the IP address of the device you want to connect to: ");
+
+                if (ip is null)
                 {
-                    IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
-
-                    if (ipLocal is not null)
-                    {
-                        port = PortHandling.FindPort(ipLocal);
-                    }
+                    continue;
                 }
 
-                while (true)
+                if (listenTask is null)
                 {
-                    if (listenTask is not null && listenTask.IsCompleted)
-                    {
-                        Console.WriteLine("A foreign device has established connection with your device");
+                    client = ClientConnection.Connect(ip, @interface, port);
 
-                        return listenTask.Result;
-                    }
-
-                    if (port is not null)
-                    {
-                        Console.WriteLine("Press [Enter] key to chceck for any outer connection or ");
-                    }
-
-                    ip = CLIHelp.GetIPv4("Insert the IP address of the device you want to connect to: ");
-
-                    if (listenTask is null)
-                    {
-                        client = ClientConnection.Connect(ip, @interface, port);
-                    }
-
-                    if (client is not null)
-                    {
-                        return client;
-                    }
-
-                    Console.WriteLine("Could not establish connection\n");
+                    Console.WriteLine("Established a connection");
                 }
-            });
+
+                if (client is not null)
+                {
+                    return client;
+                }
+
+                Console.WriteLine("Could not establish connection. Try again\n");
+            }
         }
     }
 }

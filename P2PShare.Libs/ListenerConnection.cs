@@ -40,5 +40,20 @@ namespace P2PShare.Libs
 
             return client;
         }
+
+        public static async Task<TcpClient> ListenLoop(int port, NetworkInterface @interface)
+        {
+            while (true)
+            {
+                TcpClient? client = await ListenerConnection.WaitForConnection(port, @interface);
+
+                if (client is null)
+                {
+                    continue;
+                }
+
+                return client;
+            }
+        }
     }
 }
