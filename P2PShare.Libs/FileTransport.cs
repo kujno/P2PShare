@@ -23,12 +23,8 @@ namespace P2PShare.Libs
                 return false;
             }
 
-            long fileLength = fileInfo.Length;
-            string fileName = fileInfo.Name;
-            string invite = $"File: {fileName} ({fileLength} bytes)\nDo you want to accept it? [y/n]: ";
-            byte[] inviteBytes = Encoding.UTF8.GetBytes(invite);
-            string reply;
-            byte[] buffer = new byte[3];
+            byte[] inviteBytes = Encoding.UTF8.GetBytes($"File: {fileInfo.Name} ({fileInfo.Length} bytes)\nDo you want to accept it? [y/n]: ");
+            byte[] buffer = new byte[Encoding.UTF8.GetBytes("y").Length];
 
             try
             {
@@ -41,13 +37,14 @@ namespace P2PShare.Libs
 
             try
             {
-                stream.Read(buffer, 0, 3);
+                stream.Read(buffer, 0, buffer.Length);
             }
             catch
             {
                 return false;
             }
-            reply = Encoding.UTF8.GetString(buffer);
+            
+            string reply = Encoding.UTF8.GetString(buffer);
 
             if (reply == "n")
             {
@@ -58,7 +55,7 @@ namespace P2PShare.Libs
 
             try
             {
-                stream.Read(buffer, 0, 3);
+                stream.Write(fileBytes, 0, fileBytes.Length);
             }
             catch
             {
