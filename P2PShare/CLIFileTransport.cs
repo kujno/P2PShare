@@ -59,20 +59,14 @@ namespace P2PShare.CLI
 
         public static void Sharing(int? port, NetworkInterface @interface)
         {
-            TcpClient? client = CLIConnection.GetClient(port, @interface).Result;
+            TcpClient client = CLIConnection.GetClient(port, @interface).Result;
             Task inviteLoop;
-
-            if (client is null)
-            {
-                return;
-            }
-
             bool sent;
 
-            switch (CLIHelp.GetBool("Would you like to send(y) or receive(n): "))
+            switch (CLIHelp.GetBool("Would you like to send[y] or receive[n]: "))
             {
                 case true:
-                    sent = FileTransport.SendFile(client, CLIHelp.GetFileInfo("Insert the file path to send the file or wait for a file transfer invite: "));
+                    sent = FileTransport.SendFile(client, CLIHelp.GetFileInfo("Insert the file path to send the file: "));
 
                     switch (sent)
                     {
