@@ -51,7 +51,17 @@ namespace P2PShare.Libs
                 return false;
             }
 
-            byte[] fileBytes = File.ReadAllBytes(fileInfo.FullName);
+            byte[] fileBytes;
+
+
+            try
+            {
+                fileBytes = File.ReadAllBytes(fileInfo.FullName);
+            }
+            catch
+            {
+                return false;
+            }
 
             try
             {
