@@ -18,6 +18,7 @@ namespace P2PShare.CLI
             IPAddress? ip;
             TcpClient? client = null;
             Task<TcpClient>? listenTask = null;
+            int? portOriginal = port;
 
             if (port is not null)
             {
@@ -43,7 +44,7 @@ namespace P2PShare.CLI
                     return listenTask.Result;
                 }
 
-                if (port is not null)
+                if (portOriginal is not null)
                 {
                     Console.WriteLine("Press [Enter] key to chceck for any outer connection or ");
                 }
@@ -57,9 +58,11 @@ namespace P2PShare.CLI
 
                 if (listenTask is null)
                 {
+                    Console.WriteLine($"Trying to connect on port: {port}");
+
                     client = ClientConnection.Connect(ip, @interface, port);
 
-                    Console.WriteLine("Established a connection");
+                    Console.WriteLine("Established a connection\n");
                 }
 
                 if (client is not null)
