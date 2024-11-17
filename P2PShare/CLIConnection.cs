@@ -56,7 +56,7 @@ namespace P2PShare.CLI
                     continue;
                 }
 
-                if (listenTask is null)
+                if ((listenTask is not null && !listenTask.IsCompleted) || listenTask is null)
                 {
                     Console.WriteLine($"Trying to connect on port: {port}");
 
