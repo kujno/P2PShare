@@ -140,7 +140,7 @@ namespace P2PShare.CLI
             {
                 output = new FileInfo(GetString(message));
             }
-            while (!output.Exists);
+            while (output.Directory is null || !output.Directory.Exists);
 
             return output;
         }
