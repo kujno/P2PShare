@@ -45,7 +45,7 @@ namespace P2PShare.Libs
         {
             while (true)
             {
-                TcpClient? client = await ListenerConnection.WaitForConnection(port, @interface);
+                TcpClient? client = await WaitForConnection(port, @interface);
 
                 if (client is null)
                 {
