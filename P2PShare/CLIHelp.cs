@@ -132,7 +132,7 @@ namespace P2PShare.CLI
             return input;
         }
 
-        public static FileInfo GetFileInfo(string message)
+        public static FileInfo GetExistingFileInfo(string message)
         {
             FileInfo output;
 
@@ -140,8 +140,21 @@ namespace P2PShare.CLI
             {
                 output = new FileInfo(GetString(message));
             }
-            while (output.Directory is null || !output.Directory.Exists);
+            while (!output.Exists);
 
+            return output;
+        }
+
+        public static FileInfo GetNewFileInfo(string message)
+        {
+            FileInfo output;
+            
+            do
+            {
+                output = new FileInfo(GetString(message));
+            }
+            while (output.Directory is null || !output.Directory.Exists);
+            
             return output;
         }
 

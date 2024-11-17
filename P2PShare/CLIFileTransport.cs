@@ -33,7 +33,7 @@ namespace P2PShare.CLI
 
                 int indexOfHashtag = invite.IndexOf('#') + 1;
                 int fileLength = int.Parse(invite.Substring(indexOfHashtag, invite.LastIndexOf('#') - indexOfHashtag));
-                string filePath = CLIHelp.GetFileInfo("Insert the file path where to save the file: ").FullName;
+                string filePath = CLIHelp.GetNewFileInfo("Insert the file path where to save the file: ").FullName;
                 FileInfo? fileInfo;
 
                 Console.Clear();
@@ -59,12 +59,13 @@ namespace P2PShare.CLI
         {
             TcpClient client = CLIConnection.GetClient(port, @interface).Result;
             bool sent;
-            FileInfo fileInfo = CLIHelp.GetFileInfo("Insert the file path to send the file: ");
 
 
             switch (CLIHelp.GetBool("Would you like to send[y] or receive[n]: "))
             {
                 case true:
+                    FileInfo fileInfo = CLIHelp.GetExistingFileInfo("Insert the file path to send the file: ");
+
                     sent = FileTransport.SendFile(client, fileInfo);
 
                     switch (sent)
@@ -83,6 +84,8 @@ namespace P2PShare.CLI
                     break;
 
                 case false:
+                    
+                    
                     Console.WriteLine("Waiting for file share invite...\n");
                     
                     receiveInviteLoop(client);
