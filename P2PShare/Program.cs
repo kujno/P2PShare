@@ -61,7 +61,7 @@ namespace P2PShare
 
             @interface = interfacesUp[(int)interfaceInt - 1];
 
-            port = CLIHelp.GetNullablePortInt("If you would like to wait for a connection / choose a custom port, type a port number\nIf not press [Enter] key\n\nType a port number: ", @interface);
+            port = CLIHelp.GetNullablePortInt("If you would like to wait for a connection type a port number\nIf not press [Enter] key\n\nType a port number: ", @interface);
 
             do
             {

@@ -13,26 +13,22 @@ namespace P2PShare.CLI
 {
     public class CLIConnection
     {
-        public static async Task<TcpClient> GetClient(int? port, NetworkInterface @interface)
+        public static async Task<TcpClient> GetClient(int? portListen, NetworkInterface @interface)
         {
             IPAddress? ip;
             TcpClient? client = null;
             Task<TcpClient>? listenTask = null;
-            int? portOriginal = port;
+            int portConnect = 0;
+            IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
 
-            if (port is not null)
+            if (portListen is not null)
             {
-                listenTask = ListenerConnection.ListenLoop((int)port, @interface);
+                listenTask = ListenerConnection.ListenLoop((int)portListen, @interface);
             }
 
-            if (port is null)
+            if (ipLocal is not null)
             {
-                IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
-
-                if (ipLocal is not null)
-                {
-                    port = PortHandling.FindPort(ipLocal);
-                }
+                portConnect = PortHandling.FindPort(ipLocal);
             }
 
             while (true)
@@ -44,7 +40,7 @@ namespace P2PShare.CLI
                     return listenTask.Result;
                 }
 
-                if (portOriginal is not null)
+                if (portListen is not null)
                 {
                     Console.WriteLine("Press [Enter] key to chceck for any outer connection or ");
                 }
@@ -58,9 +54,9 @@ namespace P2PShare.CLI
 
                 if ((listenTask is not null && !listenTask.IsCompleted) || listenTask is null)
                 {
-                    Console.WriteLine($"Trying to connect on port: {port}");
+                    Console.WriteLine($"Trying to connect on port: {portConnect}");
 
-                    client = ClientConnection.Connect(ip, @interface, port);
+                    client = ClientConnection.Connect(ip, @interface, portConnect);
                 }
 
                 if (client is not null)
