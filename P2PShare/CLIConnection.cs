@@ -61,12 +61,12 @@ namespace P2PShare.CLI
                     Console.WriteLine($"Trying to connect on port: {port}");
 
                     client = ClientConnection.Connect(ip, @interface, port);
-
-                    Console.WriteLine("Established a connection\n");
                 }
 
                 if (client is not null)
                 {
+                    Console.WriteLine("Established a connection\n");
+
                     return client;
                 }
 
