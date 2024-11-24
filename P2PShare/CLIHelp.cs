@@ -222,5 +222,11 @@ namespace P2PShare.CLI
                     return false;
             }
         }
+
+        public static void SetDesign()
+        {
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Title = "P2PShare";
+        }
     }
 }
