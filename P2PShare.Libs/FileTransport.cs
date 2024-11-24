@@ -33,7 +33,7 @@ namespace P2PShare.Libs
                 return false;
             }
 
-            byte[] inviteBytes = Encoding.UTF8.GetBytes($"File: {fileInfo.Name} ({fileInfo.Length} bytes)\nDo you want to accept it? [y/n]: #{fileBytes.Length}#");
+            byte[] inviteBytes = Encoding.UTF8.GetBytes($"File: {fileInfo.Name} ({fileInfo.Length} bytes)\nDo you want to accept it? [y/n]: ");
             byte[] buffer = new byte[Encoding.UTF8.GetBytes("y").Length];
 
             try
