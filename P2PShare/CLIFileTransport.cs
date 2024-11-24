@@ -22,7 +22,7 @@ namespace P2PShare.CLI
                     continue;
                 }
 
-                bool accepted = CLIHelp.GetBool(invite.Substring(0, invite.IndexOf('#')));
+                bool accepted = CLIHelp.GetBool(invite.Substring(0, invite.IndexOf("#")));
 
                 if (!accepted)
                 {
@@ -33,7 +33,7 @@ namespace P2PShare.CLI
 
                 int indexOfHashtag = invite.IndexOf('#') + 1;
                 int indexOfColon = invite.IndexOf(':') + 1;
-                int fileLength = int.Parse(invite.Substring(indexOfHashtag, invite.LastIndexOf('#') - indexOfHashtag));
+                int fileLength = int.Parse(invite.Substring(indexOfHashtag, invite.LastIndexOf("#") - indexOfHashtag));
                 string filePath = CLIHelp.GetDirectoryInfo("Insert the directory file path where to save the file: ").FullName + invite.Substring(indexOfColon, invite.IndexOf('(') - 1 - indexOfColon);
                 FileInfo? fileInfo;
 
