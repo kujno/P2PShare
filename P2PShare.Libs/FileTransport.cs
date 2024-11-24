@@ -134,7 +134,7 @@ namespace P2PShare.Libs
                     byte[] buffer = new byte[1024];
                     int bytesRead = stream.Read(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead));
 
-                    fileStream.Write(buffer, 0, buffer.Length);
+                    fileStream.Write(buffer, 0, bytesRead);
 
                     totalBytesRead += bytesRead;
                 }
