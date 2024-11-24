@@ -127,21 +127,16 @@ namespace P2PShare.Libs
             try
             {
                 FileStream fileStream = new FileStream(filePath, FileMode.Create);
+                int totalBytesRead = 0;
 
-                while (stream.DataAvailable)
+                while (totalBytesRead < fileLength)
                 {
                     byte[] buffer = new byte[1024];
-                    
-                    if (fileLength < 1024)
-                    {
-                        buffer = new byte[fileLength];
-                    }
-                    
-                    stream.Read(buffer, 0, buffer.Length);
+                    int bytesRead = stream.Read(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead));
 
                     fileStream.Write(buffer, 0, buffer.Length);
 
-                    fileLength -= buffer.Length;
+                    totalBytesRead += bytesRead;
                 }
             }
             catch
