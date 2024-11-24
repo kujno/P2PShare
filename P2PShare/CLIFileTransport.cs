@@ -60,11 +60,16 @@ namespace P2PShare.CLI
             }
         }
 
-        public static void Sharing(int? port, NetworkInterface @interface)
+        public static void Sharing(NetworkInterface @interface)
         {
-            TcpClient client = CLIConnection.GetClient(port, @interface).Result;
+            int? port;
+            TcpClient client;
             bool sent;
 
+            port = CLIHelp.GetNullablePortInt("If you would like to wait for a connection type a port number\nIf not press [Enter] key\n\nType a port number: ", @interface);
+            Console.WriteLine();
+
+            client = CLIConnection.GetClient(port, @interface).Result;
 
             switch (CLIHelp.GetBool("Would you like to send[y] or receive[n]: "))
             {

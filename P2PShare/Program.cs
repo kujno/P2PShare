@@ -14,7 +14,6 @@ namespace P2PShare
             Console.Title = "P2PShare";
 
             NetworkInterface @interface;
-            int? port;
             int? interfaceInt;
             List<NetworkInterface> interfacesUp;
 
@@ -61,13 +60,9 @@ namespace P2PShare
 
             @interface = interfacesUp[(int)interfaceInt - 1];
 
-            port = CLIHelp.GetNullablePortInt("If you would like to wait for a connection type a port number\nIf not press [Enter] key\n\nType a port number: ", @interface);
-
             do
             {
-                Console.WriteLine();
-
-                CLIFileTransport.Sharing(port, @interface);
+                CLIFileTransport.Sharing(@interface);
             }
             while (CLIHelp.GetBool("Would you like to send/receive any other file? [y/n]: "));
 
