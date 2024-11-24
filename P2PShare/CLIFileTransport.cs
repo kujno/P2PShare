@@ -24,6 +24,8 @@ namespace P2PShare.CLI
 
                 bool accepted = CLIHelp.GetBool(invite);
 
+                FileTransport.Reply(client, accepted);
+
                 if (!accepted)
                 {
                     Console.WriteLine("The file was not accepted\n");

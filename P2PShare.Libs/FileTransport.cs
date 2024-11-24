@@ -113,17 +113,6 @@ namespace P2PShare.Libs
                 return null;
             }
 
-            byte[] reply = Encoding.UTF8.GetBytes("y");
-
-            try
-            {
-                stream.Write(reply, 0, reply.Length);
-            }
-            catch
-            {
-                return null;
-            }
-
             try
             {
                 FileStream fileStream = new FileStream(filePath, FileMode.Create);
@@ -145,6 +134,46 @@ namespace P2PShare.Libs
             }
 
             return new FileInfo(filePath);
+        }
+
+        public static void Reply(TcpClient client, bool accepted)
+        {
+            NetworkStream stream;
+
+
+            try
+            {
+                stream = client.GetStream();
+            }
+            catch
+            {
+                return;
+            }
+
+            string reply;
+
+            switch (accepted)
+            {
+                case true:
+                    reply = "y";
+
+                    break;
+                case false:
+                    reply = "n";
+                    
+                    break;
+            }
+            
+            byte[] replyBytes = Encoding.UTF8.GetBytes(reply);
+
+            try
+            {
+                stream.Write(replyBytes, 0, replyBytes.Length);
+            }
+            catch
+            {
+                return;
+            }
         }
     }
 }
