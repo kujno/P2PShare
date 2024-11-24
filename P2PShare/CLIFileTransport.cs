@@ -53,6 +53,8 @@ namespace P2PShare.CLI
                 Console.WriteLine($"The file {fileInfo.Name} was received successfully\n");
 
                 CLIHelp.PrintFileInfo(fileInfo);
+
+                return;
             }
         }
 
