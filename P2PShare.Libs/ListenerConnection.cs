@@ -55,5 +55,17 @@ namespace P2PShare.Libs
                 return client;
             }
         }
+
+        public static void GetRidOfListener(ref TcpListener listener)
+        {
+            listener.Stop();
+            listener.Server.Dispose();
+        }
+
+        public static void StartTestOfListener(TcpListener listener)
+        {
+            listener.Start();
+            listener.Stop();
+        }
     }
 }

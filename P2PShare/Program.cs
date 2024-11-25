@@ -12,38 +12,9 @@ namespace P2PShare
         {
             CLIHelp.SetDesign();
 
-            NetworkInterface @interface;
-            int? interfaceInt;
-            List<NetworkInterface> interfacesUp;
+            CLIFileTransport.SharingLoop();
 
-            do
-            {
-                Console.Clear();
-
-                interfacesUp = InterfaceHandling.GetUpInterfaces();
-
-                Console.WriteLine("Welcome to P2PShare software\n");
-
-                Console.WriteLine("Up network interfaces:\n----------------------");
-                for (int j = 0; j < interfacesUp.Count; j++)
-                {
-                    Console.WriteLine($"{j + 1} - {interfacesUp[j].Name} ({interfacesUp[j].NetworkInterfaceType})");
-                }
-                interfaceInt = CLIHelp.GetNullableInt("\nChoose a network interface / press [Enter] key to refresh: ", 1, interfacesUp.Count);
-
-                Console.WriteLine();
-            }
-            while (interfaceInt is null);
-
-            @interface = interfacesUp[(int)interfaceInt - 1];
-
-            do
-            {
-                CLIFileTransport.Sharing(@interface);
-            }
-            while (CLIHelp.GetBool("Would you like to send/receive any other file? [y/n]: "));
-
-            Console.WriteLine("Goodbye");
+            CLIHelp.Goodbye();
 
             Console.ReadKey();
         }

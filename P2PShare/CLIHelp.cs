@@ -163,21 +163,7 @@ namespace P2PShare.CLI
             Console.WriteLine($"File informations:\n-------------------\nFile path: {fileInfo.FullName}\nSize: {fileInfo.Length}\n");
         }
 
-        public static IPAddress GetIPv4(string message)
-        {
-            string input;
-            IPAddress? output;
-
-            do
-            {
-                input = GetString(message);
-            }
-            while (!IPAddress.TryParse(input, out output));
-
-            return output;
-        }
-
-        public static IPAddress? GetIPv4Nullable(string message)
+        public static IPAddress? GetIPv4(string message, bool nullable)
         {
             IPAddress? output;
             string? input;
@@ -193,9 +179,18 @@ namespace P2PShare.CLI
                     input = input.Trim();
                 }
 
-                if (String.IsNullOrEmpty(input))
+                if (!String.IsNullOrEmpty(input))
                 {
-                    return null;
+                    continue;
+                }
+
+                switch (nullable)
+                {
+                    case true:
+                        return null;
+                        
+                    case false:
+                        continue;
                 }
             }
             while (!IPAddress.TryParse(input, out output));
@@ -227,6 +222,16 @@ namespace P2PShare.CLI
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.Title = "P2PShare";
+        }
+
+        public static void Goodbye()
+        {
+            Console.WriteLine("Goodbye");
+        }
+
+        public static void Hello()
+        {
+            Console.WriteLine("Welcome to P2PShare software\n");
         }
     }
 }

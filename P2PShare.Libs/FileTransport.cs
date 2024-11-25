@@ -33,7 +33,7 @@ namespace P2PShare.Libs
                 return false;
             }
 
-            byte[] inviteBytes = Encoding.UTF8.GetBytes($"File: {fileInfo.Name} ({fileInfo.Length} bytes)\nDo you want to accept it? [y/n]: ");
+            byte[] inviteBytes = createInvite(fileInfo);
             byte[] buffer = new byte[Encoding.UTF8.GetBytes("y").Length];
 
             try
@@ -102,11 +102,11 @@ namespace P2PShare.Libs
 
         public static FileInfo? ReceiveFile(TcpClient client, int fileLength, string filePath)
         {
-            NetworkStream stream;
+            NetworkStream networkStream;
 
             try
             {
-                stream = client.GetStream();
+                networkStream = client.GetStream();
             }
             catch
             {
@@ -115,21 +115,7 @@ namespace P2PShare.Libs
 
             try
             {
-                using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    int totalBytesRead = 0;
-
-                    while (totalBytesRead < fileLength)
-                    {
-                        byte[] buffer = new byte[1024];
-                        int bytesRead = stream.Read(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead));
-
-                        fileStream.Write(buffer, 0, bytesRead);
-
-                        totalBytesRead += bytesRead;
-                    }
-                }
-                
+                FileHandling.CreateFile(networkStream, filePath, fileLength);
             }
             catch
             {
@@ -177,6 +163,11 @@ namespace P2PShare.Libs
             {
                 return;
             }
+        }
+
+        private static byte[] createInvite(FileInfo fileInfo)
+        {
+            return Encoding.UTF8.GetBytes($"File: {fileInfo.Name} ({fileInfo.Length} bytes)\nDo you want to accept it? [y/n]: ");
         }
     }
 }

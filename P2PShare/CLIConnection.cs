@@ -33,40 +33,51 @@ namespace P2PShare.CLI
 
             while (true)
             {
-                if (listenTask is not null && listenTask.IsCompleted)
-                {
-                    Console.WriteLine("A foreign device has established connection with your device");
+                string getIPMessage = "Insert the IP address of the device you want to connect to: ";
+                bool nullable;
 
-                    return listenTask.Result;
+                switch (portListen)
+                {
+                    case null:
+                        nullable = false;
+
+                        break;
+
+                    default:
+                        Console.WriteLine("Press [Enter] key to chceck for any outer connection or ");
+                        
+                        nullable = true;
+
+                        break;
                 }
 
-                if (portListen is not null)
-                {
-                    Console.WriteLine("Press [Enter] key to chceck for any outer connection or ");
-                }
-
-                ip = CLIHelp.GetIPv4Nullable("Insert the IP address of the device you want to connect to: ");
+                ip = CLIHelp.GetIPv4(getIPMessage, nullable);
 
                 if (ip is null)
                 {
+                    if (listenTask is not null && listenTask.IsCompleted)
+                    {
+                        Console.WriteLine("A foreign device has established connection with your device");
+
+                        return listenTask.Result;
+                    }
+
                     continue;
                 }
 
                 if ((listenTask is not null && !listenTask.IsCompleted) || listenTask is null)
                 {
-                    Console.WriteLine($"Trying to connect on port: {portConnect}");
-
                     client = ClientConnection.Connect(ip, @interface, portConnect);
                 }
 
                 if (client is not null)
                 {
-                    Console.WriteLine("Established a connection\n");
+                    Console.WriteLine("A connection has been established\n");
 
                     return client;
                 }
 
-                Console.WriteLine("Could not establish connection. Try again\n");
+                Console.WriteLine("Could not establish a connection. Try again\n");
             }
         }
     }

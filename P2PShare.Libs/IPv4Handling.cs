@@ -12,7 +12,6 @@ namespace P2PShare.Libs
 {
     public class IPv4Handling
     {
-        // https://stackoverflow.com/questions/6803073/get-local-ip-address
         public static IPAddress? GetLocalIPv4(NetworkInterface @interface)
         {
             IPAddress? output = null;

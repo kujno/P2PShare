@@ -103,5 +103,18 @@ namespace P2PShare.CLI
                     break;
             }
         }
+
+        public static void SharingLoop()
+        {
+            int i = 0;
+
+            do
+            {
+                Sharing(CLIInterfaceHandling.GetInterface(i));
+
+                i++;
+            }
+            while (CLIHelp.GetBool("Would you like to send/receive any other file? [y/n]: "));
+        }
     }
 }
