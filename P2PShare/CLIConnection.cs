@@ -1,13 +1,8 @@
 ﻿using P2PShare.Libs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Sources;
+
 
 namespace P2PShare.CLI
 {
@@ -67,7 +62,7 @@ namespace P2PShare.CLI
 
                 if ((listenTask is not null && !listenTask.IsCompleted) || listenTask is null)
                 {
-                    client = ClientConnection.Connect(ip, @interface, portConnect);
+                    client = ClientConnection.Connect(ip, @interface, portConnect).Result;
                 }
 
                 if (client is not null)
