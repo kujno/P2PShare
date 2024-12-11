@@ -20,30 +20,20 @@ namespace P2PShare.Libs
 
             try
             {
-                await ConnectOrExpire(client, ip, port);
+                await Task.WhenAny(client.ConnectAsync(ip, port), Task.Delay(30000));
 
                 if (client.Connected)
                 {
                     return client;
                 }
-
-                client.Dispose();
-
-                return null;
             }
             catch
             {
-                client.Dispose();
-
-                return null;
             }
-        }
 
-        private static async Task ConnectOrExpire(TcpClient client, IPAddress ip, int port)
-        {
-            await Task.WhenAny(client.ConnectAsync(ip, port), Task.Delay(30000));
+            client.Dispose();
 
-            // treba dokoncit ukoncenie pripajania
+            return null;
         }
     }
 }
