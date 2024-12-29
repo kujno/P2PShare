@@ -28,7 +28,6 @@ namespace P2PShare.CLI
 
             while (true)
             {
-                string getIPMessage = "Insert the IP address of the device you want to connect to: ";
                 bool nullable;
 
                 switch (portListen)
@@ -46,7 +45,7 @@ namespace P2PShare.CLI
                         break;
                 }
 
-                ip = CLIHelp.GetIPv4(getIPMessage, nullable);
+                ip = CLIHelp.GetIPv4("Insert the IP address of the device you want to connect to: ", nullable);
 
                 if (ip is null)
                 {
@@ -62,6 +61,7 @@ namespace P2PShare.CLI
 
                 if ((listenTask is not null && !listenTask.IsCompleted) || listenTask is null)
                 {
+                    Console.WriteLine($"Trying to connect on port {portConnect}...\n");
                     client = ClientConnection.Connect(ip, @interface, portConnect).Result;
                 }
 
