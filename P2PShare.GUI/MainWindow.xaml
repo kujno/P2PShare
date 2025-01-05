@@ -15,12 +15,16 @@
             <Setter Property="Background" Value="#292929"/>
             <Setter Property="Foreground" Value="#c2c2c2"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily" Value="Arial"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#c2c2c2"/>
                     <Setter Property="Foreground" Value="#292929"/>
                 </Trigger>
             </Style.Triggers>
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Arial"/>
         </Style>
     </Window.Resources>
 
@@ -33,12 +37,15 @@
         <Grid Grid.Row="0" MouseDown="ToolBar_MouseDown" Background="#333333">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0px, 3px, 3px, 3px">
-                <Button x:Name="Minimize" Content="_" Width="32px" Height="Auto" Click="Minimize_Click"/>
-                <Button x:Name="Close" Content="X" Width="32px" Height="Auto" Click="Close_Click" Margin="3px, 0px, 0px, 0px"/>
+            <TextBlock Grid.Column="1" Text="P2PShare" Foreground="#c2c2c2" HorizontalAlignment="Center" FontSize="20px" FontFamily="Arial Black"/>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0px, 3px, 3px, 3px">
+                <Button x:Name="Minimize" Content="_" Width="32px" Height="Auto" Click="Minimize_Click" FontSize="12px" FontWeight="UltraBlack"/>
+                <Button x:Name="Close" Content="X" Width="32px" Height="Auto" Click="Close_Click" Margin="3px, 0px, 0px, 0px" FontSize="12px" FontWeight="Black"/>
             </StackPanel>
         </Grid>
     </Grid>
