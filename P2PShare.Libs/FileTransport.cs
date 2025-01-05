@@ -18,17 +18,6 @@ namespace P2PShare.Libs
                 return false;
             }
 
-            byte[] fileBytes;
-
-            try
-            {
-                fileBytes = File.ReadAllBytes(fileInfo.FullName);
-            }
-            catch
-            {
-                return false;
-            }
-
             byte[] inviteBytes = createInvite(fileInfo);
             byte[] buffer = new byte[Encoding.UTF8.GetBytes("y").Length];
 
@@ -59,7 +48,14 @@ namespace P2PShare.Libs
 
             try
             {
-                stream.Write(fileBytes, 0, fileBytes.Length);
+                int bytesRead;
+                byte[] buffer2 = new byte[8192];
+                using FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read);
+                
+                while ((bytesRead = fileStream.Read(buffer2, 0, buffer2.Length)) > 0)
+                {
+                    stream.Write(buffer2, 0, bytesRead);
+                }
             }
             catch
             {

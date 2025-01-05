@@ -12,7 +12,7 @@ namespace P2PShare.Libs
 
                 while (totalBytesRead < fileLength)
                 {
-                    byte[] buffer = new byte[1024];
+                    byte[] buffer = new byte[8192];
                     int bytesRead = networkStream.Read(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead));
 
                     fileStream.Write(buffer, 0, bytesRead);
