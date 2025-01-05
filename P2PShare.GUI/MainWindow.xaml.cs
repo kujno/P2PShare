@@ -1,4 +1,5 @@
-﻿using System.Net.NetworkInformation;
+﻿using System.Net;
+using System.Net.NetworkInformation;
 using System.Windows;
 using System.Windows.Input;
 using P2PShare.GUI.Utils;
@@ -12,6 +13,7 @@ namespace P2PShare.GUI
     public partial class MainWindow : Window
     {
         protected NetworkInterface? @interface;
+        protected IPAddress? localIP;
         
         public MainWindow()
         {
@@ -44,6 +46,11 @@ namespace P2PShare.GUI
 
         private void Interface_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
+            if (Interface.SelectedItem is null)
+            {
+                return;
+            }
+
             foreach (NetworkInterface @interface2 in InterfaceHandling.GetUpInterfaces())
             {
                 if (@interface2.Name == Interface.SelectedItem.ToString())
@@ -53,6 +60,20 @@ namespace P2PShare.GUI
                     break;
                 }
             }
+
+            if (@interface is null)
+            {
+                return;
+            }
+
+            localIP = IPv4Handling.GetLocalIPv4(@interface);
+
+            if (localIP is null)
+            {
+                return;
+            }
+
+            YourIP.Text = $"Your IP address: {localIP}";
         }
     }
 }

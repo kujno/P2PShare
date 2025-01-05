@@ -25,6 +25,7 @@
         </Style>
         <Style TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="Foreground" Value="#c2c2c2"/>
         </Style>
         <Style TargetType="ComboBox">
             <Setter Property="FontFamily" Value="Arial"/>
@@ -47,7 +48,7 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Column="1" Text="P2PShare" Foreground="#c2c2c2" HorizontalAlignment="Center" FontSize="20px" FontFamily="Arial Black"/>
+            <TextBlock Grid.Column="1" Text="P2PShare" HorizontalAlignment="Center" FontSize="20px" FontFamily="Arial Black"/>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0px, 3px, 3px, 3px">
                 <Button x:Name="Minimize" Content="_" Width="32px" Height="Auto" Click="Minimize_Click" FontSize="12px" FontWeight="UltraBlack"/>
@@ -58,15 +59,18 @@
         <Grid Grid.Row="1" Margin="10px">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="159*"/>
-                <ColumnDefinition Width="61*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <StackPanel Orientation="Vertical" Grid.Column="0">
-                <GroupBox Header="Interface:" Foreground="#c2c2c2" BorderThickness="0px" VerticalAlignment="Top">
+                <GroupBox Header="Interface:" Foreground="#c2c2c2" BorderThickness="0px" VerticalAlignment="Top" FontFamily="Arial">
                     <ComboBox x:Name="Interface" SelectionChanged="Interface_SelectionChanged"/>
                 </GroupBox>
                 <Button x:Name="refresh" Grid.Column="0" Height="24px" Width="80px" Margin="0, 4px, 0, 0" Click="refresh_Click">Refresh</Button>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Vertical">
+                <TextBlock x:Name="YourIP" Text="Your IP address:" HorizontalAlignment="Center" FontSize="20" FontWeight="Medium"/>
             </StackPanel>
         </Grid>
     </Grid>
