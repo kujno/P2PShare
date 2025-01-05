@@ -23,6 +23,8 @@ namespace P2PShare.CLI
 
             if (ipLocal is not null)
             {
+                Console.WriteLine($"Your IP address: {ipLocal}\n");
+                
                 portConnect = PortHandling.FindPort(ipLocal);
             }
 
