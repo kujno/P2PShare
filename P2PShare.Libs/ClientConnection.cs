@@ -30,6 +30,8 @@ namespace P2PShare.Libs
                 if (client.Connected)
                 {
                     OnConnected(client);
+
+                    return;
                 }
             }
             catch
@@ -39,8 +41,6 @@ namespace P2PShare.Libs
             client.Dispose();
 
             OnDisconnected();
-
-            return;
         }
 
         public static void OnConnected(TcpClient client)
