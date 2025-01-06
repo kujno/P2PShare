@@ -132,7 +132,7 @@ namespace P2PShare.GUI
             Elements.Disconnected(State, Interface);
         }
 
-        private async Task Connect_Click(object sender, RoutedEventArgs e)
+        private async void Connect_Click(object sender, RoutedEventArgs e)
         {
             IPAddress? remoteIP;
 

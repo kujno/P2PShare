@@ -12,13 +12,14 @@ namespace P2PShare.CLI
         {
             IPAddress? ip;
             TcpClient? client = null;
-            Task<TcpClient>? listenTask = null;
+            Task listenTask = null;
             int portConnect = 0;
             IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
+            CancellationTokenSource cts = new CancellationTokenSource();
 
             if (portListen is not null)
             {
-                listenTask = ListenerConnection.ListenLoop((int)portListen, @interface);
+                listenTask = ListenerConnection.ListenLoop((int)portListen, @interface, cts.Token);
             }
 
             if (ipLocal is not null)
@@ -54,8 +55,6 @@ namespace P2PShare.CLI
                     if (listenTask is not null && listenTask.IsCompleted)
                     {
                         Console.WriteLine("A foreign device has established connection with your device");
-
-                        return listenTask.Result;
                     }
 
                     continue;
@@ -64,7 +63,7 @@ namespace P2PShare.CLI
                 if ((listenTask is not null && !listenTask.IsCompleted) || listenTask is null)
                 {
                     Console.WriteLine($"Trying to connect on port {portConnect}...\n");
-                    client = ClientConnection.Connect(ip, @interface, portConnect).Result;
+                    ClientConnection.Connect(ip, @interface, portConnect);
                 }
 
                 if (client is not null)
