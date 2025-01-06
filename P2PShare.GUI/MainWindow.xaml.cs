@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Windows;
 using System.Windows.Input;
 using P2PShare.GUI.Utils;
@@ -14,11 +15,21 @@ namespace P2PShare.GUI
     {
         protected NetworkInterface? @interface;
         protected IPAddress? localIP;
-        
+        protected Task? listen;
+        protected Task? monitorConnection;
+        protected Task? connecting;
+        protected int portListen;
+        protected int portConnect;
+        protected CustomMessageBox messageBox = new CustomMessageBox();
+        protected TcpClient? client;
+        protected CancellationTokenSource? listenCancel;
+
         public MainWindow()
         {
             InitializeComponent();
             Elements.RefreshInterfaces(Interface);
+            ClientConnection.Connected += OnConnected;
+            ClientConnection.Disconnected += OnDisconnected;
         }
 
         private void Minimize_Click(object sender, RoutedEventArgs e)
@@ -29,6 +40,7 @@ namespace P2PShare.GUI
         private void Close_Click(object sender, RoutedEventArgs e)
         {
             Close();
+            messageBox.Close();
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -39,7 +51,7 @@ namespace P2PShare.GUI
             }
         }
 
-        private void refresh_Click(object sender, RoutedEventArgs e)
+        private void Refresh_Click(object sender, RoutedEventArgs e)
         {
             Elements.RefreshInterfaces(Interface);
         }
@@ -48,6 +60,8 @@ namespace P2PShare.GUI
         {
             if (Interface.SelectedItem is null)
             {
+                YourIP.Text = "Your IP address:";
+
                 return;
             }
 
@@ -74,6 +88,73 @@ namespace P2PShare.GUI
             }
 
             YourIP.Text = $"Your IP address: {localIP}";
+        }
+
+        private void Listen_Click(object sender, RoutedEventArgs e)
+        {
+            bool parsed = int.TryParse(Port.Text.Trim(), out portListen);
+
+            if (!parsed || @interface is null)
+            {
+                Elements.ShowDialog("Select an interface & enter a valid port number", messageBox);
+
+                return;
+            }
+
+            listenCancel = new CancellationTokenSource();
+
+            listen = ListenerConnection.ListenLoop(portListen, @interface, listenCancel.Token);
+
+            State.Text = $"Listening on port {portListen}";
+            State.Foreground = System.Windows.Media.Brushes.Yellow;
+        }
+
+        private void OnConnected(object? sender, TcpClient client2)
+        {
+            IPEndPoint? ipEndPoint;
+            
+            client = client2;
+
+            ipEndPoint = (IPEndPoint?)client.Client.RemoteEndPoint;
+
+            if (ipEndPoint is null)
+            {
+                return;
+            }
+
+            Elements.Connected(State, ipEndPoint.Address);
+
+            monitorConnection = GUIConnection.MonitorClientConnection(client2, State, Interface);
+        }
+
+        private void OnDisconnected(object? sender, EventArgs e)
+        {
+            Elements.Disconnected(State, Interface);
+        }
+
+        private async Task Connect_Click(object sender, RoutedEventArgs e)
+        {
+            IPAddress? remoteIP;
+
+            if (listenCancel is not null)
+            {
+                listenCancel.Cancel();
+                listenCancel.Dispose();
+            }
+
+            if (@interface is null || localIP is null || !IPAddress.TryParse(RemoteIP.Text.Trim(), out remoteIP))
+            {
+                Elements.ShowDialog("Select an interface & enter a valid IP address", messageBox);
+
+                return;
+            }
+            
+            portConnect = PortHandling.FindPort(localIP);
+
+            connecting = ClientConnection.Connect(remoteIP, @interface, portConnect);
+
+            State.Text = $"Connecting on port {portConnect}";
+            State.Foreground = System.Windows.Media.Brushes.Yellow;
         }
     }
 }

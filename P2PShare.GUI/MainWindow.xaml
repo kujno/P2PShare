@@ -8,7 +8,8 @@
         Title="P2PShare" Height="450" Width="800"
         Background="#333333"
         WindowStyle="None"
-        ResizeMode="CanMinimize">
+        ResizeMode="CanMinimize"
+        BorderThickness="1px">
 
     <Window.Resources>
         <Style TargetType="Button">
@@ -33,6 +34,15 @@
             <Setter Property="Height" Value="20px"/>
             <Setter Property="Margin" Value="0, 5px, 0, 0"/>
         </Style>
+        <Style TargetType="GroupBox">
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="Foreground" Value="#c2c2c2"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="FontSize" Value="18px"/>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -48,6 +58,11 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBlock Text="State:" VerticalAlignment="Center" Margin="5px, 0, 0, 0"/>
+                <TextBlock x:Name="State" Text="Disconnected" VerticalAlignment="Center" Margin="5px, 0, 0, 0" Foreground="Red"/>
+            </StackPanel>
+            
             <TextBlock Grid.Column="1" Text="P2PShare" HorizontalAlignment="Center" FontSize="20px" FontFamily="Arial Black"/>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0px, 3px, 3px, 3px">
@@ -66,11 +81,23 @@
                 <GroupBox Header="Interface:" Foreground="#c2c2c2" BorderThickness="0px" VerticalAlignment="Top" FontFamily="Arial">
                     <ComboBox x:Name="Interface" SelectionChanged="Interface_SelectionChanged"/>
                 </GroupBox>
-                <Button x:Name="refresh" Grid.Column="0" Height="24px" Width="80px" Margin="0, 4px, 0, 0" Click="refresh_Click">Refresh</Button>
+                <Button x:Name="Refresh" Grid.Column="0" Height="24px" Width="80px" Margin="0, 4px, 0, 0" Click="Refresh_Click">Refresh</Button>
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Vertical">
                 <TextBlock x:Name="YourIP" Text="Your IP address:" HorizontalAlignment="Center" FontSize="20" FontWeight="Medium"/>
+                <StackPanel Orientation="Horizontal" Margin="0, 20px, 0, 0" HorizontalAlignment="Center">
+                    <GroupBox Header="Listening port:" Width="100">
+                        <TextBox x:Name="Port" Width="80" Margin="0, 5px, 0, 0"/>
+                    </GroupBox>
+                    <Button x:Name="Listen" Content="Listen" Height="22px" Width="60px" VerticalAlignment="Center" Margin="0, 0, 0, -13" Click="Listen_Click"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Column="1">
+                    <GroupBox Header="Remote IP address:" Width="160">
+                        <TextBox x:Name="RemoteIP" Width="160" Margin="0, 5px, 0, 0"/>
+                    </GroupBox>
+                    <Button x:Name="Connect" Content="Connect" Height="22px" Width="60px" VerticalAlignment="Center" Margin="0, 0, 0, -13" Click="Connect_Click"/>
+                </StackPanel>
             </StackPanel>
         </Grid>
     </Grid>

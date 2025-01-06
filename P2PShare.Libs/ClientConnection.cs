@@ -6,7 +6,10 @@ namespace P2PShare.Libs
 {
     public class ClientConnection
     {
-        public static async Task<TcpClient?> Connect(IPAddress ip, NetworkInterface @interface, int port)
+        public static event EventHandler<TcpClient>? Connected;
+        public static event EventHandler? Disconnected;
+
+        public static async Task Connect(IPAddress ip, NetworkInterface @interface, int port)
         {
             IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
             TcpClient? client = new TcpClient();
@@ -15,7 +18,9 @@ namespace P2PShare.Libs
             {
                 client.Dispose();
 
-                return null;
+                OnDisconnected();
+
+                return;
             }
 
             try
@@ -24,7 +29,7 @@ namespace P2PShare.Libs
 
                 if (client.Connected)
                 {
-                    return client;
+                    OnConnected(client);
                 }
             }
             catch
@@ -33,7 +38,19 @@ namespace P2PShare.Libs
 
             client.Dispose();
 
-            return null;
+            OnDisconnected();
+
+            return;
+        }
+
+        public static void OnConnected(TcpClient client)
+        {
+            Connected?.Invoke(null, client);
+        }
+
+        public static void OnDisconnected()
+        {
+            Disconnected?.Invoke(null, EventArgs.Empty);
         }
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,6 +22,27 @@ namespace P2PShare.GUI.Utils
             {
                 @interface.Items.Add(@interface2.Name);
             }
+        }
+
+        public static void Disconnected(TextBlock State, ComboBox @interface)
+        {
+            State.Text = "Disconnected";
+            State.Foreground = System.Windows.Media.Brushes.Red;
+
+            RefreshInterfaces(@interface);
+        }
+
+        public static void Connected(TextBlock State, IPAddress ip)
+        {
+            State.Text = $"Connected to {ip}";
+            State.Foreground = System.Windows.Media.Brushes.Green;
+        }
+
+        public static void ShowDialog(string message, CustomMessageBox messageBox)
+        {
+            messageBox.Text.Text = message;
+            
+            messageBox.ShowDialog();
         }
     }
 }
