@@ -21,10 +21,7 @@ namespace P2PShare.Libs
             try
             {
                 listener.Start();
-                using (cancellationToken.Register(() => listener.Stop()))
-                {
-                    client = await listener.AcceptTcpClientAsync();
-                }
+                client = await listener.AcceptTcpClientAsync(cancellationToken);
             }
             catch (OperationCanceledException)
             {
@@ -53,6 +50,8 @@ namespace P2PShare.Libs
 
                 return;
             }
+
+            ClientConnection.OnDisconnected();
         }
 
         public static void GetRidOfListener(ref TcpListener listener)
