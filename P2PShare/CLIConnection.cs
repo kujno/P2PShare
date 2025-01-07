@@ -62,8 +62,10 @@ namespace P2PShare.CLI
 
                 if ((listenTask is not null && !listenTask.IsCompleted) || listenTask is null)
                 {
+                    CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
                     Console.WriteLine($"Trying to connect on port {portConnect}...\n");
-                    ClientConnection.Connect(ip, @interface, portConnect);
+                    ClientConnection.Connect(ip, @interface, portConnect, cancellationTokenSource.Token);
                 }
 
                 if (client is not null)

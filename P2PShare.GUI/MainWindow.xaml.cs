@@ -225,7 +225,15 @@ namespace P2PShare.GUI
                 return;
             }
 
-            await FileTransport.ReceiveFile(client, FileTransport.GetFileLenghtFromInvite(invite), path);
+            FileInfo? file = await FileTransport.ReceiveFile(client, FileTransport.GetFileLenghtFromInvite(invite), path);
+
+            if (file is null)
+            {
+                Elements.FileTransferEndDialog(messageBox, false);
+                return;
+            }
+
+            Elements.ShowDialog($"The file has been saved to:\n{file.FullName}", messageBox);
         }
 
         private void onFileBeingReceived(object? sender, EventArgs e)

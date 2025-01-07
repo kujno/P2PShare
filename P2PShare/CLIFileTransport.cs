@@ -6,11 +6,13 @@ namespace P2PShare.CLI
 {
     public class CLIFileTransport
     {
-        private static void receiveInviteLoop(TcpClient client)
+        private static async void receiveInviteLoop(TcpClient client)
         {
             while (true)
             {
-                string? invite = FileTransport.ReceiveInvite(client).Result;
+                string? invite = null;
+                
+                FileTransport.ReceiveInvite(client);
 
                 if (invite is null)
                 {
@@ -37,7 +39,7 @@ namespace P2PShare.CLI
                 Console.Clear();
                 Console.WriteLine("The file will be received in a while...");
 
-                fileInfo = FileTransport.ReceiveFile(client, fileLength, filePath);
+                fileInfo = await FileTransport.ReceiveFile(client, fileLength, filePath);
 
                 if (fileInfo is null)
                 {
@@ -55,7 +57,7 @@ namespace P2PShare.CLI
             }
         }
 
-        public static void Sharing(NetworkInterface @interface)
+        public static async void Sharing(NetworkInterface @interface)
         {
             int? port;
             TcpClient client;
@@ -71,7 +73,7 @@ namespace P2PShare.CLI
                 case true:
                     FileInfo fileInfo = CLIHelp.GetFileInfo("Insert the file path to send the file: ");
 
-                    sent = FileTransport.SendFile(client, fileInfo);
+                    sent = await FileTransport.SendFile(client, fileInfo);
 
                     switch (sent)
                     {
