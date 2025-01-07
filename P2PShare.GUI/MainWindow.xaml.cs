@@ -29,6 +29,7 @@ namespace P2PShare.GUI
         protected TcpClient? client;
         protected CancellationTokenSource? cancelConnecting;
         protected CancellationTokenSource? cancelMonitoring;
+        protected CancellationTokenSource? cancelReceivingInvite;
 
         public MainWindow()
         {
@@ -143,7 +144,9 @@ namespace P2PShare.GUI
 
             monitorConnection = GUIConnection.MonitorClientConnection(client2, State, Interface, Cancel);
 
-            receiveInvite = FileTransport.ReceiveInvite(client);
+            cancelReceivingInvite = new CancellationTokenSource();
+
+            receiveInvite = FileTransport.ReceiveInvite(client, cancelReceivingInvite.Token);
         }
 
         private void OnDisconnected(object? sender, EventArgs e)
@@ -257,6 +260,13 @@ namespace P2PShare.GUI
 
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
+            if (receiveInvite is not null)
+            {
+                cancelReceivingInvite?.Cancel();
+                
+                receiveInvite = null;
+            }
+            
             if (client is null || !client.Connected)
             {
                 Elements.ShowDialog("You must be connected to share", messageBox);

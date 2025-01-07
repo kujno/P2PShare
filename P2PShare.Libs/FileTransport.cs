@@ -80,7 +80,7 @@ namespace P2PShare.Libs
             return true;
         }
 
-        public static async Task ReceiveInvite(TcpClient client)
+        public static async Task ReceiveInvite(TcpClient client, CancellationToken cancellationToken)
         {
             NetworkStream stream;
 
@@ -99,7 +99,7 @@ namespace P2PShare.Libs
             int bytesRead;
             try
             {
-                bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
             }
             catch
             {
