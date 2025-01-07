@@ -20,6 +20,7 @@ namespace P2PShare.GUI
         protected Task? monitorConnection;
         protected Task? monitorInterface;
         protected Task? connecting;
+        protected Task? receiveInvite;
         protected int portListen;
         protected int portConnect;
         protected CustomMessageBox messageBox = new CustomMessageBox();
@@ -125,7 +126,7 @@ namespace P2PShare.GUI
             Elements.Listening(portListen, State, Cancel);
         }
 
-        private void OnConnected(object? sender, TcpClient client2)
+        private async void OnConnected(object? sender, TcpClient client2)
         {
             IPAddress? ipRemote;
             
@@ -141,6 +142,8 @@ namespace P2PShare.GUI
             Elements.Connected(State, Cancel, ipRemote);
 
             monitorConnection = GUIConnection.MonitorClientConnection(client2, State, Interface, Cancel);
+
+            receiveInvite = FileTransport.ReceiveInvite(client);
         }
 
         private void OnDisconnected(object? sender, EventArgs e)
