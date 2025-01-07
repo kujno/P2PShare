@@ -6,7 +6,7 @@ namespace P2PShare.GUI.Utils
 {
     public class GUIConnection
     {
-        public async static Task MonitorClientConnection(TcpClient client, TextBlock State, ComboBox @interface)
+        public async static Task MonitorClientConnection(TcpClient client, TextBlock State, ComboBox Interface, Button Cancel)
         {
             while (client.Connected)
             {
@@ -14,14 +14,14 @@ namespace P2PShare.GUI.Utils
                 {
                     if (client.Client.Poll(0, SelectMode.SelectRead) && client.Client.Available == 0)
                     {
-                        Elements.Disconnected(State, @interface);
+                        Elements.Disconnected(State, Cancel, Interface);
 
                         return;
                     }
                 }
                 catch
                 {
-                    Elements.Disconnected(State, @interface);
+                    Elements.Disconnected(State, Cancel, Interface);
 
                     break;
                 }

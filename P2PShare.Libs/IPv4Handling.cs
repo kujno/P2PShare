@@ -27,5 +27,17 @@ namespace P2PShare.Libs
 
             return output;
         }
+
+        public static IPAddress? GetRemoteIPAddress(TcpClient client)
+        {
+            IPEndPoint? ipEndPoint = (IPEndPoint?)client.Client.RemoteEndPoint;
+
+            if (ipEndPoint is null)
+            {
+                return null;
+            }
+
+            return ipEndPoint.Address;
+        }
     }
 }

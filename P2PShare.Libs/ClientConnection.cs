@@ -9,7 +9,7 @@ namespace P2PShare.Libs
         public static event EventHandler<TcpClient>? Connected;
         public static event EventHandler? Disconnected;
 
-        public static async Task Connect(IPAddress ip, NetworkInterface @interface, int port)
+        public static async Task Connect(IPAddress ip, NetworkInterface @interface, int port, CancellationToken cancellationToken)
         {
             IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
             TcpClient? client = new TcpClient();
@@ -23,9 +23,15 @@ namespace P2PShare.Libs
                 return;
             }
 
+            CancellationTokenSource cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
             try
             {
-                await Task.WhenAny(client.ConnectAsync(ip, port), Task.Delay(30000));
+                await Task.WhenAny(client.ConnectAsync(ip, port, cancellationTokenSource.Token).AsTask(), Task.Delay(30000, cancellationTokenSource.Token));
+
+                cancellationTokenSource.Cancel();
+
+                cancellationTokenSource.Dispose();
 
                 if (client.Connected)
                 {

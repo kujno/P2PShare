@@ -22,7 +22,7 @@ namespace P2PShare.GUI
         protected int portConnect;
         protected CustomMessageBox messageBox = new CustomMessageBox();
         protected TcpClient? client;
-        protected CancellationTokenSource? listenCancel;
+        protected CancellationTokenSource? cancel;
 
         public MainWindow()
         {
@@ -60,20 +60,12 @@ namespace P2PShare.GUI
         {
             if (Interface.SelectedItem is null)
             {
-                YourIP.Text = "Your IP address:";
+                Elements.ResetYourIp(YourIP);
 
                 return;
             }
 
-            foreach (NetworkInterface @interface2 in InterfaceHandling.GetUpInterfaces())
-            {
-                if (@interface2.Name == Interface.SelectedItem.ToString())
-                {
-                    @interface = @interface2;
-                    
-                    break;
-                }
-            }
+            @interface = Elements.GetSelectedInterface(Interface);
 
             if (@interface is null)
             {
@@ -101,45 +93,43 @@ namespace P2PShare.GUI
                 return;
             }
 
-            listenCancel = new CancellationTokenSource();
+            cancel = new CancellationTokenSource();
 
-            listen = ListenerConnection.ListenLoop(portListen, @interface, listenCancel.Token);
+            listen = ListenerConnection.ListenLoop(portListen, @interface, cancel.Token);
 
-            State.Text = $"Listening on port {portListen}";
-            State.Foreground = System.Windows.Media.Brushes.Yellow;
+            Elements.Listening(portListen, State, Cancel);
         }
 
         private void OnConnected(object? sender, TcpClient client2)
         {
-            IPEndPoint? ipEndPoint;
+            IPAddress? ipRemote;
             
             client = client2;
 
-            ipEndPoint = (IPEndPoint?)client.Client.RemoteEndPoint;
+            ipRemote = IPv4Handling.GetRemoteIPAddress(client);
 
-            if (ipEndPoint is null)
+            if (ipRemote is null)
             {
                 return;
             }
 
-            Elements.Connected(State, ipEndPoint.Address);
+            Elements.Connected(State, Cancel, ipRemote);
 
-            monitorConnection = GUIConnection.MonitorClientConnection(client2, State, Interface);
+            monitorConnection = GUIConnection.MonitorClientConnection(client2, State, Interface, Cancel);
         }
 
         private void OnDisconnected(object? sender, EventArgs e)
         {
-            Elements.Disconnected(State, Interface);
+            Elements.Disconnected(State, Cancel, Interface);
         }
 
         private async void Connect_Click(object sender, RoutedEventArgs e)
         {
             IPAddress? remoteIP;
 
-            if (listenCancel is not null)
+            if (cancel is not null)
             {
-                listenCancel.Cancel();
-                listenCancel.Dispose();
+                cancel = Cancellation.Cancel(cancel);
             }
 
             if (@interface is null || localIP is null || !IPAddress.TryParse(RemoteIP.Text.Trim(), out remoteIP))
@@ -151,10 +141,23 @@ namespace P2PShare.GUI
             
             portConnect = PortHandling.FindPort(localIP);
 
-            connecting = ClientConnection.Connect(remoteIP, @interface, portConnect);
+            cancel = new CancellationTokenSource();
 
-            State.Text = $"Connecting on port {portConnect}";
-            State.Foreground = System.Windows.Media.Brushes.Yellow;
+            connecting = ClientConnection.Connect(remoteIP, @interface, portConnect, cancel.Token);
+
+            Elements.Connecting(portConnect, State, Cancel);
+        }
+
+        private void Cancel_Click(object sender, RoutedEventArgs e)
+        {
+            if (cancel is null)
+            {
+                return;
+            }
+            
+            cancel.Cancel();
+            cancel.Dispose();
+            cancel = null;
         }
     }
 }

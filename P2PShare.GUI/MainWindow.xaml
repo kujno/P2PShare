@@ -61,6 +61,7 @@
             <StackPanel Grid.Column="0" Orientation="Horizontal">
                 <TextBlock Text="State:" VerticalAlignment="Center" Margin="5px, 0, 0, 0"/>
                 <TextBlock x:Name="State" Text="Disconnected" VerticalAlignment="Center" Margin="5px, 0, 0, 0" Foreground="Red"/>
+                <Button x:Name="Cancel" Content="Cancel" Margin="6px, 0, 0, 0" Height="20px" Width="50" VerticalAlignment="Center" Visibility="Collapsed" Click="Cancel_Click"/>
             </StackPanel>
             
             <TextBlock Grid.Column="1" Text="P2PShare" HorizontalAlignment="Center" FontSize="20px" FontFamily="Arial Black"/>
