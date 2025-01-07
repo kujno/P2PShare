@@ -24,4 +24,12 @@ namespace P2PShare.GUI
             InitializeComponent();
         }
     }
-}
+
+    private void Window_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                DragMove();
+            }
+        }
+    }
