@@ -4,6 +4,8 @@ namespace P2PShare.Libs
 {
     public class InterfaceHandling
     {
+        public static event EventHandler? InterfaceDown;
+
         public static List<NetworkInterface> GetUpInterfaces()
         {
             NetworkInterface?[] interfacesNullable = NetworkInterface.GetAllNetworkInterfaces();
@@ -31,6 +33,33 @@ namespace P2PShare.Libs
             }
 
             return interfacesUp;
+        }
+
+        public static async Task MonitorInterface(NetworkInterface @interface, CancellationToken cancellationToken)
+        {
+            try
+            {
+                while (@interface.OperationalStatus == OperationalStatus.Up)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+                    
+                    await Task.Delay(1000);
+                }
+            }
+            catch
+            {
+
+            }
+            
+            OnInterfaceDown();
+        }
+
+        private static void OnInterfaceDown()
+        {
+            InterfaceDown?.Invoke(null, EventArgs.Empty);
         }
     }
 }

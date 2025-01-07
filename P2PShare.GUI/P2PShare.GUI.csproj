@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Images\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\P2PShare.Libs\P2PShare.Libs.csproj" />
   </ItemGroup>
 

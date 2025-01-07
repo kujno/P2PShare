@@ -17,19 +17,28 @@ namespace P2PShare.GUI
         protected IPAddress? localIP;
         protected Task? listen;
         protected Task? monitorConnection;
+        protected Task? monitorInterface;
         protected Task? connecting;
         protected int portListen;
         protected int portConnect;
         protected CustomMessageBox messageBox = new CustomMessageBox();
+        protected Invite inviteWindow = new Invite();
+        protected Send_Receive sendReceiveWindow = new Send_Receive();
         protected TcpClient? client;
-        protected CancellationTokenSource? cancel;
+        protected CancellationTokenSource? cancelConnecting;
+        protected CancellationTokenSource? cancelMonitoring;
 
         public MainWindow()
         {
             InitializeComponent();
             Elements.RefreshInterfaces(Interface);
+            
             ClientConnection.Connected += OnConnected;
             ClientConnection.Disconnected += OnDisconnected;
+            InterfaceHandling.InterfaceDown += onInterfaceDown;
+            FileTransport.InviteReceived += onInviteRecieved;
+            FileTransport.FileBeingReceived += onFileBeingReceived;
+            FileHandling.FilePartReceived += onFilePartReceived;
         }
 
         private void Minimize_Click(object sender, RoutedEventArgs e)
@@ -41,6 +50,8 @@ namespace P2PShare.GUI
         {
             Close();
             messageBox.Close();
+            inviteWindow.Close();
+            sendReceiveWindow.Close();
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -58,6 +69,12 @@ namespace P2PShare.GUI
 
         private void Interface_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
+            if (monitorInterface is not null)
+            {
+                cancelMonitoring?.Cancel();
+                monitorInterface = null;
+            }
+            
             if (Interface.SelectedItem is null)
             {
                 Elements.ResetYourIp(YourIP);
@@ -80,6 +97,10 @@ namespace P2PShare.GUI
             }
 
             YourIP.Text = $"Your IP address: {localIP}";
+
+            cancelMonitoring = new CancellationTokenSource();
+
+            monitorInterface = InterfaceHandling.MonitorInterface(@interface, cancelMonitoring.Token);
         }
 
         private void Listen_Click(object sender, RoutedEventArgs e)
@@ -93,9 +114,9 @@ namespace P2PShare.GUI
                 return;
             }
 
-            cancel = new CancellationTokenSource();
+            cancelConnecting = new CancellationTokenSource();
 
-            listen = ListenerConnection.ListenLoop(portListen, @interface, cancel.Token);
+            listen = ListenerConnection.ListenLoop(portListen, @interface, cancelConnecting.Token);
 
             Elements.Listening(portListen, State, Cancel);
         }
@@ -127,9 +148,9 @@ namespace P2PShare.GUI
         {
             IPAddress? remoteIP;
 
-            if (cancel is not null)
+            if (cancelConnecting is not null)
             {
-                cancel = Cancellation.Cancel(cancel);
+                cancelConnecting = Cancellation.Cancel(cancelConnecting);
             }
 
             if (@interface is null || localIP is null || !IPAddress.TryParse(RemoteIP.Text.Trim(), out remoteIP))
@@ -141,23 +162,82 @@ namespace P2PShare.GUI
             
             portConnect = PortHandling.FindPort(localIP);
 
-            cancel = new CancellationTokenSource();
+            cancelConnecting = new CancellationTokenSource();
 
-            connecting = ClientConnection.Connect(remoteIP, @interface, portConnect, cancel.Token);
+            connecting = ClientConnection.Connect(remoteIP, @interface, portConnect, cancelConnecting.Token);
 
             Elements.Connecting(portConnect, State, Cancel);
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            if (cancel is null)
+            if (cancelConnecting is null)
             {
                 return;
             }
             
-            cancel.Cancel();
-            cancel.Dispose();
-            cancel = null;
+            cancelConnecting.Cancel();
+            cancelConnecting.Dispose();
+            cancelConnecting = null;
         }
+
+        private void onInterfaceDown(object? sender, EventArgs e)
+        {
+            Elements.RefreshInterfaces(Interface);
+        }
+
+        private async void onInviteRecieved(object? sender, string? invite)
+        {
+            if (invite is null)
+            {
+                return;
+            }
+
+            bool accepted;
+
+            inviteWindow.Text.Text = invite;
+            inviteWindow.ShowDialog();
+            accepted = inviteWindow.Accepted;
+
+            if (client is null)
+            {
+                return;
+            }
+
+            bool? selected;
+            string? path = FileDialogs.SelectFolder(out selected);
+
+            if (selected is null || path is null)
+            {
+                return;
+            }
+
+            bool recieve = accepted && (bool)selected;
+
+            await FileTransport.Reply(client, recieve);
+
+            if (!recieve)
+            {
+                return;
+            }
+
+            await FileTransport.ReceiveFile(client, FileTransport.GetFileLenghtFromInvite(invite), path);
+        }
+
+        private void onFileBeingReceived(object? sender, EventArgs e)
+        {
+            sendReceiveWindow.Text.Text = "Received: 0%";
+            sendReceiveWindow.ShowDialog();
+        }
+
+        private void onFilePartReceived(object? sender, int part)
+        {
+            sendReceiveWindow.Text.Text = $"Received: {part}%";
+
+            if (part == 100)
+            {
+                sendReceiveWindow.Close();
+            }
+        }   
     }
 }

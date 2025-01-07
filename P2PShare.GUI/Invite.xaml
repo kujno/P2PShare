@@ -1,0 +1,27 @@
+﻿<Window x:Class="P2PShare.GUI.Invite"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:P2PShare.GUI"
+        mc:Ignorable="d"
+        Title="Invite" Height="225" Width="400"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Background="#333333"
+        BorderThickness="1px"
+        MouseDown="Window_MouseDown">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock x:Name="Text" FontSize="20px" FontFamily="Arial" Foreground="#c2c2c2" Grid.Row="0" HorizontalAlignment="Center" Margin="0, 80px, 0, 0" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" TextAlignment="Center"/>
+        <StackPanel VerticalAlignment="Bottom" Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1">
+            <Button x:Name="No" Content="No" Background="#292929" BorderThickness="0" Foreground="#c2c2c2" Margin="0, 0, 0, 45px" Width="70px" Height="20px" Click="No_Click"/>
+            <Button x:Name="Yes" Content="Yes" Background="#292929" BorderThickness="0" Foreground="#c2c2c2" Margin="70px, 0, 0, 45px" Width="70px" Height="20px" Click="Yes_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
