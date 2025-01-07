@@ -25,5 +25,18 @@
 
             return dialog;
         }
+
+        public static string? SelectFile()
+        {
+            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
+            bool? selected = dialog.ShowDialog();
+
+            if (selected == true)
+            {
+                return dialog.FileName;
+            }
+
+            return null;
+        }
     }
 }

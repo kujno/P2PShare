@@ -4,8 +4,6 @@ namespace P2PShare.Libs
 {
     public class FileHandling
     {
-        public static event EventHandler<int>? FilePartReceived;
-        
         public static async Task CreateFile(NetworkStream networkStream, string filePath, int fileLength)
         {
             using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
@@ -21,19 +19,14 @@ namespace P2PShare.Libs
 
                     totalBytesRead += bytesRead;
 
-                    onFilePartReceived(calculatePercentage(fileLength, totalBytesRead));
+                    FileTransport.OnFilePartReceived(CalculatePercentage(fileLength, totalBytesRead));
                 }
             }
         }
 
-        private static void onFilePartReceived(int percentage)
+        public static int CalculatePercentage(long total, long part)
         {
-            FilePartReceived?.Invoke(null, percentage);
-        }
-
-        private static int calculatePercentage(int total, int part)
-        {
-            return part / (total / 100);
+            return (int)(part / (total / 100));
         }
     }
 }

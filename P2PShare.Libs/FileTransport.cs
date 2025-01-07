@@ -7,8 +7,12 @@ namespace P2PShare.Libs
     {
         public static event EventHandler<string?>? InviteReceived;
         public static event EventHandler? FileBeingReceived;
+        public static event EventHandler? TransferFailed;
+        public static event EventHandler? FileBeingSent;
+        public static event EventHandler<int>? FilePartReceived;
+        public static event EventHandler<int>? FilePartSent;
 
-        public static bool SendFile(TcpClient client, FileInfo fileInfo)
+        public static async Task<bool> SendFile(TcpClient client, FileInfo fileInfo)
         {
             NetworkStream stream;
 
@@ -26,7 +30,7 @@ namespace P2PShare.Libs
 
             try
             {
-                stream.Write(inviteBytes, 0, inviteBytes.Length);
+                await stream.WriteAsync(inviteBytes, 0, inviteBytes.Length);
             }
             catch
             {
@@ -35,7 +39,7 @@ namespace P2PShare.Libs
 
             try
             {
-                stream.Read(buffer, 0, buffer.Length);
+                await stream.ReadAsync(buffer, 0, buffer.Length);
             }
             catch
             {
@@ -52,16 +56,24 @@ namespace P2PShare.Libs
             try
             {
                 int bytesRead;
+                int bytesSent = 0;
                 byte[] buffer2 = new byte[8192];
                 using FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read);
                 
-                while ((bytesRead = fileStream.Read(buffer2, 0, buffer2.Length)) > 0)
+                onFileBeingSent();
+
+                while ((bytesRead = await fileStream.ReadAsync(buffer2, 0, buffer2.Length)) > 0)
                 {
-                    stream.Write(buffer2, 0, bytesRead);
+                    await stream.WriteAsync(buffer2, 0, bytesRead);
+
+                    bytesSent += bytesRead;
+                    OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
                 }
             }
             catch
             {
+                onTransferFailed();
+
                 return false;
             }
 
@@ -120,6 +132,8 @@ namespace P2PShare.Libs
             }
             catch
             {
+                onTransferFailed();
+
                 return null;
             }
 
@@ -184,6 +198,26 @@ namespace P2PShare.Libs
         private static void onFileBeingReceived()
         {
             FileBeingReceived?.Invoke(null, EventArgs.Empty);
+        }
+
+        private static void onTransferFailed()
+        {
+            TransferFailed?.Invoke(null, EventArgs.Empty);
+        }
+
+        private static void onFileBeingSent()
+        {
+            FileBeingSent?.Invoke(null, EventArgs.Empty);
+        }
+
+        public static void OnFilePartReceived(int percentage)
+        {
+            FilePartReceived?.Invoke(null, percentage);
+        }
+
+        public static void OnFilePartSent(int percentage)
+        {
+            FilePartSent?.Invoke(null, percentage);
         }
     }
 }

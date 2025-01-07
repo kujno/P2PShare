@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.IO;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Windows;
@@ -36,9 +37,12 @@ namespace P2PShare.GUI
             ClientConnection.Connected += OnConnected;
             ClientConnection.Disconnected += OnDisconnected;
             InterfaceHandling.InterfaceDown += onInterfaceDown;
-            FileTransport.InviteReceived += onInviteRecieved;
+            FileTransport.InviteReceived += onInviteReceived;
             FileTransport.FileBeingReceived += onFileBeingReceived;
-            FileHandling.FilePartReceived += onFilePartReceived;
+            FileTransport.TransferFailed += onTransferFailed;
+            FileTransport.FilePartReceived += onFilePartReceived;
+            FileTransport.FilePartSent += onFilePartSent;
+            FileTransport.FileBeingSent += onFileBeingSent;
         }
 
         private void Minimize_Click(object sender, RoutedEventArgs e)
@@ -186,7 +190,7 @@ namespace P2PShare.GUI
             Elements.RefreshInterfaces(Interface);
         }
 
-        private async void onInviteRecieved(object? sender, string? invite)
+        private async void onInviteReceived(object? sender, string? invite)
         {
             if (invite is null)
             {
@@ -232,12 +236,49 @@ namespace P2PShare.GUI
 
         private void onFilePartReceived(object? sender, int part)
         {
-            sendReceiveWindow.Text.Text = $"Received: {part}%";
+            Elements.ChangeFileTransferState(sendReceiveWindow, part, Models.Receive_Send.Receive);
+        }
 
-            if (part == 100)
+        private void onFilePartSent(object? sender, int part)
+        {
+            Elements.ChangeFileTransferState(sendReceiveWindow, part, Models.Receive_Send.Send);
+        }
+
+        private async void Send_Click(object sender, RoutedEventArgs e)
+        {
+            if (client is null || !client.Connected)
             {
-                sendReceiveWindow.Close();
+                Elements.ShowDialog("You must be connected to share", messageBox);
+                return;
             }
-        }   
+            
+            FileInfo fileInfo = new FileInfo(File.Text);
+
+            if (!fileInfo.Exists)
+            {
+                Elements.ShowDialog("Select a valid file", messageBox);
+                return;
+            }
+
+            Elements.FileTransferEndDialog(messageBox, await FileTransport.SendFile(client, fileInfo));
+        }
+
+        private void Select_Click(object sender, RoutedEventArgs e)
+        {
+            File.Text = FileDialogs.SelectFile();
+        }
+
+        private void onTransferFailed(object? sender, EventArgs e)
+        {
+            sendReceiveWindow.Close();
+
+            Elements.ShowDialog("The file transfer failed", messageBox);
+        }
+
+        private void onFileBeingSent(object? sender, EventArgs e)
+        {
+            sendReceiveWindow.Text.Text = "Sent: 0%";
+            sendReceiveWindow.ShowDialog();
+        }
     }
 }

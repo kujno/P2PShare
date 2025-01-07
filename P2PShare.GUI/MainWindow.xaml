@@ -89,16 +89,23 @@
                 <TextBlock x:Name="YourIP" Text="Your IP address:" HorizontalAlignment="Center" FontSize="20" FontWeight="Medium"/>
                 <StackPanel Orientation="Horizontal" Margin="0, 20px, 0, 0" HorizontalAlignment="Center">
                     <GroupBox Header="Listening port:" Width="100">
-                        <TextBox x:Name="Port" Width="80" Margin="0, 5px, 0, 0"/>
+                        <TextBox x:Name="Port" Width="80px" Margin="0, 5px, 0, 0"/>
                     </GroupBox>
                     <Button x:Name="Listen" Content="Listen" Height="22px" Width="60px" VerticalAlignment="Center" Margin="0, 0, 0, -13" Click="Listen_Click"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Column="1">
-                    <GroupBox Header="Remote IP address:" Width="160">
+                    <GroupBox Header="Remote IP address:" Width="160px">
                         <TextBox x:Name="RemoteIP" Width="160" Margin="0, 5px, 0, 0"/>
                     </GroupBox>
                     <Button x:Name="Connect" Content="Connect" Height="22px" Width="60px" VerticalAlignment="Center" Margin="0, 0, 0, -13" Click="Connect_Click"/>
                 </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Column="1" Margin="0, 20, 0, 0">
+                    <GroupBox Header="File to send:" Width="500px">
+                        <TextBox x:Name="File" Width="500px" Margin="0, 5px, 0, 0"/>
+                    </GroupBox>
+                    <Button x:Name="Send" Content="Send" Height="22px" Width="60px" VerticalAlignment="Center" Margin="0, 0, 0, -13" Click="Send_Click"/>
+                </StackPanel>
+                <Button x:Name="Select" Content="Select" Height="22px" Width="60px" Click="Select_Click" HorizontalAlignment="Left" Margin="49, 0"/>
             </StackPanel>
         </Grid>
     </Grid>

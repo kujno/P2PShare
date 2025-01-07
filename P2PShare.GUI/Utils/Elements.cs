@@ -1,4 +1,5 @@
-﻿using P2PShare.Libs;
+﻿using P2PShare.GUI.Models;
+using P2PShare.Libs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -79,6 +80,52 @@ namespace P2PShare.GUI.Utils
             }
 
             return null;
+        }
+
+        public static void ChangeFileTransferState(Send_Receive sendReceiveWindow, int part, Receive_Send receive_Send)
+        {
+            sendReceiveWindow.Text.Text = $"{received_Sent(receive_Send)}: {part}%";
+
+            if (part != 100)
+            {
+                return;
+            }
+
+            sendReceiveWindow.Close();
+        }
+
+        private static string received_Sent(Receive_Send receive_Send)
+        {
+            switch (receive_Send)
+            {
+                case Receive_Send.Receive:
+                    return "Received";
+
+                case Receive_Send.Send:
+                    return "Sent";
+            }
+
+            return "";
+        }
+
+        public static void FileTransferEndDialog(CustomMessageBox messageBox, bool succeeded)
+        {
+            string message;
+            
+            switch (succeeded)
+            {
+                case true:
+                    message = "succeeded";
+                    
+                    break;
+
+                case false:
+                    message = "failed";
+
+                    break;
+            }
+
+            ShowDialog($"The file transfer {message}", messageBox);
         }
     }
 }
