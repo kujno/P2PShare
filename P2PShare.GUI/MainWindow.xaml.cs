@@ -86,7 +86,7 @@ namespace P2PShare.GUI
         {
             bool parsed = int.TryParse(Port.Text.Trim(), out portListen);
 
-            if (!parsed || @interface is null)
+            if (localIP is null || !parsed || @interface is null || !PortHandling.IsPortAvailable(localIP, portListen))
             {
                 Elements.ShowDialog("Select an interface & enter a valid port number", messageBox);
 
