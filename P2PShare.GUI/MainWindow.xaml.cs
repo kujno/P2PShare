@@ -14,22 +14,22 @@ namespace P2PShare.GUI
     /// </summary>
     public partial class MainWindow : Window
     {
-        protected NetworkInterface? @interface;
-        protected IPAddress? localIP;
-        protected Task? listen;
-        protected Task? monitorConnection;
-        protected Task? monitorInterface;
-        protected Task? connecting;
-        protected Task? receiveInvite;
-        protected int portListen;
-        protected int portConnect;
-        protected CustomMessageBox messageBox = new CustomMessageBox();
-        protected Invite inviteWindow = new Invite();
-        protected Send_Receive sendReceiveWindow = new Send_Receive();
-        public TcpClient? Client { get; set; } // maybe it will work like this
-        protected CancellationTokenSource? cancelConnecting;
-        protected CancellationTokenSource? cancelMonitoring;
-        protected CancellationTokenSource? cancelReceivingInvite;
+        protected NetworkInterface? _interface;
+        protected IPAddress? _localIP;
+        protected Task? _listen;
+        protected Task? _monitorConnection;
+        protected Task? _monitorInterface;
+        protected Task? _connecting;
+        protected Task? _receiveInvite;
+        protected int _portListen;
+        protected int _portConnect;
+        protected CustomMessageBox _messageBox = new CustomMessageBox();
+        protected Invite _inviteWindow = new Invite();
+        protected Send_Receive _sendReceiveWindow = new Send_Receive();
+        protected TcpClient? _client;
+        protected CancellationTokenSource? _cancelConnecting;
+        protected CancellationTokenSource? _cancelMonitoring;
+        protected CancellationTokenSource? _cancelReceivingInvite;
 
         public MainWindow()
         {
@@ -55,9 +55,9 @@ namespace P2PShare.GUI
         private void Close_Click(object sender, RoutedEventArgs e)
         {
             Close();
-            messageBox.Close();
-            inviteWindow.Close();
-            sendReceiveWindow.Close();
+            _messageBox.Close();
+            _inviteWindow.Close();
+            _sendReceiveWindow.Close();
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -75,10 +75,10 @@ namespace P2PShare.GUI
 
         private void Interface_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if (monitorInterface is not null)
+            if (_monitorInterface is not null)
             {
-                cancelMonitoring?.Cancel();
-                monitorInterface = null;
+                _cancelMonitoring?.Cancel();
+                _monitorInterface = null;
             }
             
             if (Interface.SelectedItem is null)
@@ -88,50 +88,50 @@ namespace P2PShare.GUI
                 return;
             }
 
-            @interface = Elements.GetSelectedInterface(Interface);
+            _interface = Elements.GetSelectedInterface(Interface);
 
-            if (@interface is null)
+            if (_interface is null)
             {
                 return;
             }
 
-            localIP = IPv4Handling.GetLocalIPv4(@interface);
+            _localIP = IPv4Handling.GetLocalIPv4(_interface);
 
-            if (localIP is null)
+            if (_localIP is null)
             {
                 return;
             }
 
-            YourIP.Text = $"Your IP address: {localIP}";
+            YourIP.Text = $"Your IP address: {_localIP}";
 
-            cancelMonitoring = new CancellationTokenSource();
+            _cancelMonitoring = new CancellationTokenSource();
 
-            monitorInterface = InterfaceHandling.MonitorInterface(@interface, cancelMonitoring.Token);
+            _monitorInterface = InterfaceHandling.MonitorInterface(_interface, _cancelMonitoring.Token);
         }
 
         private void Listen_Click(object sender, RoutedEventArgs e)
         {
-            if (localIP is null || !int.TryParse(Port.Text.Trim(), out portListen) || @interface is null || !PortHandling.IsPortAvailable(localIP, portListen))
+            if (_localIP is null || !int.TryParse(Port.Text.Trim(), out _portListen) || _interface is null || !PortHandling.IsPortAvailable(_localIP, _portListen))
             {
-                Elements.ShowDialog("Select an interface & enter a valid port number", messageBox);
+                Elements.ShowDialog("Select an interface & enter a valid port number", _messageBox);
 
                 return;
             }
 
-            cancelConnecting = new CancellationTokenSource();
+            _cancelConnecting = new CancellationTokenSource();
 
-            listen = ListenerConnection.ListenLoop(portListen, @interface, cancelConnecting.Token);
+            _listen = ListenerConnection.ListenLoop(_portListen, _interface, _cancelConnecting.Token);
 
-            Elements.Listening(portListen, State, Cancel);
+            Elements.Listening(_portListen, State, Cancel);
         }
 
         private async void OnConnected(object? sender, TcpClient client2)
         {
             IPAddress? ipRemote;
             
-            Client = client2;
+            _client = client2;
 
-            ipRemote = IPv4Handling.GetRemoteIPAddress(Client);
+            ipRemote = IPv4Handling.GetRemoteIPAddress(_client);
 
             if (ipRemote is null)
             {
@@ -140,11 +140,11 @@ namespace P2PShare.GUI
 
             Elements.Connected(State, Cancel, ipRemote);
 
-            monitorConnection = GUIConnection.MonitorClientConnection(Client, State, Interface, Cancel);
+            _monitorConnection = GUIConnection.MonitorClientConnection(_client, State, Interface, Cancel);
 
-            cancelReceivingInvite = new CancellationTokenSource();
+            _cancelReceivingInvite = new CancellationTokenSource();
 
-            receiveInvite = FileTransport.ReceiveInvite(Client, cancelReceivingInvite.Token);
+            _receiveInvite = FileTransport.ReceiveInvite(_client, _cancelReceivingInvite.Token);
         }
 
         private void OnDisconnected(object? sender, EventArgs e)
@@ -156,37 +156,37 @@ namespace P2PShare.GUI
         {
             IPAddress? remoteIP;
 
-            if (cancelConnecting is not null)
+            if (_cancelConnecting is not null)
             {
-                cancelConnecting = Cancellation.Cancel(cancelConnecting);
+                _cancelConnecting = Cancellation.Cancel(_cancelConnecting);
             }
 
-            if (@interface is null || localIP is null || !IPAddress.TryParse(RemoteIP.Text.Trim(), out remoteIP))
+            if (_interface is null || _localIP is null || !IPAddress.TryParse(RemoteIP.Text.Trim(), out remoteIP))
             {
-                Elements.ShowDialog("Select an interface & enter a valid IP address", messageBox);
+                Elements.ShowDialog("Select an interface & enter a valid IP address", _messageBox);
 
                 return;
             }
             
-            portConnect = PortHandling.FindPort(localIP);
+            _portConnect = PortHandling.FindPort(_localIP);
 
-            cancelConnecting = new CancellationTokenSource();
+            _cancelConnecting = new CancellationTokenSource();
 
-            connecting = ClientConnection.Connect(remoteIP, @interface, portConnect, cancelConnecting.Token);
+            _connecting = ClientConnection.Connect(remoteIP, _interface, _portConnect, _cancelConnecting.Token);
 
-            Elements.Connecting(portConnect, State, Cancel);
+            Elements.Connecting(_portConnect, State, Cancel);
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            if (cancelConnecting is null)
+            if (_cancelConnecting is null)
             {
                 return;
             }
             
-            cancelConnecting.Cancel();
-            cancelConnecting.Dispose();
-            cancelConnecting = null;
+            _cancelConnecting.Cancel();
+            _cancelConnecting.Dispose();
+            _cancelConnecting = null;
         }
 
         private void onInterfaceDown(object? sender, EventArgs e)
@@ -203,13 +203,13 @@ namespace P2PShare.GUI
 
             bool accepted;
 
-            inviteWindow.Text.Text = invite;
-            inviteWindow.ShowDialog();
-            accepted = inviteWindow.Accepted;
+            _inviteWindow.Text.Text = invite;
+            _inviteWindow.ShowDialog();
+            accepted = _inviteWindow.Accepted;
 
-            if (Client is null)
+            if (_client is null)
             {
-                Elements.ShowDialog("The file transfer failed", messageBox);
+                Elements.ShowDialog("The file transfer failed", _messageBox);
 
                 return;
             }
@@ -227,52 +227,52 @@ namespace P2PShare.GUI
                 receive = false;
             }
 
-            await FileTransport.Reply(Client, receive);
+            await FileTransport.Reply(_client, receive);
 
             if (!receive)
             {
                 return;
             }
 
-            FileInfo? file = await FileTransport.ReceiveFile(Client, FileTransport.GetFileLenghtFromInvite(invite), path);
+            FileInfo? file = await FileTransport.ReceiveFile(_client, FileTransport.GetFileLenghtFromInvite(invite), path);
 
             if (file is null)
             {
-                Elements.FileTransferEndDialog(messageBox, false);
+                Elements.FileTransferEndDialog(_messageBox, false);
                 return;
             }
 
-            Elements.ShowDialog($"The file has been saved to:\n{file.FullName}", messageBox);
+            Elements.ShowDialog($"The file has been saved to:\n{file.FullName}", _messageBox);
         }
 
         private void onFileBeingReceived(object? sender, EventArgs e)
         {
-            sendReceiveWindow.Text.Text = "Received: 0%";
-            sendReceiveWindow.ShowDialog();
+            _sendReceiveWindow.Text.Text = "Received: 0%";
+            _sendReceiveWindow.ShowDialog();
         }
 
         private void onFilePartReceived(object? sender, int part)
         {
-            Elements.ChangeFileTransferState(sendReceiveWindow, part, Models.Receive_Send.Receive);
+            Elements.ChangeFileTransferState(_sendReceiveWindow, part, Models.Receive_Send.Receive);
         }
 
         private void onFilePartSent(object? sender, int part)
         {
-            Elements.ChangeFileTransferState(sendReceiveWindow, part, Models.Receive_Send.Send);
+            Elements.ChangeFileTransferState(_sendReceiveWindow, part, Models.Receive_Send.Send);
         }
 
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
-            if (receiveInvite is not null)
+            if (_receiveInvite is not null)
             {
-                cancelReceivingInvite?.Cancel();
+                _cancelReceivingInvite?.Cancel();
                 
-                receiveInvite = null;
+                _receiveInvite = null;
             }
             
-            if (Client is null || !Client.Connected)
+            if (_client is null || !_client.Connected)
             {
-                Elements.ShowDialog("You must be connected to share", messageBox);
+                Elements.ShowDialog("You must be connected to share", _messageBox);
                 return;
             }
             
@@ -280,11 +280,11 @@ namespace P2PShare.GUI
 
             if (!fileInfo.Exists)
             {
-                Elements.ShowDialog("Select a valid file", messageBox);
+                Elements.ShowDialog("Select a valid file", _messageBox);
                 return;
             }
 
-            Elements.FileTransferEndDialog(messageBox, await FileTransport.SendFile(Client, fileInfo));
+            Elements.FileTransferEndDialog(_messageBox, await FileTransport.SendFile(_client, fileInfo));
         }
 
         private void Select_Click(object sender, RoutedEventArgs e)
@@ -294,15 +294,15 @@ namespace P2PShare.GUI
 
         private void onTransferFailed(object? sender, EventArgs e)
         {
-            sendReceiveWindow.Close();
+            _sendReceiveWindow.Close();
 
-            Elements.ShowDialog("The file transfer failed", messageBox);
+            Elements.ShowDialog("The file transfer failed", _messageBox);
         }
 
         private void onFileBeingSent(object? sender, EventArgs e)
         {
-            sendReceiveWindow.Text.Text = "Sent: 0%";
-            sendReceiveWindow.ShowDialog();
+            _sendReceiveWindow.Text.Text = "Sent: 0%";
+            _sendReceiveWindow.ShowDialog();
         }
     }
 }
