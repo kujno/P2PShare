@@ -140,7 +140,7 @@ namespace P2PShare.GUI
 
             Elements.Connected(State, Cancel, ipRemote);
 
-            monitorConnection = GUIConnection.MonitorClientConnection(client2, State, Interface, Cancel);
+            monitorConnection = GUIConnection.MonitorClientConnection(client, State, Interface, Cancel);
 
             cancelReceivingInvite = new CancellationTokenSource();
 
