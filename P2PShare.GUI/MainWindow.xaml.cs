@@ -111,9 +111,7 @@ namespace P2PShare.GUI
 
         private void Listen_Click(object sender, RoutedEventArgs e)
         {
-            bool parsed = int.TryParse(Port.Text.Trim(), out portListen);
-
-            if (localIP is null || !parsed || @interface is null || !PortHandling.IsPortAvailable(localIP, portListen))
+            if (localIP is null || !int.TryParse(Port.Text.Trim(), out portListen) || @interface is null || !PortHandling.IsPortAvailable(localIP, portListen))
             {
                 Elements.ShowDialog("Select an interface & enter a valid port number", messageBox);
 
