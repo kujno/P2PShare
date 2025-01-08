@@ -194,7 +194,7 @@ namespace P2PShare.GUI
             Elements.RefreshInterfaces(Interface);
         }
 
-        private async void onInviteReceived(object? sender, string? invite)
+        private async void onInviteReceived(object? sender, string? invite) // todo: add calling of waiting for an invite again
         {
             if (invite is null)
             {
@@ -209,22 +209,27 @@ namespace P2PShare.GUI
 
             if (client is null)
             {
+                Elements.ShowDialog("The file transfer failed", messageBox);
+
                 return;
             }
 
             bool? selected;
+            bool receive;
             string? path = FileDialogs.SelectFolder(out selected);
 
-            if (selected is null || path is null)
+            if (selected is not null && path is not null && (accepted && (bool)selected) == true)
             {
-                return;
+                receive = true;
+            }
+            else
+            {
+                receive = false;
             }
 
-            bool recieve = accepted && (bool)selected;
+            await FileTransport.Reply(client, receive);
 
-            await FileTransport.Reply(client, recieve);
-
-            if (!recieve)
+            if (!receive)
             {
                 return;
             }
