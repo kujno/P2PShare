@@ -26,7 +26,7 @@ namespace P2PShare.GUI
         protected CustomMessageBox messageBox = new CustomMessageBox();
         protected Invite inviteWindow = new Invite();
         protected Send_Receive sendReceiveWindow = new Send_Receive();
-        protected TcpClient? client;
+        public TcpClient? Client { get; set; } // maybe it will work like this
         protected CancellationTokenSource? cancelConnecting;
         protected CancellationTokenSource? cancelMonitoring;
         protected CancellationTokenSource? cancelReceivingInvite;
@@ -129,9 +129,9 @@ namespace P2PShare.GUI
         {
             IPAddress? ipRemote;
             
-            client = client2;
+            Client = client2;
 
-            ipRemote = IPv4Handling.GetRemoteIPAddress(client);
+            ipRemote = IPv4Handling.GetRemoteIPAddress(Client);
 
             if (ipRemote is null)
             {
@@ -140,11 +140,11 @@ namespace P2PShare.GUI
 
             Elements.Connected(State, Cancel, ipRemote);
 
-            monitorConnection = GUIConnection.MonitorClientConnection(client, State, Interface, Cancel);
+            monitorConnection = GUIConnection.MonitorClientConnection(Client, State, Interface, Cancel);
 
             cancelReceivingInvite = new CancellationTokenSource();
 
-            receiveInvite = FileTransport.ReceiveInvite(client, cancelReceivingInvite.Token);
+            receiveInvite = FileTransport.ReceiveInvite(Client, cancelReceivingInvite.Token);
         }
 
         private void OnDisconnected(object? sender, EventArgs e)
@@ -207,7 +207,7 @@ namespace P2PShare.GUI
             inviteWindow.ShowDialog();
             accepted = inviteWindow.Accepted;
 
-            if (client is null)
+            if (Client is null)
             {
                 Elements.ShowDialog("The file transfer failed", messageBox);
 
@@ -227,14 +227,14 @@ namespace P2PShare.GUI
                 receive = false;
             }
 
-            await FileTransport.Reply(client, receive);
+            await FileTransport.Reply(Client, receive);
 
             if (!receive)
             {
                 return;
             }
 
-            FileInfo? file = await FileTransport.ReceiveFile(client, FileTransport.GetFileLenghtFromInvite(invite), path);
+            FileInfo? file = await FileTransport.ReceiveFile(Client, FileTransport.GetFileLenghtFromInvite(invite), path);
 
             if (file is null)
             {
@@ -270,7 +270,7 @@ namespace P2PShare.GUI
                 receiveInvite = null;
             }
             
-            if (client is null || !client.Connected)
+            if (Client is null || !Client.Connected)
             {
                 Elements.ShowDialog("You must be connected to share", messageBox);
                 return;
@@ -284,7 +284,7 @@ namespace P2PShare.GUI
                 return;
             }
 
-            Elements.FileTransferEndDialog(messageBox, await FileTransport.SendFile(client, fileInfo));
+            Elements.FileTransferEndDialog(messageBox, await FileTransport.SendFile(Client, fileInfo));
         }
 
         private void Select_Click(object sender, RoutedEventArgs e)
