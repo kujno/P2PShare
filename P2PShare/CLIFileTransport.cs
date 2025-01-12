@@ -10,9 +10,11 @@ namespace P2PShare.CLI
         {
             while (true)
             {
+                CancellationTokenSource cts = new CancellationTokenSource();
+
                 string? invite = null;
                 
-                FileTransport.ReceiveInvite(client);
+                FileTransport.ReceiveInvite(client, cts.Token);
 
                 if (invite is null)
                 {
