@@ -1,5 +1,6 @@
 ﻿using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace P2PShare.Libs
 {
@@ -99,7 +100,7 @@ namespace P2PShare.Libs
             int bytesRead;
             try
             {
-                bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
+                bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length).WaitAsync(cancellationToken);
             }
             catch
             {
