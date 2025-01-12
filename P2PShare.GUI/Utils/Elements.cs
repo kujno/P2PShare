@@ -57,8 +57,10 @@ namespace P2PShare.GUI.Utils
             Cancel.Visibility = Visibility.Visible;
         }
 
-        public static void ShowDialog(string message, CustomMessageBox messageBox)
+        public static void ShowDialog(string message)
         {
+            CustomMessageBox messageBox = new CustomMessageBox();
+            
             messageBox.Text.Text = message;
             
             messageBox.ShowDialog();
@@ -108,7 +110,7 @@ namespace P2PShare.GUI.Utils
             return "";
         }
 
-        public static void FileTransferEndDialog(CustomMessageBox messageBox, bool succeeded)
+        public static void FileTransferEndDialog(bool succeeded)
         {
             string message;
             
@@ -125,7 +127,7 @@ namespace P2PShare.GUI.Utils
                     break;
             }
 
-            ShowDialog($"The file transfer {message}", messageBox);
+            ShowDialog($"The file transfer {message}");
         }
     }
 }

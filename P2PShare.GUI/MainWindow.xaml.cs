@@ -23,9 +23,7 @@ namespace P2PShare.GUI
         protected Task? _receiveInvite;
         protected int _portListen;
         protected int _portConnect;
-        protected CustomMessageBox _messageBox = new CustomMessageBox();
-        protected Invite _inviteWindow = new Invite();
-        protected Send_Receive _sendReceiveWindow = new Send_Receive();
+        protected Send_Receive? _sendReceiveWindow;
         protected TcpClient? _client;
         protected CancellationTokenSource? _cancelConnecting;
         protected CancellationTokenSource? _cancelMonitoring;
@@ -55,9 +53,7 @@ namespace P2PShare.GUI
         private void Close_Click(object sender, RoutedEventArgs e)
         {
             Close();
-            _messageBox.Close();
-            _inviteWindow.Close();
-            _sendReceiveWindow.Close();
+            _sendReceiveWindow?.Close();
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -113,7 +109,7 @@ namespace P2PShare.GUI
         {
             if (_localIP is null || !int.TryParse(Port.Text.Trim(), out _portListen) || _interface is null || !PortHandling.IsPortAvailable(_localIP, _portListen))
             {
-                Elements.ShowDialog("Select an interface & enter a valid port number", _messageBox);
+                Elements.ShowDialog("Select an interface & enter a valid port number");
 
                 return;
             }
@@ -166,7 +162,7 @@ namespace P2PShare.GUI
 
             if (_interface is null || _localIP is null || !IPAddress.TryParse(RemoteIP.Text.Trim(), out remoteIP))
             {
-                Elements.ShowDialog("Select an interface & enter a valid IP address", _messageBox);
+                Elements.ShowDialog("Select an interface & enter a valid IP address");
 
                 return;
             }
@@ -205,14 +201,15 @@ namespace P2PShare.GUI
             }
 
             bool accepted;
+            Invite inviteWindow = new();
 
-            _inviteWindow.Text.Text = invite;
-            _inviteWindow.ShowDialog();
-            accepted = _inviteWindow.Accepted;
+            inviteWindow.Text.Text = invite;
+            inviteWindow.ShowDialog();
+            accepted = inviteWindow.Accepted;
 
             if (_client is null)
             {
-                Elements.ShowDialog("The file transfer failed", _messageBox);
+                Elements.ShowDialog("The file transfer failed");
 
                 return;
             }
@@ -241,26 +238,37 @@ namespace P2PShare.GUI
 
             if (file is null)
             {
-                Elements.FileTransferEndDialog(_messageBox, false);
+                Elements.FileTransferEndDialog(false);
                 return;
             }
 
-            Elements.ShowDialog($"The file has been saved to:\n{file.FullName}", _messageBox);
+            Elements.ShowDialog($"The file has been saved to:\n{file.FullName}");
         }
 
         private void onFileBeingReceived(object? sender, EventArgs e)
         {
+            _sendReceiveWindow = new();
             _sendReceiveWindow.Text.Text = "Received: 0%";
             _sendReceiveWindow.ShowDialog();
         }
 
         private void onFilePartReceived(object? sender, int part)
         {
+            if (_sendReceiveWindow is null)
+            {
+                return;
+            }
+
             Elements.ChangeFileTransferState(_sendReceiveWindow, part, Models.Receive_Send.Receive);
         }
 
         private void onFilePartSent(object? sender, int part)
         {
+            if (_sendReceiveWindow is null)
+            {
+                return;
+            }
+
             Elements.ChangeFileTransferState(_sendReceiveWindow, part, Models.Receive_Send.Send);
         }
 
@@ -275,7 +283,7 @@ namespace P2PShare.GUI
             
             if (_client is null || !_client.Connected)
             {
-                Elements.ShowDialog("You must be connected to share", _messageBox);
+                Elements.ShowDialog("You must be connected to share");
                 return;
             }
             
@@ -283,11 +291,11 @@ namespace P2PShare.GUI
 
             if (!fileInfo.Exists)
             {
-                Elements.ShowDialog("Select a valid file", _messageBox);
+                Elements.ShowDialog("Select a valid file");
                 return;
             }
 
-            Elements.FileTransferEndDialog(_messageBox, await FileTransport.SendFile(_client, fileInfo));
+            Elements.FileTransferEndDialog(await FileTransport.SendFile(_client, fileInfo));
         }
 
         private void Select_Click(object sender, RoutedEventArgs e)
@@ -297,13 +305,18 @@ namespace P2PShare.GUI
 
         private void onTransferFailed(object? sender, EventArgs e)
         {
-            _sendReceiveWindow.Close();
+            _sendReceiveWindow?.Close();
 
-            Elements.ShowDialog("The file transfer failed", _messageBox);
+            Elements.ShowDialog("The file transfer failed");
         }
 
         private void onFileBeingSent(object? sender, EventArgs e)
         {
+            if (_sendReceiveWindow is null)
+            {
+                return;
+            }
+
             _sendReceiveWindow.Text.Text = "Sent: 0%";
             _sendReceiveWindow.ShowDialog();
         }
