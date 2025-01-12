@@ -1,6 +1,5 @@
 ﻿using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace P2PShare.Libs
 {
@@ -47,9 +46,7 @@ namespace P2PShare.Libs
                 return false;
             }
             
-            string reply = Encoding.UTF8.GetString(buffer);
-
-            if (reply == "n")
+            if (Encoding.UTF8.GetString(buffer) == "n")
             {
                 return false;
             }

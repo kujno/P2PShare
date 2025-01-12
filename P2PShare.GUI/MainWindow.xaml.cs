@@ -141,9 +141,7 @@ namespace P2PShare.GUI
 
             _monitorConnection = GUIConnection.MonitorClientConnection(_client, State, Interface, Cancel);
 
-            _cancelReceivingInvite = new CancellationTokenSource();
-
-            _receiveInvite = FileTransport.ReceiveInvite(_client, _cancelReceivingInvite.Token);
+            await receiveInvite();
         }
 
         private void OnDisconnected(object? sender, EventArgs e)
@@ -321,11 +319,7 @@ namespace P2PShare.GUI
 
         private void onFileBeingSent(object? sender, EventArgs e)
         {
-            if (_sendReceiveWindow is null)
-            {
-                return;
-            }
-
+            _sendReceiveWindow = new();
             _sendReceiveWindow.Text.Text = "Sent: 0%";
             _sendReceiveWindow.ShowDialog();
         }
