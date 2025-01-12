@@ -214,11 +214,16 @@ namespace P2PShare.GUI
                 return;
             }
 
+            if (!accepted)
+            {
+                return;
+            }
+            
             bool? selected;
             bool receive;
             string? path = FileDialogs.SelectFolder(out selected);
 
-            if (selected is not null && path is not null && (accepted && (bool)selected) == true)
+            if (selected is not null && path is not null && selected == true)
             {
                 receive = true;
             }
@@ -229,7 +234,7 @@ namespace P2PShare.GUI
 
             await FileTransport.Reply(_client, receive);
 
-            if (!receive || path is null)
+            if (path is null)
             {
                 return;
             }
