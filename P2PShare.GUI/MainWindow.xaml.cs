@@ -193,7 +193,7 @@ namespace P2PShare.GUI
             Elements.RefreshInterfaces(Interface);
         }
 
-        private async void onInviteReceived(object? sender, string? invite) // todo: add calling of waiting for an invite again
+        private async void onInviteReceived(object? sender, string? invite)
         {
             if (invite is null)
             {
@@ -248,6 +248,8 @@ namespace P2PShare.GUI
             }
 
             Elements.ShowDialog($"The file has been saved to:\n{file.FullName}");
+
+            await receiveInvite();
         }
 
         private void onFileBeingReceived(object? sender, EventArgs e)
@@ -301,6 +303,8 @@ namespace P2PShare.GUI
             }
 
             Elements.FileTransferEndDialog(await FileTransport.SendFile(_client, fileInfo));
+
+            await receiveInvite();
         }
 
         private void Select_Click(object sender, RoutedEventArgs e)
@@ -324,6 +328,17 @@ namespace P2PShare.GUI
 
             _sendReceiveWindow.Text.Text = "Sent: 0%";
             _sendReceiveWindow.ShowDialog();
+        }
+
+        private async Task receiveInvite()
+        {
+            if (_client is null || !_client.Connected)
+            {
+                return;
+            }
+            
+            _cancelReceivingInvite = new();
+            _receiveInvite = FileTransport.ReceiveInvite(_client, _cancelReceivingInvite.Token);
         }
     }
 }
