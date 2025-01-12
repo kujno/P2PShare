@@ -229,7 +229,7 @@ namespace P2PShare.GUI
 
             await FileTransport.Reply(_client, receive);
 
-            if (!receive)
+            if (!receive || path is null)
             {
                 return;
             }
