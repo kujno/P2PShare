@@ -156,6 +156,7 @@ namespace P2PShare.GUI
             if (_cancelConnecting is not null)
             {
                 _cancelConnecting = Cancellation.Cancel(_cancelConnecting);
+                _cancelConnecting = null;
             }
 
             if (_interface is null || _localIP is null || !IPAddress.TryParse(RemoteIP.Text.Trim(), out remoteIP))
