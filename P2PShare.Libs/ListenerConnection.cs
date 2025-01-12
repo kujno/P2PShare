@@ -37,7 +37,7 @@ namespace P2PShare.Libs
 
         public static async Task ListenLoop(int port, NetworkInterface @interface, CancellationToken cancellationToken)
         {
-            while (true && !cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 TcpClient? client = await WaitForConnection(port, @interface, cancellationToken);
 
