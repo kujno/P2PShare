@@ -193,7 +193,7 @@ namespace P2PShare.Libs
 
         public static int GetFileLenghtFromInvite(string invite)
         {
-            return int.Parse(invite.Substring(invite.IndexOf('(') + 1, invite.IndexOf("bytes") - invite.IndexOf('(')));
+            return int.Parse(invite.Substring(invite.IndexOf('(') + 1, invite.LastIndexOf('B') - invite.IndexOf('(')));
         }
 
         private static void onFileBeingReceived()
