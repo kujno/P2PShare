@@ -279,7 +279,7 @@ namespace P2PShare.GUI
                 return;
             }
             
-            FileInfo fileInfo = new FileInfo(File.Text);
+            FileInfo fileInfo = new(File.Text.Trim());
 
             if (!fileInfo.Exists)
             {
