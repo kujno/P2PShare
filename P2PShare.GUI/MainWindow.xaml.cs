@@ -143,7 +143,7 @@ namespace P2PShare.GUI
 
             Elements.Connected(State, Cancel, ipRemote);
 
-            // _monitorConnection = GUIConnection.MonitorClientConnection(_client, State, Interface, Cancel);
+            _monitorConnection = GUIConnection.MonitorClientConnection(_client, State, Interface, Cancel);
 
             _cancelReceivingInvite = new CancellationTokenSource();
 
