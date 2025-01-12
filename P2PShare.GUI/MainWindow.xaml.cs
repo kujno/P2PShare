@@ -135,6 +135,9 @@ namespace P2PShare.GUI
 
             if (ipRemote is null)
             {
+                _client.Dispose();
+                _client = null;
+
                 return;
             }
 

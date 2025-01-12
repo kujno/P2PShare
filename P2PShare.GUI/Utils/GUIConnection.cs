@@ -14,20 +14,18 @@ namespace P2PShare.GUI.Utils
                 {
                     if (client.Client.Poll(0, SelectMode.SelectRead) && client.Client.Available == 0)
                     {
-                        Elements.Disconnected(State, Cancel, Interface);
-
-                        return;
+                        break;
                     }
                 }
                 catch
                 {
-                    Elements.Disconnected(State, Cancel, Interface);
-
                     break;
                 }
 
                 await Task.Delay(1000);
             }
+
+            Elements.Disconnected(State, Cancel, Interface);
         }
     }
 }
