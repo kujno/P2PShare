@@ -266,9 +266,9 @@ namespace P2PShare.GUI
 
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
-            if (_receiveInvite is not null)
+            if (_receiveInvite is not null && _cancelReceivingInvite is not null)
             {
-                _cancelReceivingInvite?.Cancel();
+                await _cancelReceivingInvite.CancelAsync();
                 
                 _receiveInvite = null;
             }
