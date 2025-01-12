@@ -106,7 +106,7 @@ namespace P2PShare.GUI
 
             _cancelMonitoring = new CancellationTokenSource();
 
-            // _monitorInterface = InterfaceHandling.MonitorInterface(_interface, _cancelMonitoring.Token);
+            _monitorInterface = InterfaceHandling.MonitorInterface(_interface, _cancelMonitoring.Token);
         }
 
         private void Listen_Click(object sender, RoutedEventArgs e)

@@ -35,27 +35,27 @@ namespace P2PShare.Libs
             return interfacesUp;
         }
 
-        //public static async Task MonitorInterface(NetworkInterface @interface, CancellationToken cancellationToken)
-        //{
-        //    try
-        //    {
-        //        while (@interface.OperationalStatus == OperationalStatus.Up)
-        //        {
-        //            if (cancellationToken.IsCancellationRequested)
-        //            {
-        //                return;
-        //            }
+        public static async Task MonitorInterface(NetworkInterface @interface, CancellationToken cancellationToken)
+        {
+            try
+            {
+                while (@interface.OperationalStatus == OperationalStatus.Up)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
                     
-        //            await Task.Delay(1000);
-        //        }
-        //    }
-        //    catch
-        //    {
+                    await Task.Delay(1000);
+                }
+            }
+            catch
+            {
 
-        //    }
+            }
             
-        //    OnInterfaceDown();
-        //}
+            OnInterfaceDown();
+        }
 
         private static void OnInterfaceDown()
         {
