@@ -20,7 +20,7 @@ namespace P2PShare.GUI
         protected Task? _monitorConnection;
         protected Task? _monitorInterface;
         protected Task? _connecting;
-        protected Task? _receiveInvite;
+        protected Task? _receiveInvite = null;
         protected int _portListen;
         protected int _portConnect;
         protected Send_Receive? _sendReceiveWindow;
