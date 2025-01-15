@@ -39,7 +39,7 @@ namespace P2PShare.Libs
 
             try
             {
-                await stream.ReadAsync(buffer, 0, buffer.Length);
+                int read = await stream.ReadAsync(buffer, 0, buffer.Length);
             }
             catch
             {
@@ -142,7 +142,6 @@ namespace P2PShare.Libs
         {
             NetworkStream stream;
 
-
             try
             {
                 stream = client.GetStream();
@@ -170,7 +169,7 @@ namespace P2PShare.Libs
 
             try
             {
-                await stream.WriteAsync(replyBytes, 0, replyBytes.Length);
+                stream.Write(replyBytes, 0, replyBytes.Length);
             }
             catch
             {
