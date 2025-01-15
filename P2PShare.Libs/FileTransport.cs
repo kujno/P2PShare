@@ -169,7 +169,7 @@ namespace P2PShare.Libs
 
             try
             {
-                stream.Write(replyBytes, 0, replyBytes.Length);
+                await stream.WriteAsync(replyBytes, 0, replyBytes.Length);
             }
             catch
             {
