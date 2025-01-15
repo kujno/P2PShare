@@ -301,7 +301,9 @@ namespace P2PShare.GUI
                 return;
             }
 
-            Elements.FileTransferEndDialog(await FileTransport.SendFile(_client, fileInfo));
+            bool sent = await FileTransport.SendFile(_client, fileInfo);
+
+            Elements.FileTransferEndDialog(sent);
 
             await receiveInvite();
         }

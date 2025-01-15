@@ -174,7 +174,6 @@ namespace P2PShare.Libs
             }
             catch
             {
-                return;
             }
         }
 
