@@ -39,14 +39,14 @@ namespace P2PShare.Libs
 
             try
             {
-                int read = await stream.ReadAsync(buffer, 0, buffer.Length);
+                await stream.ReadAsync(buffer, 0, buffer.Length);
             }
             catch
             {
                 return false;
             }
             
-            if (Encoding.UTF8.GetString(buffer) == "n")
+            if (Encoding.UTF8.GetString(buffer) != "y")
             {
                 return false;
             }
