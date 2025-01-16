@@ -36,7 +36,7 @@ namespace P2PShare.Libs
             {
                 return false;
             }
-
+            
             try
             {
                 await stream.ReadAsync(buffer, 0, buffer.Length);
@@ -97,12 +97,10 @@ namespace P2PShare.Libs
             int bytesRead;
             try
             {
-                bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length).WaitAsync(cancellationToken);
+                bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
             }
             catch
             {
-                onInviteReceived(null);
-
                 return;
             }
 
@@ -166,6 +164,8 @@ namespace P2PShare.Libs
             }
             
             byte[] replyBytes = Encoding.UTF8.GetBytes(reply);
+
+            await stream.FlushAsync();
 
             try
             {

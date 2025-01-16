@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -280,11 +281,11 @@ namespace P2PShare.GUI
 
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
-            if (_receiveInvite is not null && _cancelReceivingInvite is not null)
+            if (_receiveInvite is not null && _receiveInvite.Status == TaskStatus.Running && _cancelReceivingInvite is not null)
             {
                 await _cancelReceivingInvite.CancelAsync();
-                
-                _receiveInvite = null;
+
+                _cancelReceivingInvite = null;
             }
             
             if (_client is null || !_client.Connected)
