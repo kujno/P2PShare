@@ -281,11 +281,15 @@ namespace P2PShare.GUI
 
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
-            if (_receiveInvite is not null && _receiveInvite.Status == TaskStatus.Running && _cancelReceivingInvite is not null)
+            if (_cancelReceivingInvite is not null && _client is not null)
             {
+                NetworkStream stream = _client.GetStream();
+
                 await _cancelReceivingInvite.CancelAsync();
 
                 _cancelReceivingInvite = null;
+
+                await stream.FlushAsync();
             }
             
             if (_client is null || !_client.Connected)
@@ -334,7 +338,7 @@ namespace P2PShare.GUI
             }
             
             _cancelReceivingInvite = new();
-            _receiveInvite = FileTransport.ReceiveInvite(_client, _cancelReceivingInvite.Token);
+            await FileTransport.ReceiveInvite(_client, _cancelReceivingInvite.Token);
         }
     }
 }

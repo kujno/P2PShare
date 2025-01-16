@@ -88,8 +88,6 @@ namespace P2PShare.Libs
             }
             catch
             {
-                onInviteReceived(null);
-
                 return;
             }
 
@@ -100,7 +98,7 @@ namespace P2PShare.Libs
                 bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
             }
             catch
-            {
+            {                
                 return;
             }
 
