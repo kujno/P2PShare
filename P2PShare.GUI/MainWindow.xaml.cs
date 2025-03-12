@@ -15,20 +15,20 @@ namespace P2PShare.GUI
     /// </summary>
     public partial class MainWindow : Window
     {
-        protected NetworkInterface? _interface;
-        protected IPAddress? _localIP;
-        protected Task? _listen;
-        protected Task? _monitorConnection;
-        protected Task? _monitorInterface;
-        protected Task? _connecting;
-        protected Task? _receiveInvite = null;
-        protected int _portListen;
-        protected int _portConnect;
-        protected Send_Receive? _sendReceiveWindow;
-        protected TcpClient? _client;
-        protected CancellationTokenSource? _cancelConnecting;
-        protected CancellationTokenSource? _cancelMonitoring;
-        protected CancellationTokenSource? _cancelReceivingInvite;
+        private NetworkInterface? _interface;
+        private IPAddress? _localIP;
+        private Task? _listen;
+        private Task? _monitorConnection;
+        private Task? _monitorInterface;
+        private Task? _connecting;
+        private Task? _receiveInvite = null;
+        private int _portListen;
+        private int _portConnect;
+        private Send_Receive? _sendReceiveWindow;
+        private TcpClient? _client, _inviteClient;
+        private CancellationTokenSource? _cancelConnecting;
+        private CancellationTokenSource? _cancelMonitoring;
+        private CancellationTokenSource? _cancelReceivingInvite;
 
         public MainWindow()
         {
