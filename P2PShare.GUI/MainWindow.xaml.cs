@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.IO;
+﻿using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -18,14 +17,14 @@ namespace P2PShare.GUI
         private NetworkInterface? _interface;
         private IPAddress? _localIP;
         private Task? _listen;
-        private Task? _monitorConnection;
+        private Task?[] _monitorConnections = new Task?[2];
         private Task? _monitorInterface;
-        private Task? _connecting;
+        private Task?[] _connecting = new Task?[2];
         private Task? _receiveInvite = null;
         private int _portListen;
         private int _portConnect;
         private Send_Receive? _sendReceiveWindow;
-        private TcpClient? _client, _inviteClient;
+        private TcpClient?[] _clients = new TcpClient?[2];
         private CancellationTokenSource? _cancelConnecting;
         private CancellationTokenSource? _cancelMonitoring;
         private CancellationTokenSource? _cancelReceivingInvite;
@@ -125,29 +124,77 @@ namespace P2PShare.GUI
         private async void OnConnected(object? sender, TcpClient client2)
         {
             IPAddress? ipRemote;
-            
-            _client = client2;
+            int i = 0;
+            bool check = false;
 
-            ipRemote = IPv4Handling.GetRemoteIPAddress(_client);
+            do
+            {
+                if (_clients[i] is not null)
+                {
+                    i++;
+                    
+                    continue;
+                }
+
+                _clients[i] = client2;
+                
+                check = true;
+            }
+            while (i < _clients.Length && !check);
+
+            if (_clients[i] is null)
+            {
+                return;
+            }
+            
+            ipRemote = IPv4Handling.GetRemoteIPAddress(_clients[i]!);
 
             if (ipRemote is null)
             {
-                _client.Dispose();
-                _client = null;
+                _clients[i]!.Dispose();
+                _clients[i] = null;
 
                 return;
             }
 
-            Elements.Connected(State, Cancel, ipRemote);
+            check = true;
+            
+            foreach (TcpClient? client in _clients)
+            {
+                if (client is not null)
+                {
+                    continue;
+                }
 
-            _monitorConnection = GUIConnection.MonitorClientConnection(_client, State, Interface, Cancel);
+                check = false;
+                
+                break;
+            }
+            
+            if (check)
+            {
+                Elements.Connected(State, Cancel, ipRemote);
+            }
+
+            _monitorConnections[i] = GUIConnection.MonitorClientConnection(_clients[i]!, State, Interface, Cancel);
 
             await receiveInvite();
         }
 
         private void OnDisconnected(object? sender, EventArgs e)
         {
+            if (State.Text == "Disconnected")
+            {
+                return;
+            }
+            
             Elements.Disconnected(State, Cancel, Interface);
+
+            for (int i = 0; i < _clients.Length; i++)
+            {
+                _clients[i]?.Dispose();
+                _clients[i] = null;
+            }
         }
 
         private async void Connect_Click(object sender, RoutedEventArgs e)
@@ -171,7 +218,10 @@ namespace P2PShare.GUI
 
             _cancelConnecting = new CancellationTokenSource();
 
-            _connecting = ClientConnection.Connect(remoteIP, _interface, _portConnect, _cancelConnecting.Token);
+            for (int i = 0; i < 2; i++)
+            {
+                _connecting[i] = ClientConnection.Connect(remoteIP, _interface, _portConnect + i, _cancelConnecting.Token);
+            }
 
             Elements.Connecting(_portConnect, State, Cancel);
         }
@@ -207,7 +257,7 @@ namespace P2PShare.GUI
             inviteWindow.ShowDialog();
             accepted = inviteWindow.Accepted;
 
-            if (_client is null)
+            if (_clients[0] is null || !_clients[0]!.Connected)
             {
                 Elements.ShowDialog("The file transfer failed");
 
@@ -232,14 +282,14 @@ namespace P2PShare.GUI
                 receive = false;
             }
 
-            await FileTransport.Reply(_client, receive);
+            await FileTransport.Reply(_clients[0]!, receive);
 
             if (path is null)
             {
                 return;
             }
 
-            FileInfo? file = await FileTransport.ReceiveFile(_client, FileTransport.GetFileLenghtFromInvite(invite), path);
+            FileInfo? file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), path);
 
             if (file is null)
             {
@@ -281,18 +331,7 @@ namespace P2PShare.GUI
 
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
-            if (_cancelReceivingInvite is not null && _client is not null)
-            {
-                NetworkStream stream = _client.GetStream();
-
-                await _cancelReceivingInvite.CancelAsync();
-
-                _cancelReceivingInvite = null;
-
-                await stream.FlushAsync();
-            }
-            
-            if (_client is null || !_client.Connected)
+            if (_clients[0] is null || !_clients[0]!.Connected)
             {
                 Elements.ShowDialog("You must be connected to share");
                 return;
@@ -306,7 +345,7 @@ namespace P2PShare.GUI
                 return;
             }
 
-            Elements.FileTransferEndDialog(await FileTransport.SendFile(_client, fileInfo));
+            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients[0]!, fileInfo));
 
             await receiveInvite();
         }
@@ -332,13 +371,12 @@ namespace P2PShare.GUI
 
         private async Task receiveInvite()
         {
-            if (_client is null || !_client.Connected)
+            if (_clients[1] is null || !_clients[1]!.Connected)
             {
                 return;
             }
             
-            _cancelReceivingInvite = new();
-            await FileTransport.ReceiveInvite(_client, _cancelReceivingInvite.Token);
+            await FileTransport.ReceiveInvite(_clients[1]!);
         }
     }
 }
