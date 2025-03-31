@@ -307,9 +307,12 @@ namespace P2PShare.GUI
 
         private void onFileBeingReceived(object? sender, EventArgs e)
         {
-            _sendReceiveWindow = new();
-            _sendReceiveWindow.Text.Text = "Received: 0%";
-            _sendReceiveWindow.Show();
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                _sendReceiveWindow = new Send_Receive();
+                _sendReceiveWindow.Text.Text = "Received: 0%";
+                _sendReceiveWindow.Show();
+            });
         }
 
         private void onFilePartReceived(object? sender, int part)
