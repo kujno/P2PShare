@@ -285,7 +285,7 @@ namespace P2PShare.GUI
                 receive = false;
             }
 
-            await FileTransport.Reply(_clients[0]!, receive);
+            await FileTransport.Reply(_clients[1]!, receive);
 
             if (path is null)
             {
@@ -348,7 +348,7 @@ namespace P2PShare.GUI
                 return;
             }
 
-            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients[0]!, fileInfo));
+            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfo));
 
             await receiveInvite();
         }
