@@ -16,7 +16,7 @@ namespace P2PShare.GUI
     {
         private NetworkInterface? _interface;
         private IPAddress? _localIP;
-        private Task? _listen;
+        private Task?[] _listening = new Task?[2];
         private Task?[] _monitorConnections = new Task?[2];
         private Task? _monitorInterface;
         private Task?[] _connecting = new Task?[2];
@@ -116,7 +116,10 @@ namespace P2PShare.GUI
 
             _cancelConnecting = new CancellationTokenSource();
 
-            _listen = ListenerConnection.ListenLoop(_portListen, _interface, _cancelConnecting.Token);
+            for (int i = 0; i < 2; i++)
+            {
+                _listening[i] = ListenerConnection.ListenLoop(_portListen + i, _interface, _cancelConnecting.Token);
+            }
 
             Elements.Listening(_portListen, State, Cancel);
         }
