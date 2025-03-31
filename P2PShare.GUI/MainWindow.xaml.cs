@@ -309,7 +309,7 @@ namespace P2PShare.GUI
         {
             _sendReceiveWindow = new();
             _sendReceiveWindow.Text.Text = "Received: 0%";
-            _sendReceiveWindow.ShowDialog();
+            _sendReceiveWindow.Show();
         }
 
         private void onFilePartReceived(object? sender, int part)
@@ -369,7 +369,7 @@ namespace P2PShare.GUI
         {
             _sendReceiveWindow = new();
             _sendReceiveWindow.Text.Text = "Sent: 0%";
-            _sendReceiveWindow.ShowDialog();
+            _sendReceiveWindow.Show();
         }
 
         private async Task receiveInvite()
