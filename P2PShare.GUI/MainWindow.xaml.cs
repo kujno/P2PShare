@@ -285,7 +285,7 @@ namespace P2PShare.GUI
                 receive = false;
             }
 
-            await FileTransport.Reply(_clients[1]!, receive);
+            await FileTransport.Reply(_clients[0]!, receive);
 
             if (path is null)
             {

@@ -14,14 +14,11 @@ namespace P2PShare.Libs
 
         public static async Task<bool> SendFile(TcpClient[] clients, FileInfo fileInfo)
         {
-            NetworkStream[] stream = new NetworkStream[2];
+            NetworkStream[] streams = new NetworkStream[2];
 
             try
             {
-                for (int i = 0; i < stream.Length; i++)
-                {
-                    stream[i] = clients[i].GetStream();
-                }
+                streams = ClientHandling.GetStreamsFromTcpClients(clients);
             }
             catch
             {
@@ -33,7 +30,7 @@ namespace P2PShare.Libs
 
             try
             {
-                await stream[1].WriteAsync(inviteBytes, 0, inviteBytes.Length);
+                await streams[1].WriteAsync(inviteBytes, 0, inviteBytes.Length);
             }
             catch
             {
@@ -42,7 +39,7 @@ namespace P2PShare.Libs
             
             try
             {
-                await stream[1].ReadAsync(buffer, 0, buffer.Length);
+                await streams[0].ReadAsync(buffer, 0, buffer.Length);
             }
             catch
             {
@@ -65,7 +62,7 @@ namespace P2PShare.Libs
 
                 while ((bytesRead = await fileStream.ReadAsync(buffer2, 0, buffer2.Length)) > 0)
                 {
-                    await stream[0].WriteAsync(buffer2, 0, bytesRead);
+                    await streams[0].WriteAsync(buffer2, 0, bytesRead);
 
                     bytesSent += bytesRead;
                     OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
@@ -84,7 +81,7 @@ namespace P2PShare.Libs
         public static async Task ReceiveInvite(TcpClient client)
         {
             NetworkStream stream;
-
+            
             try
             {
                 stream = client.GetStream();
