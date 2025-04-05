@@ -242,59 +242,53 @@ namespace P2PShare.GUI
 
         private async void onInviteReceived(object? sender, string? invite)
         {
-            if (invite is null)
+            if (!String.IsNullOrEmpty(invite))
             {
-                return;
+                bool accepted;
+                Invite inviteWindow = new();
+                FileInfo? file = null;
+
+                inviteWindow.Text.Text = invite;
+                inviteWindow.ShowDialog();
+                accepted = inviteWindow.Accepted;
+
+                if (_clients[0] is not null || _clients[0]!.Connected)
+                {
+                    bool? selected = null;
+                    bool receive;
+                    string? path = null;
+
+                    if (accepted)
+                    {
+                        path = FileDialogs.SelectFolder(out selected);
+                    }
+
+                    if (selected is not null && path is not null && selected == true)
+                    {
+                        receive = true;
+                    }
+                    else
+                    {
+                        receive = false;
+                    }
+
+                    await FileTransport.Reply(_clients[0]!, receive);
+
+                    if (path is not null)
+                    {
+                        file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), $"{path}\\{FileTransport.GetFileNameFromInvite(invite)}");
+                    }
+                }
+
+                if (file is null)
+                {
+                    Elements.FileTransferEndDialog(false);
+                }
+                else 
+                {
+                    Elements.ShowDialog($"The file has been saved to:\n{file.FullName}");
+                }
             }
-
-            bool accepted;
-            Invite inviteWindow = new();
-
-            inviteWindow.Text.Text = invite;
-            inviteWindow.ShowDialog();
-            accepted = inviteWindow.Accepted;
-
-            if (_clients[0] is null || !_clients[0]!.Connected)
-            {
-                Elements.ShowDialog("The file transfer failed");
-
-                return;
-            }
-
-            bool? selected = null;
-            bool receive;
-            string? path = null;
-            
-            if (accepted)
-            {
-                path = FileDialogs.SelectFolder(out selected);
-            }
-
-            if (selected is not null && path is not null && selected == true)
-            {
-                receive = true;
-            }
-            else
-            {
-                receive = false;
-            }
-
-            await FileTransport.Reply(_clients[0]!, receive);
-
-            if (path is null)
-            {
-                return;
-            }
-
-            FileInfo? file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), $"{path}\\{FileTransport.GetFileNameFromInvite(invite)}");
-
-            if (file is null)
-            {
-                Elements.FileTransferEndDialog(false);
-                return;
-            }
-
-            Elements.ShowDialog($"The file has been saved to:\n{file.FullName}");
 
             await receiveInvite();
         }
