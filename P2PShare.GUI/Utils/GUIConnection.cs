@@ -1,4 +1,5 @@
-﻿using System.Net.NetworkInformation;
+﻿using P2PShare.Libs;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Windows.Controls;
 
@@ -25,7 +26,7 @@ namespace P2PShare.GUI.Utils
                 await Task.Delay(1000);
             }
 
-            Elements.Disconnected(State, Cancel, Interface);
+            ClientConnection.OnDisconnected();
         }
     }
 }
