@@ -26,7 +26,6 @@ namespace P2PShare.GUI
         private TcpClient?[] _clients = new TcpClient?[2];
         private CancellationTokenSource? _cancelConnecting;
         private CancellationTokenSource? _cancelMonitoring;
-        private CancellationTokenSource? _cancelReceivingInvite;
 
         public MainWindow()
         {
@@ -159,6 +158,8 @@ namespace P2PShare.GUI
                 return;
             }
 
+            _monitorConnections[i] = GUIConnection.MonitorClientConnection(_clients[i]!, State, Interface, Cancel);
+
             check = true;
             
             foreach (TcpClient? client in _clients)
@@ -172,13 +173,13 @@ namespace P2PShare.GUI
                 
                 break;
             }
-            
-            if (check)
+
+            if (!check)
             {
-                Elements.Connected(State, Cancel, ipRemote);
+                return;
             }
 
-            _monitorConnections[i] = GUIConnection.MonitorClientConnection(_clients[i]!, State, Interface, Cancel);
+            Elements.Connected(State, Cancel, ipRemote);
 
             await receiveInvite();
         }

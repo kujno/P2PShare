@@ -32,7 +32,14 @@ namespace P2PShare.GUI.Utils
 
         public static void Connected(TextBlock State, Button Cancel, IPAddress ip)
         {
-            State.Text = $"Connected to {ip}";
+            string ipString = ip.ToString();
+
+            if (ipString.Contains("::ffff:"))
+            {
+                ipString = ipString.Substring("::ffff:".Length);
+            }
+
+            State.Text = $"Connected to {ipString}";
             State.Foreground = System.Windows.Media.Brushes.Green;
             Cancel.Visibility = Visibility.Collapsed;
         }
