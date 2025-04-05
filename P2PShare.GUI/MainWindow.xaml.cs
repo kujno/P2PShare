@@ -186,11 +186,6 @@ namespace P2PShare.GUI
 
         private void OnDisconnected(object? sender, EventArgs e)
         {
-            if (State.Text == "Disconnected")
-            {
-                return;
-            }
-            
             Elements.Disconnected(State, Cancel, Interface);
 
             for (int i = 0; i < _clients.Length; i++)

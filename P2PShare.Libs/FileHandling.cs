@@ -6,7 +6,7 @@ namespace P2PShare.Libs
     {
         public static async Task CreateFile(NetworkStream networkStream, string filePath, int fileLength)
         {
-            using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
+            using (FileStream fileStream = new FileStream(filePath, getFileMode(filePath)))
             {
                 int totalBytesRead = 0;
 
@@ -27,6 +27,16 @@ namespace P2PShare.Libs
         public static int CalculatePercentage(long total, long part)
         {
             return (int)(part / (total / 100));
+        }
+
+        private static FileMode getFileMode(string path)
+        {
+            if (File.Exists(path))
+            {
+                return FileMode.Create;
+            }
+
+            return FileMode.CreateNew;
         }
     }
 }
