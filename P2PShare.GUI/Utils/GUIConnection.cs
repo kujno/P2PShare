@@ -1,5 +1,4 @@
 ﻿using P2PShare.Libs;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Windows.Controls;
 

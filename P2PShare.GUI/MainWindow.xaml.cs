@@ -20,7 +20,6 @@ namespace P2PShare.GUI
         private Task?[] _monitorConnections = new Task?[2];
         private Task? _monitorInterface;
         private Task?[] _connecting = new Task?[2];
-        private Task? _receiveInvite = null;
         private int _portListen;
         private int _portConnect;
         private Send_Receive? _sendReceiveWindow;
@@ -262,14 +261,14 @@ namespace P2PShare.GUI
                 return;
             }
 
-            if (!accepted)
-            {
-                return;
-            }
-            
-            bool? selected;
+            bool? selected = null;
             bool receive;
-            string? path = FileDialogs.SelectFolder(out selected);
+            string? path = null;
+            
+            if (accepted)
+            {
+                path = FileDialogs.SelectFolder(out selected);
+            }
 
             if (selected is not null && path is not null && selected == true)
             {

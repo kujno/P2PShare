@@ -15,49 +15,26 @@ namespace P2PShare.Libs
         public static async Task<bool> SendFile(TcpClient[] clients, FileInfo fileInfo)
         {
             NetworkStream[] streams = new NetworkStream[2];
-
-            try
-            {
-                streams = ClientHandling.GetStreamsFromTcpClients(clients);
-            }
-            catch
-            {
-                return false;
-            }
-
             byte[] inviteBytes = createInvite(fileInfo);
             byte[] buffer = new byte[Encoding.UTF8.GetBytes("y").Length];
 
             try
             {
-                await streams[1].WriteAsync(inviteBytes, 0, inviteBytes.Length);
-            }
-            catch
-            {
-                return false;
-            }
-            
-            try
-            {
-                await streams[0].ReadAsync(buffer, 0, buffer.Length);
-            }
-            catch
-            {
-                return false;
-            }
-            
-            if (Encoding.UTF8.GetString(buffer) != "y")
-            {
-                return false;
-            }
+                streams = ClientHandling.GetStreamsFromTcpClients(clients);
 
-            try
-            {
+                await streams[1].WriteAsync(inviteBytes, 0, inviteBytes.Length);
+                await streams[0].ReadAsync(buffer, 0, buffer.Length);
+                
+                if (Encoding.UTF8.GetString(buffer) != "y")
+                {
+                    return false;
+                }
+
                 int bytesRead;
                 int bytesSent = 0;
                 byte[] buffer2 = new byte[8192];
                 using FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read);
-                
+
                 onFileBeingSent();
 
                 while ((bytesRead = await fileStream.ReadAsync(buffer2, 0, buffer2.Length)) > 0)
@@ -70,8 +47,6 @@ namespace P2PShare.Libs
             }
             catch
             {
-                onTransferFailed();
-
                 return false;
             }
 
@@ -81,24 +56,17 @@ namespace P2PShare.Libs
         public static async Task ReceiveInvite(TcpClient client)
         {
             NetworkStream stream;
-            
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+
             try
             {
                 stream = client.GetStream();
-            }
-            catch
-            {
-                return;
-            }
 
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            try
-            {
                 bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
             }
             catch
-            {                
+            {
                 return;
             }
 
@@ -112,22 +80,12 @@ namespace P2PShare.Libs
             try
             {
                 networkStream = client.GetStream();
-            }
-            catch
-            {
-                return null;
-            }
 
-            onFileBeingReceived();
-
-            try
-            {
+                onFileBeingReceived();
                 await FileHandling.CreateFile(networkStream, filePath, fileLength);
             }
             catch
             {
-                onTransferFailed();
-
                 return null;
             }
 
@@ -137,36 +95,27 @@ namespace P2PShare.Libs
         public static async Task Reply(TcpClient client, bool accepted)
         {
             NetworkStream stream;
+            string reply;
+            byte[] replyBytes;
 
             try
             {
                 stream = client.GetStream();
-            }
-            catch
-            {
-                return;
-            }
 
-            string reply;
+                switch (accepted)
+                {
+                    case true:
+                        reply = "y";
 
-            switch (accepted)
-            {
-                case true:
-                    reply = "y";
+                        break;
+                    case false:
+                        reply = "n";
 
-                    break;
-                case false:
-                    reply = "n";
-                    
-                    break;
-            }
-            
-            byte[] replyBytes = Encoding.UTF8.GetBytes(reply);
+                        break;
+                }
+                replyBytes = Encoding.UTF8.GetBytes(reply);
 
-            await stream.FlushAsync();
-
-            try
-            {
+                await stream.FlushAsync();
                 await stream.WriteAsync(replyBytes, 0, replyBytes.Length);
             }
             catch
