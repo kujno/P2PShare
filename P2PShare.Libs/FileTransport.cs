@@ -189,6 +189,11 @@ namespace P2PShare.Libs
             return int.Parse(invite.Substring(invite.IndexOf('(') + 1, invite.LastIndexOf('B') - invite.IndexOf('(') - 1));
         }
 
+        public static string GetFileNameFromInvite(string invite)
+        {
+            return invite.Substring(0, invite.IndexOf(" ("));
+        }
+
         private static void onFileBeingReceived()
         {
             FileBeingReceived?.Invoke(null, EventArgs.Empty);

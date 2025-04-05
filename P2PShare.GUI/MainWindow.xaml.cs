@@ -287,7 +287,7 @@ namespace P2PShare.GUI
                 return;
             }
 
-            FileInfo? file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), path);
+            FileInfo? file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), path + FileTransport.GetFileNameFromInvite(invite));
 
             if (file is null)
             {
