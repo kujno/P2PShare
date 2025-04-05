@@ -6,7 +6,7 @@ namespace P2PShare.Libs
     {
         public static async Task CreateFile(NetworkStream networkStream, string filePath, int fileLength)
         {
-            using (FileStream fileStream = new FileStream(filePath, getFileMode(filePath)))
+            using (FileStream fileStream = new FileStream(filePath, getFileMode(filePath), FileAccess.Write, FileShare.None))
             {
                 int totalBytesRead = 0;
 
