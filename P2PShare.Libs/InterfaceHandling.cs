@@ -20,11 +20,11 @@ namespace P2PShare.Libs
             NetworkInterface[] interfaces = interfacesNullable.Where(ni => ni != null).Cast<NetworkInterface>().ToArray();
 
             // up interfaces check
-            for (int j = 0; j < interfaces.Length; j++)
+            for (int i = 0; i < interfaces.Length; i++)
             {
-                if (interfaces[j].OperationalStatus == OperationalStatus.Up)
+                if (interfaces[i].OperationalStatus == OperationalStatus.Up && !interfaces[i].Name.ToLower().Contains("loopback"))
                 {
-                    interfacesUp.Add(interfaces[j]);
+                    interfacesUp.Add(interfaces[i]);
                 }
             }
             if (interfacesUp.Count == 0)
