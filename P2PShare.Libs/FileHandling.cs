@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Sockets;
+using System.Text;
 
 namespace P2PShare.Libs
 {
@@ -14,11 +15,15 @@ namespace P2PShare.Libs
 
                 while (totalBytesRead < fileLength)
                 {
+                    byte[] ack = Encoding.UTF8.GetBytes(".");
+
+                    await networkStream.WriteAsync(ack, 0, ack.Length);
                     await networkStream.ReadAsync(nonce, 0, nonce.Length);
 
                     byte[] buffer = new byte[FileTransport.BufferSize + SymmetricCryptography.TagSize];
                     byte[] decryptedBuffer;
 
+                    await networkStream.WriteAsync(ack, 0, ack.Length);
                     await networkStream.ReadAsync(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead + SymmetricCryptography.TagSize));
 
                     decryptedBuffer = SymmetricCryptography.Decrypt(buffer, aesKey, nonce);
