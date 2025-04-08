@@ -25,8 +25,10 @@ namespace P2PShare.Libs
         {
             byte[] encryptedData;
 
-            using (RSA rsa = RSA.Create(key))
+            using (RSA rsa = RSA.Create())
             {
+                rsa.ImportParameters(key);
+
                 encryptedData = rsa.Encrypt(originalData, RSAEncryptionPadding.OaepSHA256);
             }
 
@@ -37,8 +39,10 @@ namespace P2PShare.Libs
         {
             byte[] decryptedData;
             
-            using (RSA rsa = RSA.Create(key))
+            using (RSA rsa = RSA.Create())
             {
+                rsa.ImportParameters(key);
+
                 decryptedData = rsa.Decrypt(encryptedData, RSAEncryptionPadding.OaepSHA256);
             }
             
