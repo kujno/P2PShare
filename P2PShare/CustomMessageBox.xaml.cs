@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Input;
 
-namespace P2PShare.GUI
+namespace P2PShare
 {
     /// <summary>
     /// Interaction logic for CustomMessageBox.xaml

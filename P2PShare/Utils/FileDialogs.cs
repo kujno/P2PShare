@@ -1,4 +1,4 @@
-﻿namespace P2PShare.GUI.Utils
+﻿namespace P2PShare.Utils
 {
     public class FileDialogs
     {

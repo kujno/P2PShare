@@ -1,8 +1,6 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿using System.Windows;
 
-namespace P2PShare.GUI
+namespace P2PShare
 {
     /// <summary>
     /// Interaction logic for App.xaml

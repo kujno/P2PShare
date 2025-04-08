@@ -1,11 +1,11 @@
-﻿using P2PShare.GUI.Models;
+﻿using P2PShare.Models;
 using P2PShare.Libs;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace P2PShare.GUI.Utils
+namespace P2PShare.Utils
 {
     public class Elements
     {

@@ -1,4 +1,4 @@
-﻿namespace P2PShare.GUI.Models
+﻿namespace P2PShare.Models
 {
     public enum Receive_Send
     {

@@ -4,10 +4,10 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Windows;
 using System.Windows.Input;
-using P2PShare.GUI.Utils;
+using P2PShare.Utils;
 using P2PShare.Libs;
 
-namespace P2PShare.GUI
+namespace P2PShare
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

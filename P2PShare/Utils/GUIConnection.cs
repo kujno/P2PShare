@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using System.Windows.Controls;
 
-namespace P2PShare.GUI.Utils
+namespace P2PShare.Utils
 {
     public class GUIConnection
     {
