@@ -37,21 +37,15 @@ namespace P2PShare.Libs
 
         public static byte[] Decrypt(byte[] encryptedData, RSAParameters key)
         {
-            byte[] decryptedData = new byte[1];
-            try
-            {
-                using (RSA rsa = RSA.Create())
-                {
-                    rsa.ImportParameters(key);
-
-                    decryptedData = rsa.Decrypt(encryptedData, RSAEncryptionPadding.OaepSHA256);
-                }
-            }
-            catch (CryptographicException ex)
-            {
-                File.WriteAllText("error.txt", ex.ToString());
-            }
+            byte[] decryptedData;
             
+            using (RSA rsa = RSA.Create())
+            {
+                rsa.ImportParameters(key);
+
+                decryptedData = rsa.Decrypt(encryptedData, RSAEncryptionPadding.OaepSHA256);
+            }
+
             return decryptedData;
         }
 

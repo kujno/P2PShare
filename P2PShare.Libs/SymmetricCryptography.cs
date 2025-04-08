@@ -12,13 +12,9 @@ namespace P2PShare.Libs
             byte[] encryptedData;
             byte[] tag = new byte[TagSize];
 
-            do
-            {
-                aes = new (key, tag.Length);
-            }
-            while (aes.TagSizeInBytes is null);
+            aes = new(key, tag.Length);
 
-            encryptedData = new byte[data.Length + (int)aes.TagSizeInBytes];
+            encryptedData = new byte[data.Length + (int)aes.TagSizeInBytes!];
 
             aes.Encrypt(nonce, data, encryptedData, tag);
 
