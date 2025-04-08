@@ -27,7 +27,7 @@ namespace P2PShare
         private TcpClient?[] _clients = new TcpClient?[2];
         private CancellationTokenSource? _cancelConnecting;
         private CancellationTokenSource? _cancelMonitoring;
-        private RSAParameters[] rsaParameters;
+        private RSAParameters[]? rsaParameters;
 
         public MainWindow()
         {
@@ -277,7 +277,7 @@ namespace P2PShare
                         receive = false;
                     }
 
-                    await FileTransport.Reply(_clients[0]!, receive, rsaParameters[0]);
+                    await FileTransport.Reply(_clients[0]!, receive, rsaParameters![0]);
 
                     if (path is not null)
                     {
