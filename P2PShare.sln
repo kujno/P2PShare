@@ -5,7 +5,7 @@ VisualStudioVersion = 17.11.35312.102
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "P2PShare.Libs", "P2PShare.Libs\P2PShare.Libs.csproj", "{4AC8BCB9-FAB8-4301-B709-0B9C4569552C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "P2PShare", "P2PShare.GUI\P2PShare.csproj", "{7356CDD3-8389-4488-8DE2-437C66D2B2BE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "P2PShare", "P2PShare\P2PShare.csproj", "{7356CDD3-8389-4488-8DE2-437C66D2B2BE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
