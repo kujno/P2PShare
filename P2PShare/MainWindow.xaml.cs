@@ -287,7 +287,7 @@ namespace P2PShare
 
                 if (file is null)
                 {
-                    Elements.FileTransferEndDialog(false);
+                    Elements.FileTransferEndDialog(false, _sendReceiveWindow);
                 }
                 else 
                 {
@@ -341,7 +341,7 @@ namespace P2PShare
                 return;
             }
 
-            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfo));
+            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfo), _sendReceiveWindow);
 
             await receiveInvite();
         }
