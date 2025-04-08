@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Input;
 using P2PShare.Utils;
 using P2PShare.Libs;
+using System.Security.Cryptography;
 
 namespace P2PShare
 {
@@ -26,6 +27,7 @@ namespace P2PShare
         private TcpClient?[] _clients = new TcpClient?[2];
         private CancellationTokenSource? _cancelConnecting;
         private CancellationTokenSource? _cancelMonitoring;
+        private RSAParameters[] rsaParameters;
 
         public MainWindow()
         {
@@ -267,17 +269,19 @@ namespace P2PShare
                     if (selected is not null && path is not null && selected == true)
                     {
                         receive = true;
+
+                        rsaParameters = AsymmetricCryptography.GenerateKeys();
                     }
                     else
                     {
                         receive = false;
                     }
 
-                    await FileTransport.Reply(_clients[0]!, receive);
+                    await FileTransport.Reply(_clients[0]!, receive, rsaParameters[0]);
 
                     if (path is not null)
                     {
-                        file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), $"{path}\\{FileTransport.GetFileNameFromInvite(invite)}");
+                        file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), $"{path}\\{FileTransport.GetFileNameFromInvite(invite)}", rsaParameters[1]);
                     }
                 }
 

@@ -1,25 +1,39 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Net.Sockets;
 
 namespace P2PShare.Libs
 {
     public class FileHandling
     {
-        public static async Task CreateFile(NetworkStream networkStream, string filePath, int fileLength)
+        public static async Task CreateFile(NetworkStream networkStream, string filePath, int fileLength, byte[] aesKey)
         {
             using (FileStream fileStream = new FileStream(filePath, getFileMode(filePath)))
             {
                 int totalBytesRead = 0;
+                int i = 0;
+                byte[] nonce = new byte[FileTransport.NonceSize];
 
                 while (totalBytesRead < fileLength)
                 {
-                    byte[] buffer = new byte[8192];
-                    int bytesRead = await networkStream.ReadAsync(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead));
+                    if (i % 2 == 0)
+                    {
+                        await networkStream.ReadAsync(nonce, 0, nonce.Length);
+                    }
+                    else
+                    {
+                        byte[] buffer = new byte[FileTransport.BufferSize + SymmetricCryptography.TagSize];
+                        byte[] decryptedBuffer;
 
-                    await fileStream.WriteAsync(buffer, 0, bytesRead);
+                        await networkStream.ReadAsync(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead + SymmetricCryptography.TagSize));
+                        
+                        decryptedBuffer = SymmetricCryptography.Decrypt(buffer, aesKey, nonce);
 
-                    totalBytesRead += bytesRead;
+                        await fileStream.WriteAsync(decryptedBuffer, 0, decryptedBuffer.Length);
 
-                    FileTransport.OnFilePartReceived(CalculatePercentage(fileLength, totalBytesRead));
+                        totalBytesRead += decryptedBuffer.Length;
+
+                        FileTransport.OnFilePartReceived(CalculatePercentage(fileLength, totalBytesRead));
+                    }
                 }
             }
         }

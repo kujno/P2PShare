@@ -2,13 +2,15 @@
 
 namespace P2PShare.Libs
 {
-    class AsymmetricCryptography
+    public class AsymmetricCryptography
     {
+        public static int DwKeySize { get; } = 2048;
+
         public static RSAParameters[] GenerateKeys()
         {
             RSAParameters[] parameters = new RSAParameters[2];
 
-            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048))
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(DwKeySize))
             {
                 // public key
                 parameters[0] = rsa.ExportParameters(false);
@@ -41,6 +43,30 @@ namespace P2PShare.Libs
             }
             
             return decryptedData;
+        }
+
+        public static int? GetKeyLength(bool isPrivate, out int modulusLength, out int exponentLength)
+        {
+            int keyLength;
+
+            modulusLength = 0;
+            exponentLength = 0;
+
+            using (RSACryptoServiceProvider rsaCSP = new(DwKeySize))
+            {
+                RSAParameters rsaParameters = rsaCSP.ExportParameters(isPrivate);
+
+                if (rsaParameters.Modulus is null || rsaParameters.Exponent is null)
+                {                    
+                    return null;
+                }
+
+                modulusLength = rsaParameters.Modulus.Length;
+                exponentLength = rsaParameters.Exponent.Length;
+                keyLength = modulusLength + exponentLength;
+            }
+
+            return keyLength;
         }
     }
 }

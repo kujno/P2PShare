@@ -2,17 +2,19 @@
 
 namespace P2PShare.Libs
 {
-    class SymmetricCryptography
+    public class SymmetricCryptography
     {
+        public static int TagSize { get; } = 16;
+
         public static byte[] Encrypt(byte[] data, byte[] key, byte[] nonce)
         {
             AesGcm aes;
             byte[] encryptedData;
-            byte[] tag = new byte[16];
+            byte[] tag = new byte[TagSize];
 
             do
             {
-                aes = new (key, 16);
+                aes = new (key, tag.Length);
             }
             while (aes.TagSizeInBytes is null);
 
