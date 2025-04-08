@@ -48,7 +48,6 @@ namespace P2PShare.Libs
 
                 int bytesRead;
                 int bytesSent = 0;
-                int i = 0;
                 RSAParameters rsaParameters = new();
                 using FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read);
                 byte[] aesKey = new byte[AesKeySize];
@@ -74,23 +73,18 @@ namespace P2PShare.Libs
 
                 while ((bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                 {
-                    if (i % 2 == 0)
-                    {
-                        RandomNumberGenerator.Fill(nonce);
+                    byte[] encryptedData;
 
-                        await streams[0].WriteAsync(nonce, 0, nonce.Length);
-                    }
-                    else
-                    {
-                        byte[] encryptedData = SymmetricCryptography.Encrypt(buffer, aesKey, nonce);
+                    RandomNumberGenerator.Fill(nonce);
 
-                        await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
+                    await streams[0].WriteAsync(nonce, 0, nonce.Length);
 
-                        bytesSent += bytesRead;
-                        OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
-                    }
+                    encryptedData = SymmetricCryptography.Encrypt(buffer, aesKey, nonce);
 
-                    i++;
+                    await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
+
+                    bytesSent += bytesRead;
+                    OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
                 }
             }
             catch

@@ -10,30 +10,24 @@ namespace P2PShare.Libs
             using (FileStream fileStream = new FileStream(filePath, getFileMode(filePath)))
             {
                 int totalBytesRead = 0;
-                int i = 0;
                 byte[] nonce = new byte[FileTransport.NonceSize];
 
                 while (totalBytesRead < fileLength)
                 {
-                    if (i % 2 == 0)
-                    {
-                        await networkStream.ReadAsync(nonce, 0, nonce.Length);
-                    }
-                    else
-                    {
-                        byte[] buffer = new byte[FileTransport.BufferSize + SymmetricCryptography.TagSize];
-                        byte[] decryptedBuffer;
+                    await networkStream.ReadAsync(nonce, 0, nonce.Length);
 
-                        await networkStream.ReadAsync(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead + SymmetricCryptography.TagSize));
-                        
-                        decryptedBuffer = SymmetricCryptography.Decrypt(buffer, aesKey, nonce);
+                    byte[] buffer = new byte[FileTransport.BufferSize + SymmetricCryptography.TagSize];
+                    byte[] decryptedBuffer;
 
-                        await fileStream.WriteAsync(decryptedBuffer, 0, decryptedBuffer.Length);
+                    await networkStream.ReadAsync(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead + SymmetricCryptography.TagSize));
 
-                        totalBytesRead += decryptedBuffer.Length;
+                    decryptedBuffer = SymmetricCryptography.Decrypt(buffer, aesKey, nonce);
 
-                        FileTransport.OnFilePartReceived(CalculatePercentage(fileLength, totalBytesRead));
-                    }
+                    await fileStream.WriteAsync(decryptedBuffer, 0, decryptedBuffer.Length);
+
+                    totalBytesRead += decryptedBuffer.Length;
+
+                    FileTransport.OnFilePartReceived(CalculatePercentage(fileLength, totalBytesRead));
                 }
             }
         }
