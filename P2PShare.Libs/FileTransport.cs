@@ -5,56 +5,44 @@ namespace P2PShare.Libs
 {
     public class FileTransport
     {
-        public static bool SendFile(TcpClient client, FileInfo fileInfo)
+        public static event EventHandler<string?>? InviteReceived;
+        public static event EventHandler? FileBeingReceived;
+        public static event EventHandler? TransferFailed;
+        public static event EventHandler? FileBeingSent;
+        public static event EventHandler<int>? FilePartReceived;
+        public static event EventHandler<int>? FilePartSent;
+
+        public static async Task<bool> SendFile(TcpClient[] clients, FileInfo fileInfo)
         {
-            NetworkStream stream;
-
-            try
-            {
-                stream = client.GetStream();
-            }
-            catch
-            {
-                return false;
-            }
-
+            NetworkStream[] streams = new NetworkStream[2];
             byte[] inviteBytes = createInvite(fileInfo);
             byte[] buffer = new byte[Encoding.UTF8.GetBytes("y").Length];
 
             try
             {
-                stream.Write(inviteBytes, 0, inviteBytes.Length);
-            }
-            catch
-            {
-                return false;
-            }
+                streams = ClientHandling.GetStreamsFromTcpClients(clients);
 
-            try
-            {
-                stream.Read(buffer, 0, buffer.Length);
-            }
-            catch
-            {
-                return false;
-            }
-            
-            string reply = Encoding.UTF8.GetString(buffer);
+                await streams[1].WriteAsync(inviteBytes, 0, inviteBytes.Length);
+                await streams[0].ReadAsync(buffer, 0, buffer.Length);
+                
+                if (Encoding.UTF8.GetString(buffer) != "y")
+                {
+                    return false;
+                }
 
-            if (reply == "n")
-            {
-                return false;
-            }
-
-            try
-            {
                 int bytesRead;
+                int bytesSent = 0;
                 byte[] buffer2 = new byte[8192];
                 using FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read);
-                
-                while ((bytesRead = fileStream.Read(buffer2, 0, buffer2.Length)) > 0)
+
+                onFileBeingSent();
+
+                while ((bytesRead = await fileStream.ReadAsync(buffer2, 0, buffer2.Length)) > 0)
                 {
-                    stream.Write(buffer2, 0, bytesRead);
+                    await streams[0].WriteAsync(buffer2, 0, bytesRead);
+
+                    bytesSent += bytesRead;
+                    OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
                 }
             }
             catch
@@ -65,49 +53,36 @@ namespace P2PShare.Libs
             return true;
         }
 
-        public static async Task<string?> ReceiveInvite(TcpClient client)
+        public static async Task ReceiveInvite(TcpClient client)
         {
             NetworkStream stream;
+            byte[] buffer = new byte[1024];
+            int bytesRead;
 
             try
             {
                 stream = client.GetStream();
-            }
-            catch
-            {
-                return null;
-            }
 
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            try
-            {
                 bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
             }
             catch
             {
-                return null;
+                return;
             }
 
-            return Encoding.UTF8.GetString(buffer, 0, bytesRead);
+            onInviteReceived(Encoding.UTF8.GetString(buffer, 0, bytesRead));
         }
 
-        public static FileInfo? ReceiveFile(TcpClient client, int fileLength, string filePath)
+        public static async Task<FileInfo?> ReceiveFile(TcpClient client, int fileLength, string filePath)
         {
             NetworkStream networkStream;
 
             try
             {
                 networkStream = client.GetStream();
-            }
-            catch
-            {
-                return null;
-            }
 
-            try
-            {
-                FileHandling.CreateFile(networkStream, filePath, fileLength);
+                onFileBeingReceived();
+                await FileHandling.CreateFile(networkStream, filePath, fileLength);
             }
             catch
             {
@@ -117,49 +92,80 @@ namespace P2PShare.Libs
             return new FileInfo(filePath);
         }
 
-        public static void Reply(TcpClient client, bool accepted)
+        public static async Task Reply(TcpClient client, bool accepted)
         {
             NetworkStream stream;
-
+            string reply;
+            byte[] replyBytes;
 
             try
             {
                 stream = client.GetStream();
+
+                switch (accepted)
+                {
+                    case true:
+                        reply = "y";
+
+                        break;
+                    case false:
+                        reply = "n";
+
+                        break;
+                }
+                replyBytes = Encoding.UTF8.GetBytes(reply);
+
+                await stream.FlushAsync();
+                await stream.WriteAsync(replyBytes, 0, replyBytes.Length);
             }
             catch
             {
-                return;
-            }
-
-            string reply;
-
-            switch (accepted)
-            {
-                case true:
-                    reply = "y";
-
-                    break;
-                case false:
-                    reply = "n";
-                    
-                    break;
-            }
-            
-            byte[] replyBytes = Encoding.UTF8.GetBytes(reply);
-
-            try
-            {
-                stream.Write(replyBytes, 0, replyBytes.Length);
-            }
-            catch
-            {
-                return;
             }
         }
 
         private static byte[] createInvite(FileInfo fileInfo)
         {
-            return Encoding.UTF8.GetBytes($"File: {fileInfo.Name} ({fileInfo.Length} bytes)\nDo you want to accept it? [y/n]: ");
+            return Encoding.UTF8.GetBytes($"{fileInfo.Name} ({fileInfo.Length}B)\nAccept?");
+        }
+
+        private static void onInviteReceived(string? invite)
+        {
+            InviteReceived?.Invoke(null, invite);
+        }
+
+        public static int GetFileLenghtFromInvite(string invite)
+        {
+            return int.Parse(invite.Substring(invite.IndexOf('(') + 1, invite.LastIndexOf('B') - invite.IndexOf('(') - 1));
+        }
+
+        public static string GetFileNameFromInvite(string invite)
+        {
+            return invite.Substring(0, invite.IndexOf(" ("));
+        }
+
+        private static void onFileBeingReceived()
+        {
+            FileBeingReceived?.Invoke(null, EventArgs.Empty);
+        }
+
+        private static void onTransferFailed()
+        {
+            TransferFailed?.Invoke(null, EventArgs.Empty);
+        }
+
+        private static void onFileBeingSent()
+        {
+            FileBeingSent?.Invoke(null, EventArgs.Empty);
+        }
+
+        public static void OnFilePartReceived(int percentage)
+        {
+            FilePartReceived?.Invoke(null, percentage);
+        }
+
+        public static void OnFilePartSent(int percentage)
+        {
+            FilePartSent?.Invoke(null, percentage);
         }
     }
 }

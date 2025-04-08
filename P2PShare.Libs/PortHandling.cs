@@ -9,12 +9,22 @@ namespace P2PShare.Libs
         {
             Random random = new Random();
             int port;
+            bool check;
 
             do
             {
+                check = true;
                 port = random.Next(49152, 65536);
+
+                for (int i = 0; i < 2; i++)
+                {
+                    if (!IsPortAvailable(ip, port + i))
+                    {
+                        check = false;
+                    }
+                }
             }
-            while (!IsPortAvailable(ip, port));
+            while (!check);
 
             return port;
         }
@@ -31,7 +41,7 @@ namespace P2PShare.Libs
 
                 return true;
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }

@@ -6,48 +6,52 @@ namespace P2PShare.Libs
 {
     public class ListenerConnection
     {
-        public static async Task<TcpClient?> WaitForConnection(int port, NetworkInterface @interface)
+        public static async Task<TcpClient?> WaitForConnection(int port, NetworkInterface @interface, CancellationToken cancellationToken)
         {
             IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
-            
+
             if (ipLocal is null)
             {
                 return null;
             }
-            
+
             TcpListener listener = new TcpListener(ipLocal, port);
             TcpClient client;
 
             try
             {
                 listener.Start();
-                client = await listener.AcceptTcpClientAsync();
+                client = await listener.AcceptTcpClientAsync(cancellationToken);
             }
-            catch
+            catch (OperationCanceledException)
             {
                 return null;
             }
             finally
             {
-                listener.Dispose();
+                listener.Stop();
             }
 
             return client;
         }
 
-        public static async Task<TcpClient> ListenLoop(int port, NetworkInterface @interface)
+        public static async Task ListenLoop(int port, NetworkInterface @interface, CancellationToken cancellationToken)
         {
-            while (true)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                TcpClient? client = await WaitForConnection(port, @interface);
+                TcpClient? client = await WaitForConnection(port, @interface, cancellationToken);
 
                 if (client is null)
                 {
                     continue;
                 }
 
-                return client;
+                ClientConnection.OnConnected(client);
+
+                return;
             }
+
+            ClientConnection.OnDisconnected();
         }
 
         public static void GetRidOfListener(ref TcpListener listener)
