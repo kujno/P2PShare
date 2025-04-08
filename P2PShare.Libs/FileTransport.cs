@@ -53,6 +53,7 @@ namespace P2PShare.Libs
                 byte[] aesKey = new byte[AesKeySize];
                 byte[] aesKeyEncrypted;
                 byte[] nonce = new byte[NonceSize];
+                byte[] buffer2 = new byte[BufferSize];
 
                 RandomNumberGenerator.Fill(aesKey);
 
@@ -63,15 +64,13 @@ namespace P2PShare.Libs
                 Array.Copy(buffer, 0, rsaParameters.Modulus, 0, modulusLength);
                 Array.Copy(buffer, modulusLength, rsaParameters.Exponent, 0, exponentLength);
 
-                buffer = new byte[BufferSize];
-
                 aesKeyEncrypted = AsymmetricCryptography.Encrypt(aesKey, rsaParameters);
 
                 onFileBeingSent();
 
                 await streams[0].WriteAsync(aesKeyEncrypted, 0, aesKeyEncrypted.Length);
 
-                while ((bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                while ((bytesRead = await fileStream.ReadAsync(buffer2, 0, buffer2.Length)) > 0)
                 {
                     byte[] encryptedData;
 
@@ -79,7 +78,7 @@ namespace P2PShare.Libs
 
                     await streams[0].WriteAsync(nonce, 0, nonce.Length);
 
-                    encryptedData = SymmetricCryptography.Encrypt(buffer, aesKey, nonce);
+                    encryptedData = SymmetricCryptography.Encrypt(buffer2, aesKey, nonce);
 
                     await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
 
