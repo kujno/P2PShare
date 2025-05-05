@@ -170,7 +170,6 @@ namespace P2PShare.Libs
                     replyBytes = replyBytes.Concat(rsaParameters.Modulus).Concat(rsaParameters.Exponent).ToArray();
                 }
 
-                await stream.FlushAsync();
                 await stream.WriteAsync(replyBytes, 0, replyBytes.Length);
             }
             catch
