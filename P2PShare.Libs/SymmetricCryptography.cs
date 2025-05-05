@@ -26,7 +26,7 @@ namespace P2PShare.Libs
             byte[] decryptedData = new byte[data.Length];
 
             Array.Copy(dataWithTag, 0, data, 0, data.Length);
-            Array.Copy(dataWithTag, dataWithTag.Length - TagSize, tag, 0, TagSize);
+            Array.Copy(dataWithTag, data.Length, tag, 0, TagSize);
 
             using (AesGcm aes = new(key, TagSize))
             {
