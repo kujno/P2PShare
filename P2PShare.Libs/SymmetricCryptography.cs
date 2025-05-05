@@ -9,18 +9,14 @@ namespace P2PShare.Libs
         public static byte[] Encrypt(byte[] data, byte[] key, byte[] nonce)
         {
             AesGcm aes;
-            byte[] encryptedData;
+            byte[] cipherText = new byte[data.Length];
             byte[] tag = new byte[TagSize];
 
             aes = new(key, tag.Length);
 
-            encryptedData = new byte[data.Length + (int)aes.TagSizeInBytes!];
+            aes.Encrypt(nonce, data, cipherText, tag);
 
-            aes.Encrypt(nonce, data, encryptedData, tag);
-
-            Array.Copy(tag, 0, encryptedData, data.Length, tag.Length);
-
-            return encryptedData;
+            return cipherText.Concat(tag).ToArray();
         }
 
         public static byte[] Decrypt(byte[] data, byte[] key, byte[] nonce)

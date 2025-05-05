@@ -86,7 +86,7 @@ namespace P2PShare.Libs
                     OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
                 }
             }
-            catch
+            catch (Exception)
             {
                 return false;
             }
