@@ -28,6 +28,13 @@ namespace P2PShare.Libs
                     totalBytesRead += decryptedBuffer.Length;
 
                     FileTransport.OnFilePartReceived(CalculatePercentage(fileLength, totalBytesRead));
+
+                    if (totalBytesRead == fileLength)
+                    {
+                        break;
+                    }
+                    
+                    await networkStream.WriteAsync(FileTransport.Ack, 0, FileTransport.Ack.Length);
                 }
             }
         }

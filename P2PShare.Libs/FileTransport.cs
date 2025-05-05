@@ -15,6 +15,7 @@ namespace P2PShare.Libs
         public static int BufferSize { get; } = 8192;
         private static int AesKeySize { get; } = 32;
         public static int NonceSize { get; } = 12;
+        public static byte[] Ack { get; } = Encoding.UTF8.GetBytes(".");
 
         public static async Task<bool> SendFile(TcpClient[] clients, FileInfo fileInfo)
         {
@@ -73,6 +74,7 @@ namespace P2PShare.Libs
                 while ((bytesRead = await fileStream.ReadAsync(buffer2, 0, buffer2.Length)) > 0)
                 {
                     byte[] encryptedData;
+                    byte[] ackBuffer = new byte[Ack.Length];
 
                     RandomNumberGenerator.Fill(nonce);
 
@@ -84,6 +86,13 @@ namespace P2PShare.Libs
 
                     bytesSent += bytesRead;
                     OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
+
+                    if (bytesSent == fileInfo.Length)
+                    {
+                        break;
+                    }
+
+                    await streams[0].ReadAsync(ackBuffer, 0, Ack.Length);
                 }
             }
             catch (Exception)
