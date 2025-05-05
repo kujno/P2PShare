@@ -13,11 +13,12 @@ namespace P2PShare.Libs
 
                 while (totalBytesRead < fileLength)
                 {
-                    await networkStream.ReadAsync(nonce, 0, FileTransport.NonceSize);
-
                     byte[] buffer = new byte[FileTransport.BufferSize + SymmetricCryptography.TagSize];
                     byte[] decryptedBuffer;
 
+                    await networkStream.ReadAsync(nonce, 0, FileTransport.NonceSize);
+
+                    Array.Clear(buffer, 0, buffer.Length);
                     await networkStream.ReadAsync(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead + SymmetricCryptography.TagSize));
 
                     decryptedBuffer = SymmetricCryptography.Decrypt(buffer, aesKey, nonce);
