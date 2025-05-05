@@ -134,7 +134,7 @@ namespace P2PShare.Libs
 
                 await FileHandling.CreateFile(stream, filePath, fileLength, aesKey);
             }
-            catch
+            catch (Exception)
             {
                 return null;
             }
