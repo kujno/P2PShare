@@ -61,8 +61,8 @@ namespace P2PShare.Libs
 
                 rsaParameters.Modulus = new byte[modulusLength];
                 rsaParameters.Exponent = new byte[exponentLength];
-                Array.Copy(buffer, 0, rsaParameters.Modulus, 0, modulusLength);
-                Array.Copy(buffer, modulusLength, rsaParameters.Exponent, 0, exponentLength);
+                Array.Copy(rsaKey, 0, rsaParameters.Modulus, 0, modulusLength);
+                Array.Copy(rsaKey, modulusLength, rsaParameters.Exponent, 0, exponentLength);
 
                 aesKeyEncrypted = AsymmetricCryptography.Encrypt(aesKey, rsaParameters);
 
