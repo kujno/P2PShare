@@ -21,24 +21,17 @@ namespace P2PShare.Libs
 
         public static byte[] Decrypt(byte[] dataWithTag, byte[] key, byte[] nonce)
         {
-            AesGcm aes;
-            byte[] tag, decryptedData;
+            byte[] tag = new byte[TagSize];
             byte[] data = new byte[dataWithTag.Length - TagSize];
+            byte[] decryptedData = new byte[data.Length];
 
-            Array.Copy(dataWithTag, 0, data, 0, dataWithTag.Length - TagSize);
-
-            do
-            {
-                aes = new(key, TagSize);
-            }
-            while (aes.TagSizeInBytes is null);
-
-            tag = new byte[TagSize];
-            decryptedData = new byte[data.Length];
-
+            Array.Copy(dataWithTag, 0, data, 0, data.Length);
             Array.Copy(dataWithTag, dataWithTag.Length - TagSize, tag, 0, TagSize);
 
-            aes.Decrypt(nonce, data, tag, decryptedData);
+            using (AesGcm aes = new(key, TagSize))
+            {
+                aes.Decrypt(nonce, data, tag, decryptedData);
+            }
 
             return decryptedData;
         }

@@ -76,7 +76,7 @@ namespace P2PShare.Libs
 
                     RandomNumberGenerator.Fill(nonce);
 
-                    await streams[0].WriteAsync(nonce, 0, nonce.Length);
+                    await streams[0].WriteAsync(nonce, 0, NonceSize);
 
                     encryptedData = SymmetricCryptography.Encrypt(buffer2, aesKey, nonce);
 
