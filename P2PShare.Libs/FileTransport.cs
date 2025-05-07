@@ -15,6 +15,7 @@ namespace P2PShare.Libs
         public static int BufferSize { get; } = 8192;
         private static int AesKeySize { get; } = 32;
         public static int NonceSize { get; } = 12;
+        public static byte[] Ack { get; } = Encoding.UTF8.GetBytes("y");
 
         public static async Task<bool> SendFile(TcpClient[] clients, FileInfo fileInfo)
         {
@@ -52,8 +53,8 @@ namespace P2PShare.Libs
                 using FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read);
                 byte[] aesKey = new byte[AesKeySize];
                 byte[] aesKeyEncrypted;
-                byte[] nonce = new byte[NonceSize];
                 byte[] buffer2 = new byte[BufferSize];
+                byte[] oldNonce = new byte[NonceSize];
 
                 RandomNumberGenerator.Fill(aesKey);
 
@@ -72,18 +73,38 @@ namespace P2PShare.Libs
 
                 while ((bytesRead = await fileStream.ReadAsync(buffer2, 0, buffer2.Length)) > 0)
                 {
-                    byte[] encryptedData;
+                    byte[] ackBuffer = new byte[Ack.Length];
 
-                    RandomNumberGenerator.Fill(nonce);
+                    do
+                    {
+                        byte[] encryptedData;
+                        byte[] nonce = new byte[NonceSize];
 
-                    await streams[0].WriteAsync(nonce, 0, NonceSize);
+                        do
+                        {
+                            RandomNumberGenerator.Fill(nonce);
+                        }
+                        while (nonce == oldNonce);
 
-                    encryptedData = SymmetricCryptography.Encrypt(buffer2, aesKey, nonce);
+                        await streams[0].WriteAsync(nonce, 0, NonceSize);
 
-                    await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
+                        encryptedData = SymmetricCryptography.Encrypt(buffer2, aesKey, nonce);
 
-                    bytesSent += bytesRead;
-                    OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
+                        await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
+
+                        await streams[0].ReadAsync(ackBuffer, 0, Ack.Length);
+
+                        oldNonce = nonce;
+
+                        if (ackBuffer != Ack)
+                        {
+                            continue;
+                        }
+                        
+                        bytesSent += bytesRead;
+                        OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
+                    }
+                    while (ackBuffer != Ack);
                 }
             }
             catch (Exception)

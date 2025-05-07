@@ -19,7 +19,7 @@ namespace P2PShare.Libs
             return cipherText.Concat(tag).ToArray();
         }
 
-        public static byte[] Decrypt(byte[] dataWithTag, byte[] key, byte[] nonce)
+        public static byte[]? Decrypt(byte[] dataWithTag, byte[] key, byte[] nonce)
         {
             byte[] tag = new byte[TagSize];
             byte[] data = new byte[dataWithTag.Length - TagSize];
@@ -30,7 +30,14 @@ namespace P2PShare.Libs
 
             using (AesGcm aes = new(key, TagSize))
             {
-                aes.Decrypt(nonce, data, tag, decryptedData);
+                try
+                {
+                    aes.Decrypt(nonce, data, tag, decryptedData);
+                }
+                catch
+                {
+                    return null;
+                }
             }
 
             return decryptedData;

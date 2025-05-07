@@ -1,4 +1,5 @@
 ﻿using System.Net.Sockets;
+using System.Text;
 
 namespace P2PShare.Libs
 {
@@ -15,7 +16,7 @@ namespace P2PShare.Libs
                 {
                     // bad buffer size possibly
                     byte[] buffer = new byte[FileTransport.BufferSize + SymmetricCryptography.TagSize];
-                    byte[] decryptedBuffer;
+                    byte[]? decryptedBuffer;
 
                     // get nonce
                     await networkStream.ReadAsync(nonce, 0, FileTransport.NonceSize);
@@ -25,11 +26,22 @@ namespace P2PShare.Libs
 
                     decryptedBuffer = SymmetricCryptography.Decrypt(buffer, aesKey, nonce);
 
-                    await fileStream.WriteAsync(decryptedBuffer, 0, decryptedBuffer.Length);
+                    if (decryptedBuffer is not null)
+                    {
+                        await networkStream.WriteAsync(FileTransport.Ack, 0, FileTransport.Ack.Length);
 
-                    totalBytesRead += decryptedBuffer.Length;
+                        await fileStream.WriteAsync(decryptedBuffer, 0, decryptedBuffer.Length);
 
-                    FileTransport.OnFilePartReceived(CalculatePercentage(fileLength, totalBytesRead));
+                        totalBytesRead += decryptedBuffer.Length;
+
+                        FileTransport.OnFilePartReceived(CalculatePercentage(fileLength, totalBytesRead));
+
+                        continue;
+                    }
+
+                    byte[] ack = Encoding.UTF8.GetBytes("n");
+
+                    await networkStream.WriteAsync(ack, 0, ack.Length);
                 }
             }
         }
