@@ -73,7 +73,6 @@ namespace P2PShare.Libs
                 while ((bytesRead = await fileStream.ReadAsync(buffer2, 0, buffer2.Length)) > 0)
                 {
                     byte[] encryptedData;
-                    byte[] ackBuffer = new byte[Ack.Length];
 
                     RandomNumberGenerator.Fill(nonce);
 
