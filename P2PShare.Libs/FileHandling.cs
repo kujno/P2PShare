@@ -17,10 +17,11 @@ namespace P2PShare.Libs
                     byte[] buffer = new byte[FileTransport.BufferSize + SymmetricCryptography.TagSize];
                     byte[] decryptedBuffer;
 
+                    // get nonce
                     await networkStream.ReadAsync(nonce, 0, FileTransport.NonceSize);
 
-                    Array.Clear(buffer, 0, buffer.Length);
-                    await networkStream.ReadAsync(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead + SymmetricCryptography.TagSize));
+                    // get chunk
+                    await networkStream.ReadAsync(buffer, 0, Math.Min(buffer.Length + SymmetricCryptography.TagSize, fileLength - totalBytesRead + SymmetricCryptography.TagSize));
 
                     decryptedBuffer = SymmetricCryptography.Decrypt(buffer, aesKey, nonce);
 
@@ -29,13 +30,6 @@ namespace P2PShare.Libs
                     totalBytesRead += decryptedBuffer.Length;
 
                     FileTransport.OnFilePartReceived(CalculatePercentage(fileLength, totalBytesRead));
-
-                    if (totalBytesRead == fileLength)
-                    {
-                        break;
-                    }
-                    
-                    await networkStream.WriteAsync(FileTransport.Ack, 0, FileTransport.Ack.Length);
                 }
             }
         }
