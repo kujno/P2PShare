@@ -101,16 +101,11 @@ namespace P2PShare.Libs
                         await streams[0].ReadAsync(ackBuffer, 0, Ack.Length);
 
                         oldNonce = nonce;
-
-                        if (ackBuffer != Ack)
-                        {
-                            continue;
-                        }
-                        
-                        bytesSent += bytesRead;
-                        OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
                     }
-                    while (ackBuffer != Ack);
+                    while (!ackBuffer.SequenceEqual(Ack));
+                    
+                    bytesSent += bytesRead;
+                    OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
                 }
             }
             catch (Exception)
