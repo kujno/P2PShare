@@ -197,7 +197,12 @@ namespace P2PShare
         {
             IPAddress? remoteIP;
 
-            ClientConnection.OnDisconnected();
+            getRidOfClients();
+
+            if (Interface.SelectedItem?.ToString() != _interface?.Name)
+            {
+                Interface.SelectedItem = _interface?.Name;
+            }
 
             if (_cancelConnecting is not null)
             {
@@ -239,6 +244,8 @@ namespace P2PShare
         private void onInterfaceDown(object? sender, EventArgs e)
         {
             Elements.RefreshInterfaces(Interface);
+
+            _interface = null;
         }
 
         private async void onInviteReceived(object? sender, string? invite)
