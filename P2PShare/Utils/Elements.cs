@@ -111,7 +111,7 @@ namespace P2PShare.Utils
             return "";
         }
 
-        public static void FileTransferEndDialog(bool succeeded)
+        public static void FileTransferEndDialog(bool succeeded, Send_Receive? sendReceiveWindow)
         {
             string message;
             
@@ -127,6 +127,8 @@ namespace P2PShare.Utils
 
                     break;
             }
+
+            sendReceiveWindow?.Close();
 
             ShowDialog($"The file transfer {message}");
         }

@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Input;
 using P2PShare.Utils;
 using P2PShare.Libs;
+using System.Security.Cryptography;
 
 namespace P2PShare
 {
@@ -26,6 +27,7 @@ namespace P2PShare
         private TcpClient?[] _clients = new TcpClient?[2];
         private CancellationTokenSource? _cancelConnecting;
         private CancellationTokenSource? _cancelMonitoring;
+        private RSAParameters[]? rsaParameters;
 
         public MainWindow()
         {
@@ -188,16 +190,19 @@ namespace P2PShare
         {
             Elements.Disconnected(State, Cancel, Interface);
 
-            for (int i = 0; i < _clients.Length; i++)
-            {
-                _clients[i]?.Dispose();
-                _clients[i] = null;
-            }
+            getRidOfClients();
         }
 
         private async void Connect_Click(object sender, RoutedEventArgs e)
         {
             IPAddress? remoteIP;
+
+            getRidOfClients();
+
+            if (Interface.SelectedItem?.ToString() != _interface?.Name)
+            {
+                Interface.SelectedItem = _interface?.Name;
+            }
 
             if (_cancelConnecting is not null)
             {
@@ -239,6 +244,8 @@ namespace P2PShare
         private void onInterfaceDown(object? sender, EventArgs e)
         {
             Elements.RefreshInterfaces(Interface);
+
+            _interface = null;
         }
 
         private async void onInviteReceived(object? sender, string? invite)
@@ -267,31 +274,33 @@ namespace P2PShare
                     if (selected is not null && path is not null && selected == true)
                     {
                         receive = true;
+
+                        rsaParameters = AsymmetricCryptography.GenerateKeys();
                     }
                     else
                     {
                         receive = false;
                     }
 
-                    await FileTransport.Reply(_clients[0]!, receive);
+                    await FileTransport.Reply(_clients[0]!, receive, rsaParameters![0]);
 
                     if (path is not null)
                     {
-                        file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), $"{path}\\{FileTransport.GetFileNameFromInvite(invite)}");
+                        file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), $"{path}\\{FileTransport.GetFileNameFromInvite(invite)}", rsaParameters[1]);
                     }
                 }
 
                 if (file is null)
                 {
-                    Elements.FileTransferEndDialog(false);
+                    Elements.FileTransferEndDialog(false, _sendReceiveWindow);
                 }
                 else 
                 {
                     Elements.ShowDialog($"The file has been saved to:\n{file.FullName}");
                 }
-            }
 
-            await receiveInvite();
+                await receiveInvite();
+            }
         }
 
         private void onFileBeingReceived(object? sender, EventArgs e)
@@ -337,7 +346,7 @@ namespace P2PShare
                 return;
             }
 
-            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfo));
+            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfo), _sendReceiveWindow);
 
             await receiveInvite();
         }
@@ -369,6 +378,15 @@ namespace P2PShare
             }
             
             await FileTransport.ReceiveInvite(_clients[1]!);
+        }
+
+        private void getRidOfClients()
+        {
+            for (int i = 0; i < _clients.Length; i++)
+            {
+                _clients[i]?.Dispose();
+                _clients[i] = null;
+            }
         }
     }
 }

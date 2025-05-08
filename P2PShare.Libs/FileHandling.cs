@@ -1,25 +1,50 @@
 ﻿using System.Net.Sockets;
+using System.Text;
 
 namespace P2PShare.Libs
 {
     public class FileHandling
     {
-        public static async Task CreateFile(NetworkStream networkStream, string filePath, int fileLength)
+        public static async Task CreateFile(NetworkStream networkStream, string filePath, int fileLength, byte[] aesKey)
         {
             using (FileStream fileStream = new FileStream(filePath, getFileMode(filePath)))
             {
                 int totalBytesRead = 0;
+                byte[] nonce = new byte[FileTransport.NonceSize];
 
                 while (totalBytesRead < fileLength)
                 {
-                    byte[] buffer = new byte[8192];
-                    int bytesRead = await networkStream.ReadAsync(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead));
+                    byte[] buffer = new byte[Math.Min(FileTransport.BufferSize, fileLength - totalBytesRead) + SymmetricCryptography.TagSize];
+                    byte[]? decryptedBuffer;
 
-                    await fileStream.WriteAsync(buffer, 0, bytesRead);
+                    // get nonce
+                    await networkStream.ReadAsync(nonce, 0, FileTransport.NonceSize);
 
-                    totalBytesRead += bytesRead;
+                    // ack nonce
+                    await networkStream.WriteAsync(FileTransport.Ack, 0, FileTransport.Ack.Length);
 
-                    FileTransport.OnFilePartReceived(CalculatePercentage(fileLength, totalBytesRead));
+                    // get chunk
+                    await networkStream.ReadAsync(buffer, 0, buffer.Length);
+
+                    decryptedBuffer = SymmetricCryptography.Decrypt(buffer, aesKey, nonce);
+
+                    if (decryptedBuffer is not null)
+                    {
+                        //ack
+                        await networkStream.WriteAsync(FileTransport.Ack, 0, FileTransport.Ack.Length);
+
+                        await fileStream.WriteAsync(decryptedBuffer, 0, decryptedBuffer.Length);
+
+                        totalBytesRead += decryptedBuffer.Length;
+
+                        FileTransport.OnFilePartReceived(CalculatePercentage(fileLength, totalBytesRead));
+
+                        continue;
+                    }
+
+                    byte[] ack = Encoding.UTF8.GetBytes("n");
+
+                    await networkStream.WriteAsync(ack, 0, ack.Length);
                 }
             }
         }
