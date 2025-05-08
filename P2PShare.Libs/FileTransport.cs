@@ -94,11 +94,15 @@ namespace P2PShare.Libs
                         // ack nonce
                         await streams[0].ReadAsync(ackBuffer, 0, Ack.Length);
 
+                        await streams[0].FlushAsync();
+
                         // send chunk
                         await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
 
                         // ack
                         await streams[0].ReadAsync(ackBuffer, 0, Ack.Length);
+
+                        await streams[0].FlushAsync();
 
                         oldNonce = nonce;
                     }
