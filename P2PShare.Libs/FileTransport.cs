@@ -86,12 +86,18 @@ namespace P2PShare.Libs
                         }
                         while (nonce == oldNonce);
 
+                        // send nonce
                         await streams[0].WriteAsync(nonce, 0, NonceSize);
 
                         encryptedData = SymmetricCryptography.Encrypt(buffer2, aesKey, nonce);
 
+                        // ack nonce
+                        await streams[0].ReadAsync(ackBuffer, 0, Ack.Length);
+
+                        // send chunk
                         await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
 
+                        // ack
                         await streams[0].ReadAsync(ackBuffer, 0, Ack.Length);
 
                         oldNonce = nonce;

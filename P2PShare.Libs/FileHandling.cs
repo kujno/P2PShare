@@ -20,6 +20,9 @@ namespace P2PShare.Libs
                     // get nonce
                     await networkStream.ReadAsync(nonce, 0, FileTransport.NonceSize);
 
+                    // ack nonce
+                    await networkStream.WriteAsync(FileTransport.Ack, 0, FileTransport.Ack.Length);
+
                     // get chunk
                     await networkStream.ReadAsync(buffer, 0, Math.Min(buffer.Length, fileLength - totalBytesRead + SymmetricCryptography.TagSize));
 
@@ -27,6 +30,7 @@ namespace P2PShare.Libs
 
                     if (decryptedBuffer is not null)
                     {
+                        //ack
                         await networkStream.WriteAsync(FileTransport.Ack, 0, FileTransport.Ack.Length);
 
                         await fileStream.WriteAsync(decryptedBuffer, 0, decryptedBuffer.Length);
