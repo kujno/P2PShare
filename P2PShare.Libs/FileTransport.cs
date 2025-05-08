@@ -53,7 +53,7 @@ namespace P2PShare.Libs
                 using FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read);
                 byte[] aesKey = new byte[AesKeySize];
                 byte[] aesKeyEncrypted;
-                byte[] buffer2 = new byte[BufferSize];
+                byte[] buffer2;
                 byte[] oldNonce = new byte[NonceSize];
 
                 RandomNumberGenerator.Fill(aesKey);
@@ -71,7 +71,7 @@ namespace P2PShare.Libs
 
                 await streams[0].WriteAsync(aesKeyEncrypted, 0, aesKeyEncrypted.Length);
 
-                while ((bytesRead = await fileStream.ReadAsync(buffer2, 0, buffer2.Length)) > 0)
+                while ((bytesRead = await fileStream.ReadAsync(buffer2 = new byte[Math.Min(BufferSize, fileInfo.Length - bytesSent)], 0, buffer2.Length)) > 0)
                 {
                     byte[] ackBuffer = new byte[Ack.Length];
 
