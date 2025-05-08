@@ -67,6 +67,8 @@ namespace P2PShare
         private void Refresh_Click(object sender, RoutedEventArgs e)
         {
             Elements.RefreshInterfaces(Interface);
+
+            ClientConnection.OnDisconnected();
         }
 
         private void Interface_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
