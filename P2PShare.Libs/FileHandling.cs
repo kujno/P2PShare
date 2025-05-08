@@ -14,7 +14,6 @@ namespace P2PShare.Libs
 
                 while (totalBytesRead < fileLength)
                 {
-                    // bad buffer size possibly
                     byte[] buffer = new byte[FileTransport.BufferSize + SymmetricCryptography.TagSize];
                     byte[]? decryptedBuffer;
 
