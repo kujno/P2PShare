@@ -203,6 +203,8 @@ namespace P2PShare
         {
             IPAddress? remoteIP;
 
+            ClientConnection.OnDisconnected();
+
             if (_cancelConnecting is not null)
             {
                 _cancelConnecting = Cancellation.Cancel(_cancelConnecting);
