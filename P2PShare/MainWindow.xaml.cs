@@ -67,8 +67,6 @@ namespace P2PShare
         private void Refresh_Click(object sender, RoutedEventArgs e)
         {
             Elements.RefreshInterfaces(Interface);
-
-            ClientConnection.OnDisconnected();
         }
 
         private void Interface_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -192,11 +190,7 @@ namespace P2PShare
         {
             Elements.Disconnected(State, Cancel, Interface);
 
-            for (int i = 0; i < _clients.Length; i++)
-            {
-                _clients[i]?.Dispose();
-                _clients[i] = null;
-            }
+            getRidOfClients();
         }
 
         private async void Connect_Click(object sender, RoutedEventArgs e)
@@ -377,6 +371,15 @@ namespace P2PShare
             }
             
             await FileTransport.ReceiveInvite(_clients[1]!);
+        }
+
+        private void getRidOfClients()
+        {
+            for (int i = 0; i < _clients.Length; i++)
+            {
+                _clients[i]?.Dispose();
+                _clients[i] = null;
+            }
         }
     }
 }
