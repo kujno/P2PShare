@@ -12,7 +12,7 @@ namespace P2PShare.Libs
         public static async Task Connect(IPAddress ip, NetworkInterface @interface, int port, CancellationToken cancellationToken)
         {
             IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
-            TcpClient? client = new TcpClient();
+            TcpClient? client = new();
 
             if (ipLocal is null)
             {
