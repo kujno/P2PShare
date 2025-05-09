@@ -16,6 +16,7 @@ namespace P2PShare.Libs
         private static int AesKeySize { get; } = 32;
         public static int NonceSize { get; } = 12;
         public static byte[] Ack { get; } = Encoding.UTF8.GetBytes("y");
+        private static char Separator { get; } = '<';
 
         public static async Task<bool> SendFile(TcpClient[] clients, FileInfo fileInfo)
         {
@@ -205,7 +206,7 @@ namespace P2PShare.Libs
 
         private static byte[] createInvite(FileInfo fileInfo)
         {
-            return Encoding.UTF8.GetBytes($"{fileInfo.Name} ({fileInfo.Length}B)\nAccept?");
+            return Encoding.UTF8.GetBytes($"{fileInfo.Name} {Separator}{fileInfo.Length}B>\nAccept?");
         }
 
         private static void onInviteReceived(string? invite)
@@ -215,22 +216,19 @@ namespace P2PShare.Libs
 
         public static int GetFileLenghtFromInvite(string invite)
         {
-            return int.Parse(invite.Substring(invite.IndexOf('(') + 1, invite.LastIndexOf('B') - invite.IndexOf('(') - 1));
+            int separatorIndex = invite.IndexOf(Separator);
+
+            return int.Parse(invite.Substring(separatorIndex + 1, invite.LastIndexOf('B') - separatorIndex - 1));
         }
 
         public static string GetFileNameFromInvite(string invite)
         {
-            return invite.Substring(0, invite.IndexOf(" ("));
+            return invite.Substring(0, invite.IndexOf($" {Separator}"));
         }
 
         private static void onFileBeingReceived()
         {
             FileBeingReceived?.Invoke(null, EventArgs.Empty);
-        }
-
-        private static void onTransferFailed()
-        {
-            TransferFailed?.Invoke(null, EventArgs.Empty);
         }
 
         private static void onFileBeingSent()
