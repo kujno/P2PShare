@@ -23,6 +23,8 @@ namespace P2PShare.Libs
                 return;
             }
 
+            client.Client.Bind(new IPEndPoint(ipLocal, port));
+
             CancellationTokenSource cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
             try
