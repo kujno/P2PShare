@@ -27,10 +27,6 @@ namespace P2PShare.Libs
                     interfacesUp.Add(interfaces[i]);
                 }
             }
-            if (interfacesUp.Count == 0)
-            {
-                throw new Exception("No up network interfaces found");
-            }
 
             return interfacesUp;
         }
