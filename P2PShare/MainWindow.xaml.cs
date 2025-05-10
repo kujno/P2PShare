@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Input;
 using P2PShare.Utils;
 using P2PShare.Libs;
-using System.Security.Cryptography;
 
 namespace P2PShare
 {

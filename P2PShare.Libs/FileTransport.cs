@@ -31,7 +31,7 @@ namespace P2PShare.Libs
             NetworkStream[] streams = new NetworkStream[2];
             int rsaKeyLengthNoNull = (int)rsaKeyLength;
             byte[] inviteBytes = createInvite(fileInfo);
-            byte[] buffer = new byte[yLength + rsaKeyLengthNoNull];
+            byte[] buffer = new byte[Ack.Length];
             byte[] rsaKey = new byte[rsaKeyLengthNoNull];
 
             try
@@ -47,12 +47,15 @@ namespace P2PShare.Libs
                     return false;
                 }
 
-                await streams[0].ReadAsync(buffer, 0, buffer.Length);
+                // get invite response
+                await streams[0].ReadAsync(buffer, 0, Ack.Length);
 
                 if (Encoding.UTF8.GetString(buffer) == "n")
                 {
                     return false;
                 }
+
+                await streams[0].ReadAsync(rsaKey, 0, rsaKey.Length);
 
                 int bytesRead;
                 int bytesSent = 0;
@@ -66,10 +69,8 @@ namespace P2PShare.Libs
                 EncryptionSymmetrical cryptographySymmetrical;
 
                 RandomNumberGenerator.Fill(aesKey);
-
                 cryptographySymmetrical = new(aesKey);
 
-                rsaKey = getKeyFromBuffer(buffer, yLength, rsaKeyLengthNoNull);
                 Array.Copy(rsaKey, 0, modulus, 0, modulusLength);
                 Array.Copy(rsaKey, modulusLength, exponent, 0, exponentLength);
                 encryptorAsymmetrical = new(modulus, exponent);
@@ -251,15 +252,6 @@ namespace P2PShare.Libs
         public static void OnFilePartSent(int percentage)
         {
             FilePartSent?.Invoke(null, percentage);
-        }
-
-        private static byte[] getKeyFromBuffer(byte[] buffer, int yLength, int keyLength)
-        {
-            byte[] output = new byte[keyLength];
-
-            Array.Copy(buffer, yLength, output, 0, keyLength);
-
-            return output;
         }
 
         private static async Task<bool> ack(NetworkStream stream)
