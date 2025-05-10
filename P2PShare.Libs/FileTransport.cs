@@ -33,6 +33,7 @@ namespace P2PShare.Libs
             byte[] inviteBytes = createInvite(fileInfo);
             byte[] buffer = new byte[Ack.Length];
             byte[] rsaKey = new byte[rsaKeyLengthNoNull];
+            bool response;
 
             try
             {
@@ -48,9 +49,9 @@ namespace P2PShare.Libs
                 }
 
                 // get invite response
-                await streams[0].ReadAsync(buffer, 0, Ack.Length);
+                response = await ack(streams[0]);
 
-                if (Encoding.UTF8.GetString(buffer) == "n")
+                if (!response)
                 {
                     return false;
                 }
