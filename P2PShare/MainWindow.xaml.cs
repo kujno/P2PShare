@@ -39,7 +39,6 @@ namespace P2PShare
             InterfaceHandling.InterfaceDown += onInterfaceDown;
             FileTransport.InviteReceived += onInviteReceived;
             FileTransport.FileBeingReceived += onFileBeingReceived;
-            FileTransport.TransferFailed += onTransferFailed;
             FileTransport.FilePartReceived += onFilePartReceived;
             FileTransport.FilePartSent += onFilePartSent;
             FileTransport.FileBeingSent += onFileBeingSent;

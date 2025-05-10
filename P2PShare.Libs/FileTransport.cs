@@ -8,7 +8,6 @@ namespace P2PShare.Libs
     {
         public static event EventHandler<string?>? InviteReceived;
         public static event EventHandler? FileBeingReceived;
-        public static event EventHandler? TransferFailed;
         public static event EventHandler? FileBeingSent;
         public static event EventHandler<int>? FilePartReceived;
         public static event EventHandler<int>? FilePartSent;
