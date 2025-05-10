@@ -55,6 +55,8 @@ namespace P2PShare.Libs
                     return false;
                 }
 
+                await SendAck(streams[0]);
+
                 await streams[0].ReadAsync(rsaKey, 0, rsaKey.Length);
 
                 int bytesRead;
@@ -207,6 +209,8 @@ namespace P2PShare.Libs
             }
 
             byte[] buffer = rsaParameters.Modulus!.Concat(rsaParameters.Exponent!).ToArray();
+
+            await ack(stream);
 
             await stream.WriteAsync(buffer, 0, buffer.Length);
         }
