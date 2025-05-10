@@ -28,6 +28,7 @@ namespace P2PShare
         private CancellationTokenSource? _cancelConnecting;
         private CancellationTokenSource? _cancelMonitoring;
         private RSAParameters[]? rsaParameters;
+        private bool inviteSent = false;
 
         public MainWindow()
         {
@@ -238,6 +239,8 @@ namespace P2PShare
             _cancelConnecting.Cancel();
             _cancelConnecting.Dispose();
             _cancelConnecting = null;
+
+            getRidOfClients();
         }
 
         private void onInterfaceDown(object? sender, EventArgs e)
@@ -331,6 +334,13 @@ namespace P2PShare
 
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
+            if (inviteSent)
+            {
+                Elements.ShowDialog("You cannot send multiple files at once");
+                
+                return;
+            }
+            
             if (_clients[0] is null || !_clients[0]!.Connected)
             {
                 Elements.ShowDialog("You must be connected to share");
@@ -345,7 +355,11 @@ namespace P2PShare
                 return;
             }
 
+            inviteSent = true;
+
             Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfo), _sendReceiveWindow);
+
+            inviteSent = false;
 
             await receiveInvite();
         }
