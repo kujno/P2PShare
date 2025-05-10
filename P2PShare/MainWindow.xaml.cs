@@ -286,9 +286,9 @@ namespace P2PShare
                 {
                     Elements.ShowDialog($"The file has been saved to:\n{file.FullName}");
                 }
-
-                await FileTransport.ReceiveInvite(_clients);
             }
+
+            await FileTransport.ReceiveInvite(_clients);
         }
 
         private void onFileBeingReceived(object? sender, EventArgs e)

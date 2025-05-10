@@ -144,13 +144,13 @@ namespace P2PShare.Libs
                 bytesRead = await streams[1].ReadAsync(buffer, 0, buffer.Length);
 
                 await SendAck(streams[0]);
+
+                onInviteReceived(Encoding.UTF8.GetString(buffer, 0, bytesRead));
             }
             catch
             {
-                return;
+                onInviteReceived(null);
             }
-
-            onInviteReceived(Encoding.UTF8.GetString(buffer, 0, bytesRead));
         }
 
         public static async Task<FileInfo?> ReceiveFile(TcpClient client, int fileLength, string filePath, RSAParameters rsaParameters)
