@@ -147,7 +147,7 @@ namespace P2PShare.Libs
             {
                 return null;
             }
-            RandomNumberGenerator.Fill(new byte[AesKeySize]);
+            RandomNumberGenerator.Fill(aesKey);
             buffer = new byte[new EncryptorAsymmetrical(exampleKey.Modulus!, exampleKey.Exponent!).Encrypt(aesKey).Length];
 
             try
