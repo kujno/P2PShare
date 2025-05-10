@@ -301,7 +301,7 @@ namespace P2PShare.Libs
             await stream.WriteAsync(ackBuffer, 0, Ack.Length);
         }
 
-        private static async Task SendAck(NetworkStream stream)
+        public static async Task SendAck(NetworkStream stream)
         {
             await SendAck(stream, true);
         }

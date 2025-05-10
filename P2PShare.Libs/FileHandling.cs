@@ -20,8 +20,7 @@ namespace P2PShare.Libs
                     // get nonce
                     await networkStream.ReadAsync(nonce, 0, FileTransport.NonceSize);
 
-                    // ack nonce
-                    await networkStream.WriteAsync(FileTransport.Ack, 0, FileTransport.Ack.Length);
+                    await FileTransport.SendAck(networkStream);
 
                     // get chunk
                     await networkStream.ReadAsync(buffer, 0, buffer.Length);
@@ -30,8 +29,7 @@ namespace P2PShare.Libs
 
                     if (decryptedBuffer is not null)
                     {
-                        //ack
-                        await networkStream.WriteAsync(FileTransport.Ack, 0, FileTransport.Ack.Length);
+                        await FileTransport.SendAck(networkStream, true);
 
                         await fileStream.WriteAsync(decryptedBuffer, 0, decryptedBuffer.Length);
 
@@ -42,9 +40,7 @@ namespace P2PShare.Libs
                         continue;
                     }
 
-                    byte[] ack = Encoding.UTF8.GetBytes("n");
-
-                    await networkStream.WriteAsync(ack, 0, ack.Length);
+                    await FileTransport.SendAck(networkStream, false);
                 }
             }
         }
