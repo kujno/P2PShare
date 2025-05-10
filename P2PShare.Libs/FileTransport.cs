@@ -161,6 +161,7 @@ namespace P2PShare.Libs
 
                 await stream.ReadAsync(buffer, 0, buffer.Length);
                 aesKey = decryptographer.Decrypt(buffer);
+                await Task.Delay(100);
                 EncryptionSymmetrical encryption = new(aesKey);
 
                 await FileHandling.CreateFile(stream, filePath, fileLength, encryption);
