@@ -27,8 +27,8 @@ namespace P2PShare
         private TcpClient?[] _clients = new TcpClient?[2];
         private CancellationTokenSource? _cancelConnecting;
         private CancellationTokenSource? _cancelMonitoring;
-        private RSAParameters[]? rsaParameters;
-        private bool inviteSent = false;
+        private DecryptorAsymmetrical? _decryptographer;
+        private bool _inviteSent = false;
 
         public MainWindow()
         {
@@ -263,18 +263,20 @@ namespace P2PShare
                     {
                         receive = true;
 
-                        rsaParameters = AsymmetricCryptography.GenerateKeys();
+                        _decryptographer = new();
                     }
                     else
                     {
                         receive = false;
                     }
 
-                    await FileTransport.Reply(_clients[0]!, receive, rsaParameters![0]);
+                    await FileTransport.Reply(_clients[0]!, receive);
 
                     if (path is not null)
                     {
-                        file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), $"{path}\\{FileTransport.GetFileNameFromInvite(invite)}", rsaParameters[1]);
+                        await FileTransport.SendRSAPublicKey(_clients[0]!.GetStream(), _decryptographer!.PublicKey);
+                        
+                        file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), $"{path}\\{FileTransport.GetFileNameFromInvite(invite)}", _decryptographer);
                     }
                 }
 
@@ -320,7 +322,7 @@ namespace P2PShare
 
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
-            if (inviteSent)
+            if (_inviteSent)
             {
                 Elements.ShowDialog("You cannot send multiple files at once");
                 
@@ -341,11 +343,11 @@ namespace P2PShare
                 return;
             }
 
-            inviteSent = true;
+            _inviteSent = true;
 
             Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfo), _sendReceiveWindow);
 
-            inviteSent = false;
+            _inviteSent = false;
             
             await FileTransport.ReceiveInvite(_clients);
         }
