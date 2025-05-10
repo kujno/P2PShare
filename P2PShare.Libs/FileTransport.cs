@@ -42,7 +42,7 @@ namespace P2PShare.Libs
 
                 Task delay = Task.Delay(10000);
 
-                if (await Task.WhenAny(ack(streams[1]), delay) == delay)
+                if (await Task.WhenAny(ack(streams[0]), delay) == delay)
                 {
                     return false;
                 }
@@ -130,7 +130,7 @@ namespace P2PShare.Libs
 
                 bytesRead = await streams[1].ReadAsync(buffer, 0, buffer.Length);
 
-                await SendAck(streams[1]);
+                await SendAck(streams[0]);
 
                 onInviteReceived(Encoding.UTF8.GetString(buffer, 0, bytesRead));
             }
@@ -161,7 +161,7 @@ namespace P2PShare.Libs
 
                 await stream.ReadAsync(buffer, 0, buffer.Length);
                 aesKey = decryptographer.Decrypt(buffer);
-                await Task.Delay(900);
+                await Task.Delay(1000);
                 EncryptionSymmetrical encryption = new(aesKey);
 
                 await FileHandling.CreateFile(stream, filePath, fileLength, encryption);
