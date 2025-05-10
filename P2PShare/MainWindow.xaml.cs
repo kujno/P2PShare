@@ -162,28 +162,14 @@ namespace P2PShare
 
             _monitorConnections[i] = GUIConnection.MonitorClientConnection(_clients[i]!, State, Interface, Cancel);
 
-            check = true;
-            
-            foreach (TcpClient? client in _clients)
-            {
-                if (client is not null)
-                {
-                    continue;
-                }
-
-                check = false;
-                
-                break;
-            }
-
-            if (!check)
+            if (!ClientConnection.AreClientsConnected(_clients))
             {
                 return;
             }
 
             Elements.Connected(State, Cancel, ipRemote);
 
-            await receiveInvite();
+            await FileTransport.ReceiveInvite(_clients);
         }
 
         private void OnDisconnected(object? sender, EventArgs e)
@@ -300,9 +286,9 @@ namespace P2PShare
                 {
                     Elements.ShowDialog($"The file has been saved to:\n{file.FullName}");
                 }
-
-                await receiveInvite();
             }
+
+            await FileTransport.ReceiveInvite(_clients);
         }
 
         private void onFileBeingReceived(object? sender, EventArgs e)
@@ -360,8 +346,8 @@ namespace P2PShare
             Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfo), _sendReceiveWindow);
 
             inviteSent = false;
-
-            await receiveInvite();
+            
+            await FileTransport.ReceiveInvite(_clients);
         }
 
         private void Select_Click(object sender, RoutedEventArgs e)
@@ -381,16 +367,6 @@ namespace P2PShare
             _sendReceiveWindow = new();
             _sendReceiveWindow.Text.Text = "Sent: 0%";
             _sendReceiveWindow.Show();
-        }
-
-        private async Task receiveInvite()
-        {
-            if (_clients[1] is null || !_clients[1]!.Connected)
-            {
-                return;
-            }
-            
-            await FileTransport.ReceiveInvite(_clients[1]!);
         }
 
         private void getRidOfClients()

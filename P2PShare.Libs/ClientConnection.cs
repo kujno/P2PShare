@@ -60,5 +60,18 @@ namespace P2PShare.Libs
         {
             Disconnected?.Invoke(null, EventArgs.Empty);
         }
+
+        public static bool AreClientsConnected(TcpClient?[] clients)
+        {
+            foreach (TcpClient? client in clients)
+            {
+                if (client is null || !client.Connected)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }
