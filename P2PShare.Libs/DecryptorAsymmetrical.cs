@@ -14,7 +14,7 @@ namespace P2PShare.Libs
             _privateKey = keys[1];
         }
 
-        public async Task<byte[]> Decrypt(byte[] encryptedData)
+        public byte[] Decrypt(byte[] encryptedData)
         {
             byte[] decryptedData;
 
@@ -22,7 +22,7 @@ namespace P2PShare.Libs
             {
                 rsa.ImportParameters(_privateKey);
 
-                decryptedData = await Task.Run(() => rsa.Decrypt(encryptedData, RSAEncryptionPadding.OaepSHA256));
+                decryptedData = rsa.Decrypt(encryptedData, RSAEncryptionPadding.OaepSHA256);
             }
 
             return decryptedData;
