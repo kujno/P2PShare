@@ -40,6 +40,14 @@ namespace P2PShare.Libs
                 streams = ClientHandling.GetStreamsFromTcpClients(clients);
 
                 await streams[1].WriteAsync(inviteBytes, 0, inviteBytes.Length);
+
+                Task delay = Task.Delay(10000);
+
+                if (await Task.WhenAny(ack(streams[0]), delay) == delay)
+                {
+                    return false;
+                }
+
                 await streams[0].ReadAsync(buffer, 0, buffer.Length);
 
                 if (Encoding.UTF8.GetString(buffer) == "n")
@@ -73,8 +81,8 @@ namespace P2PShare.Libs
 
                 while ((bytesRead = await fileStream.ReadAsync(buffer2 = new byte[Math.Min(BufferSize, fileInfo.Length - bytesSent)], 0, buffer2.Length)) > 0)
                 {
-                    byte[] ackBuffer = new byte[Ack.Length];
-
+                    bool ackBool;
+                    
                     do
                     {
                         byte[] encryptedData;
@@ -91,22 +99,20 @@ namespace P2PShare.Libs
 
                         encryptedData = SymmetricCryptography.Encrypt(buffer2, aesKey, nonce);
 
-                        // ack nonce
-                        await streams[0].ReadAsync(ackBuffer, 0, Ack.Length);
+                        await ack(streams[0]);
 
                         await streams[0].FlushAsync();
 
                         // send chunk
                         await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
 
-                        // ack
-                        await streams[0].ReadAsync(ackBuffer, 0, Ack.Length);
+                        ackBool = await ack(streams[0]);
 
                         await streams[0].FlushAsync();
 
                         oldNonce = nonce;
                     }
-                    while (!ackBuffer.SequenceEqual(Ack));
+                    while (!ackBool);
                     
                     bytesSent += bytesRead;
                     OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
@@ -120,17 +126,24 @@ namespace P2PShare.Libs
             return true;
         }
 
-        public static async Task ReceiveInvite(TcpClient client)
+        public static async Task ReceiveInvite(TcpClient?[] clients)
         {
-            NetworkStream stream;
+            if (!ClientConnection.AreClientsConnected(clients))
+            {
+                return;
+            }
+            
+            NetworkStream[] streams;
             byte[] buffer = new byte[1024];
             int bytesRead;
 
             try
             {
-                stream = client.GetStream();
+                streams = ClientHandling.GetStreamsFromTcpClients(clients!);
 
-                bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                bytesRead = await streams[1].ReadAsync(buffer, 0, buffer.Length);
+
+                await SendAck(streams[0]);
             }
             catch
             {
@@ -252,6 +265,45 @@ namespace P2PShare.Libs
             Array.Copy(buffer, yLength, output, 0, keyLength);
 
             return output;
+        }
+
+        private static async Task<bool> ack(NetworkStream stream)
+        {
+            byte[] buffer = new byte[Ack.Length];
+
+            await stream.ReadAsync(buffer, 0, Ack.Length);
+
+            if (buffer.SequenceEqual(Ack))
+            {
+                return true;
+            }
+            
+            return false;
+        }
+
+        public static async Task SendAck(NetworkStream stream, bool yN)
+        {
+            byte[] ackBuffer = new byte[Ack.Length];
+
+            switch (yN)
+            {
+                case true:
+                    ackBuffer = Ack;
+
+                    break;
+
+                default:
+                    ackBuffer = Encoding.UTF8.GetBytes("n");
+
+                    break;
+            }
+
+            await stream.WriteAsync(ackBuffer, 0, Ack.Length);
+        }
+
+        private static async Task SendAck(NetworkStream stream)
+        {
+            await SendAck(stream, true);
         }
     }
 }
