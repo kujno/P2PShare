@@ -29,10 +29,9 @@ namespace P2PShare.Libs
             }
 
             NetworkStream[] streams = new NetworkStream[2];
-            int rsaKeyLengthNoNull = (int)rsaKeyLength;
             byte[] inviteBytes = createInvite(fileInfo);
             byte[] buffer = new byte[Ack.Length];
-            byte[] rsaKey = new byte[rsaKeyLengthNoNull];
+            byte[] rsaKey = new byte[(int)rsaKeyLength];
             bool response;
 
             try
@@ -141,7 +140,7 @@ namespace P2PShare.Libs
             }
         }
 
-        public static async Task<FileInfo?> ReceiveFile(TcpClient client, int fileLength, string filePath, DecryptorAsymmetrical decryptographer)
+        public static async Task<FileInfo?> ReceiveFile(TcpClient client, int fileLength, string filePath, DecryptorAsymmetrical decryptor)
         {
             NetworkStream stream;
             byte[] aesKey = new byte[AesKeySize];
@@ -161,7 +160,7 @@ namespace P2PShare.Libs
                 onFileBeingReceived();
 
                 await stream.ReadAsync(buffer, 0, buffer.Length);
-                aesKey = decryptographer.Decrypt(buffer);
+                aesKey = decryptor.Decrypt(buffer);
                 EncryptionSymmetrical encryption = new(aesKey);
 
                 await FileHandling.CreateFile(stream, filePath, fileLength, encryption);
