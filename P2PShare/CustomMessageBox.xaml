@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:P2PShare"
         mc:Ignorable="d"
-        Title="CustomMessageBox" Height="225" Width="400"
+        Title="CustomMessageBox" Height="225px" Width="400px"
         WindowStyle="None"
         ResizeMode="NoResize"
         Background="#333333"
