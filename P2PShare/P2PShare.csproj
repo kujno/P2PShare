@@ -6,7 +6,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Images\P2PShare.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Images\P2PShare.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\P2PShare.Libs\P2PShare.Libs.csproj" />

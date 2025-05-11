@@ -15,6 +15,12 @@
     {
         "Entry"
         {
+        "MsmKey" = "8:_04C3BFD844024A71B9B9D2940CED49AE"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_3E2EAEBC734F4D1EBD8E02F50162D97F"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -122,6 +128,26 @@
         }
         "File"
         {
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_04C3BFD844024A71B9B9D2940CED49AE"
+            {
+            "SourcePath" = "8:..\\P2PShare\\Images\\P2PShare.ico"
+            "TargetName" = "8:P2PShare.ico"
+            "Tag" = "8:"
+            "Folder" = "8:_95331E516E2C4909B41739D373EF72F9"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
         }
         "FileType"
         {
@@ -160,6 +186,39 @@
             "Property" = "8:TARGETDIR"
                 "Folders"
                 {
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_52613E18E82A4515B1F7707DC3C8B26A"
+                    {
+                    "Name" = "8:App"
+                    "AlwaysCreate" = "11:FALSE"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "Property" = "8:_BD4072D5B5B243A9ABB0A10A5F3765B0"
+                        "Folders"
+                        {
+                        }
+                    }
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_5763161E898C47DA86A9A11CC596ED40"
+                    {
+                    "Name" = "8:Libs"
+                    "AlwaysCreate" = "11:FALSE"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "Property" = "8:_409E2A35ECC242EC917FAAF0084C6BF9"
+                        "Folders"
+                        {
+                        }
+                    }
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_95331E516E2C4909B41739D373EF72F9"
+                    {
+                    "Name" = "8:Images"
+                    "AlwaysCreate" = "11:FALSE"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "Property" = "8:_2C20AD84EE364A978353FB918096CAC8"
+                        "Folders"
+                        {
+                        }
+                    }
                 }
             }
         }
@@ -179,7 +238,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:P2PShare"
         "ProductCode" = "8:{61211D9C-E81D-43D7-971D-91ED0F91FF6A}"
-        "PackageCode" = "8:{9B3567D8-45AF-44E4-9FCB-ABA089CCCEB2}"
+        "PackageCode" = "8:{ECAD7115-B54A-480A-A977-388461CBAFA1}"
         "UpgradeCode" = "8:{36F5B492-1CB4-4891-B71C-D9FB7EBCE939}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
@@ -196,7 +255,7 @@
         "Keywords" = "8:"
         "ARPCOMMENTS" = "8:Installer for P2PShare"
         "ARPURLINFOABOUT" = "8:"
-        "ARPPRODUCTICON" = "8:"
+        "ARPPRODUCTICON" = "8:_04C3BFD844024A71B9B9D2940CED49AE"
         "ARPIconIndex" = "3:0"
         "SearchPath" = "8:"
         "UseSystemSearchPath" = "11:TRUE"
@@ -309,8 +368,8 @@
             "Transitive" = "11:FALSE"
             "Target" = "8:_3E2EAEBC734F4D1EBD8E02F50162D97F"
             "Folder" = "8:_B2F273CC590A42CCB816DF6D8F427B68"
-            "WorkingFolder" = "8:_BD741801683C45BF97B0A9E55CEF3A50"
-            "Icon" = "8:"
+            "WorkingFolder" = "8:_52613E18E82A4515B1F7707DC3C8B26A"
+            "Icon" = "8:_04C3BFD844024A71B9B9D2940CED49AE"
             "Feature" = "8:"
             }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_EC3C6F75C5C742EA841942B47C06EDE2"
@@ -323,8 +382,8 @@
             "Transitive" = "11:FALSE"
             "Target" = "8:_3E2EAEBC734F4D1EBD8E02F50162D97F"
             "Folder" = "8:_0EDBCFFCCF9F4330921820C006E7B9E1"
-            "WorkingFolder" = "8:_BD741801683C45BF97B0A9E55CEF3A50"
-            "Icon" = "8:"
+            "WorkingFolder" = "8:_52613E18E82A4515B1F7707DC3C8B26A"
+            "Icon" = "8:_04C3BFD844024A71B9B9D2940CED49AE"
             "Feature" = "8:"
             }
         }
@@ -728,10 +787,10 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_3E2EAEBC734F4D1EBD8E02F50162D97F"
             {
-            "SourcePath" = "8:..\\P2PShare\\obj\\Release\\net8.0-windows\\apphost.exe"
+            "SourcePath" = "8:..\\P2PShare\\obj\\Debug\\net8.0-windows\\apphost.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
-            "Folder" = "8:_BD741801683C45BF97B0A9E55CEF3A50"
+            "Folder" = "8:_52613E18E82A4515B1F7707DC3C8B26A"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -756,10 +815,10 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_84B03812293E418EA7BE695378DA317E"
             {
-            "SourcePath" = "8:..\\P2PShare.Libs\\obj\\Release\\net8.0\\P2PShare.Libs.dll"
+            "SourcePath" = "8:..\\P2PShare.Libs\\obj\\Debug\\net8.0\\P2PShare.Libs.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
-            "Folder" = "8:_BD741801683C45BF97B0A9E55CEF3A50"
+            "Folder" = "8:_5763161E898C47DA86A9A11CC596ED40"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
