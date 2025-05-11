@@ -1,31 +1,26 @@
 ﻿using System.Net.Sockets;
-using System.Text;
 
 namespace P2PShare.Libs
 {
     public class FileHandling
     {
-        public static async Task CreateFile(NetworkStream networkStream, string filePath, int fileLength, byte[] aesKey)
+        public static async Task CreateFile(NetworkStream networkStream, string filePath, int fileLength, EncryptionSymmetrical encryption)
         {
             using (FileStream fileStream = new FileStream(filePath, getFileMode(filePath)))
             {
                 int totalBytesRead = 0;
-                byte[] nonce = new byte[FileTransport.NonceSize];
+
+                await FileTransport.SendAck(networkStream);
 
                 while (totalBytesRead < fileLength)
                 {
-                    byte[] buffer = new byte[Math.Min(FileTransport.BufferSize, fileLength - totalBytesRead) + SymmetricCryptography.TagSize];
+                    byte[] buffer = new byte[Math.Min(FileTransport.BufferSize, fileLength - totalBytesRead) + encryption.TagSize + encryption.NonceSize];
                     byte[]? decryptedBuffer;
-
-                    // get nonce
-                    await networkStream.ReadAsync(nonce, 0, FileTransport.NonceSize);
-
-                    await FileTransport.SendAck(networkStream);
 
                     // get chunk
                     await networkStream.ReadAsync(buffer, 0, buffer.Length);
 
-                    decryptedBuffer = SymmetricCryptography.Decrypt(buffer, aesKey, nonce);
+                    decryptedBuffer = encryption.Decrypt(buffer);
 
                     if (decryptedBuffer is not null)
                     {
