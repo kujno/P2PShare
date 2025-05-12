@@ -292,14 +292,14 @@ namespace P2PShare.Libs
         {
             byte[] buffer = new byte[Ack.Length];
 
-            await stream.ReadAsync(buffer, 0, Ack.Length);
+            Task reading =  stream.ReadAsync(buffer, 0, Ack.Length);
 
-            if (buffer.SequenceEqual(Ack))
+            if (await Task.WhenAny(reading, Task.Delay(1000)) != reading || !buffer.SequenceEqual(Ack))
             {
-                return true;
+                return false;
             }
 
-            return false;
+            return true;
         }
 
         public static async Task SendAck(NetworkStream stream, bool yN)
