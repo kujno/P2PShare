@@ -166,24 +166,29 @@ namespace P2PShare
                 return;
             }
 
-            Elements.Connected(State, Cancel, ipRemote);
+            Elements.Connected(State, Cancel, Disconnect, ipRemote);
 
             await FileTransport.ReceiveInvite(_clients);
         }
 
         private void OnDisconnected(object? sender, EventArgs e)
         {
-            Elements.Disconnected(State, Cancel, Interface);
+            Elements.Disconnected(State, Cancel, Disconnect, Interface);
 
-            getRidOfClients();
+            ClientConnection.GetRidOfClients(_clients);
         }
 
-        private async void Connect_Click(object sender, RoutedEventArgs e)
+        private void Connect_Click(object sender, RoutedEventArgs e)
         {
             IPAddress? remoteIP;
 
-            getRidOfClients();
+            if (ClientConnection.AreClientsConnected(_clients))
+            {
+                Elements.ShowDialog("You must first disconnect to connect to another device");
 
+                return;
+            }
+            
             if (Interface.SelectedItem?.ToString() != _interface?.Name)
             {
                 Interface.SelectedItem = _interface?.Name;
@@ -206,10 +211,7 @@ namespace P2PShare
 
             _cancelConnecting = new CancellationTokenSource();
 
-            for (int i = 0; i < 2; i++)
-            {
-                _connecting[i] = ClientConnection.Connect(remoteIP, _interface, _portConnect + i, _cancelConnecting.Token);
-            }
+            _connecting = ClientConnection.ConnectAll(remoteIP, _interface, _portConnect, _cancelConnecting.Token);
 
             Elements.Connecting(_portConnect, State, Cancel);
         }
@@ -225,7 +227,7 @@ namespace P2PShare
             _cancelConnecting.Dispose();
             _cancelConnecting = null;
 
-            getRidOfClients();
+            ClientConnection.GetRidOfClients(_clients);
         }
 
         private void onInterfaceDown(object? sender, EventArgs e)
@@ -370,13 +372,9 @@ namespace P2PShare
             _sendReceiveWindow.Show();
         }
 
-        private void getRidOfClients()
+        private void Disconnect_Click(object sender, RoutedEventArgs e)
         {
-            for (int i = 0; i < _clients.Length; i++)
-            {
-                _clients[i]?.Dispose();
-                _clients[i] = null;
-            }
+            ClientConnection.GetRidOfClients(_clients);
         }
     }
 }
