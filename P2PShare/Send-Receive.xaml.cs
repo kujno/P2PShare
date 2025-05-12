@@ -44,6 +44,8 @@ namespace P2PShare
                 if (_i == _filesCount)
                 {
                     Close();
+
+                    return;
                 }
 
                 _i++;
