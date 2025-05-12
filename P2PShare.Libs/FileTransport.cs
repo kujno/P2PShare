@@ -115,7 +115,7 @@ namespace P2PShare.Libs
 
         public static async Task ReceiveInvite(TcpClient?[] clients)
         {
-            if (!ClientConnection.AreClientsConnected(clients))
+            if (!ConnectionClient.AreClientsConnected(clients))
             {
                 return;
             }

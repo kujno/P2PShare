@@ -4,7 +4,7 @@ using System.Net;
 
 namespace P2PShare.Libs
 {
-    public class IPv4Handling
+    public class IPHandling
     {
         public static IPAddress? GetLocalIPv4(NetworkInterface @interface)
         {

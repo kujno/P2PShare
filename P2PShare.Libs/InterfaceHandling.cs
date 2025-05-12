@@ -31,13 +31,13 @@ namespace P2PShare.Libs
             return interfacesUp;
         }
 
-        public static async Task MonitorInterface(NetworkInterface @interface, CancellationToken cancellationToken)
+        public static async Task MonitorInterface(NetworkInterface @interface, Cancellation cancellation)
         {
             try
             {
                 while (@interface.OperationalStatus == OperationalStatus.Up)
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    if (cancellation.TokenSource is null || cancellation.TokenSource.Token.IsCancellationRequested)
                     {
                         return;
                     }

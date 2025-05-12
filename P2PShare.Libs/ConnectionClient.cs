@@ -4,17 +4,18 @@ using System.Net.Sockets;
 
 namespace P2PShare.Libs
 {
-    public class ClientConnection
+    public class ConnectionClient
     {
         public static event EventHandler<TcpClient>? Connected;
         public static event EventHandler? Disconnected;
 
-        public static async Task Connect(IPAddress ip, NetworkInterface @interface, int port, CancellationToken cancellationToken)
+        public static async Task Connect(IPAddress ip, NetworkInterface @interface, int port, Cancellation cancellation)
         {
-            IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
+            IPAddress? ipLocal = IPHandling.GetLocalIPv4(@interface);
             TcpClient client = new();
+            ValueTask connecting;
 
-            if (ipLocal is null)
+            if (ipLocal is null || cancellation.TokenSource is null)
             {
                 client.Dispose();
 
@@ -23,27 +24,35 @@ namespace P2PShare.Libs
                 return;
             }
 
-            client.Client.Bind(new IPEndPoint(ipLocal, port));
-
-            CancellationTokenSource cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
             try
             {
-                await Task.WhenAny(client.ConnectAsync(ip, port, cancellationTokenSource.Token).AsTask(), Task.Delay(30000, cancellationTokenSource.Token));
+                client.Client.Bind(new IPEndPoint(ipLocal, port));
 
-                cancellationTokenSource.Cancel();
-
-                cancellationTokenSource.Dispose();
-
-                if (client.Connected)
+                do
                 {
-                    OnConnected(client);
+                    try
+                    {
+                        connecting = client.ConnectAsync(ip, port, cancellation.TokenSource.Token);
 
-                    return;
+                        await connecting;
+                    }
+                    catch
+                    {
+                    }
                 }
+                while (!client.Connected && cancellation.TokenSource is not null);
             }
             catch
             {
+            }
+
+            cancellation.Cancel();
+
+            if (client.Connected)
+            {
+                OnConnected(client);
+
+                return;
             }
 
             client.Dispose();
@@ -83,13 +92,13 @@ namespace P2PShare.Libs
             }
         }
 
-        public static Task[] ConnectAll(IPAddress ip, NetworkInterface @interface, int port, CancellationToken cancellationToken)
+        public static Task[] ConnectAll(IPAddress ip, NetworkInterface @interface, int port, Cancellation cancellation)
         {
             Task[] connecting = new Task[2];
 
             for (int i = 0; i < 2; i++)
             {
-                connecting[i] = Connect(ip, @interface, port + i, cancellationToken);
+                connecting[i] = Connect(ip, @interface, port + i, cancellation);
             }
 
             return connecting;

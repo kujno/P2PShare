@@ -16,18 +16,19 @@ namespace P2PShare
     {
         private NetworkInterface? _interface;
         private IPAddress? _localIP;
-        private Task?[] _listening = new Task?[2];
-        private Task?[] _monitorConnections = new Task?[2];
+        private Task?[] _listening;
+        private Task?[] _monitorConnections;
         private Task? _monitorInterface;
-        private Task?[] _connecting = new Task?[2];
+        private Task?[] _connecting;
         private int _portListen;
         private int _portConnect;
         private Send_Receive? _sendReceiveWindow;
-        private TcpClient?[] _clients = new TcpClient?[2];
-        private CancellationTokenSource? _cancelConnecting;
-        private CancellationTokenSource? _cancelMonitoring;
+        private TcpClient?[] _clients;
+        private Cancellation _cancelConnecting;
+        private Cancellation _cancelMonitoring;
         private DecryptorAsymmetrical? _decryptographer;
-        private bool _inviteSent = false;
+        private bool _inviteSent;
+        private Task? _timeOut;
 
         public MainWindow()
         {
@@ -35,14 +36,22 @@ namespace P2PShare
             Elements.RefreshInterfaces(Interface);
             Interface.SelectedIndex = 0;
 
-            ClientConnection.Connected += OnConnected;
-            ClientConnection.Disconnected += OnDisconnected;
+            ConnectionClient.Connected += OnConnected;
+            ConnectionClient.Disconnected += OnDisconnected;
             InterfaceHandling.InterfaceDown += onInterfaceDown;
             FileTransport.InviteReceived += onInviteReceived;
             FileTransport.FileBeingReceived += onFileBeingReceived;
             FileTransport.FilePartReceived += onFilePartReceived;
             FileTransport.FilePartSent += onFilePartSent;
             FileTransport.FileBeingSent += onFileBeingSent;
+
+            _listening = new Task?[2];
+            _monitorConnections = new Task?[2];
+            _connecting = new Task?[2];
+            _clients = new TcpClient?[2];
+            _inviteSent = false;
+            _cancelConnecting = new();
+            _cancelMonitoring = new();
         }
 
         private void Minimize_Click(object sender, RoutedEventArgs e)
@@ -91,7 +100,7 @@ namespace P2PShare
                 return;
             }
 
-            _localIP = IPv4Handling.GetLocalIPv4(_interface);
+            _localIP = IPHandling.GetLocalIPv4(_interface);
 
             if (_localIP is null)
             {
@@ -100,13 +109,20 @@ namespace P2PShare
 
             YourIP.Text = $"Your IP address: {_localIP}";
 
-            _cancelMonitoring = new CancellationTokenSource();
+            _cancelMonitoring?.NewTokenSource();
 
-            _monitorInterface = InterfaceHandling.MonitorInterface(_interface, _cancelMonitoring.Token);
+            if (_cancelMonitoring is null)
+            {
+                return;
+            }
+            
+            _monitorInterface = InterfaceHandling.MonitorInterface(_interface, _cancelMonitoring);
         }
 
         private void Listen_Click(object sender, RoutedEventArgs e)
         {
+            _cancelConnecting.NewTokenSource();
+
             if (_localIP is null || !int.TryParse(Port.Text.Trim(), out _portListen) || _interface is null || !PortHandling.IsPortAvailable(_localIP, _portListen))
             {
                 Elements.ShowDialog("Select an interface & enter a valid port number");
@@ -114,11 +130,11 @@ namespace P2PShare
                 return;
             }
 
-            _cancelConnecting = new CancellationTokenSource();
-
+            _timeOut = _cancelConnecting.TimeOut();
+            
             for (int i = 0; i < 2; i++)
             {
-                _listening[i] = ListenerConnection.ListenLoop(_portListen + i, _interface, _cancelConnecting.Token);
+                _listening[i] = ConnectionListener.ListenLoop(_portListen + i, _interface, _cancelConnecting);
             }
 
             Elements.Listening(_portListen, State, Cancel);
@@ -150,7 +166,7 @@ namespace P2PShare
                 return;
             }
             
-            ipRemote = IPv4Handling.GetRemoteIPAddress(_clients[i]!);
+            ipRemote = IPHandling.GetRemoteIPAddress(_clients[i]!);
 
             if (ipRemote is null)
             {
@@ -162,7 +178,7 @@ namespace P2PShare
 
             _monitorConnections[i] = GUIConnection.MonitorClientConnection(_clients[i]!, State, Interface, Cancel);
 
-            if (!ClientConnection.AreClientsConnected(_clients))
+            if (!ConnectionClient.AreClientsConnected(_clients))
             {
                 return;
             }
@@ -176,7 +192,7 @@ namespace P2PShare
         {
             Elements.Disconnected(State, Cancel, Disconnect, Interface);
 
-            ClientConnection.GetRidOfClients(_clients);
+            ConnectionClient.GetRidOfClients(_clients);
 
             if (Interface.Items.Contains(_interface?.Name))
             {
@@ -188,7 +204,7 @@ namespace P2PShare
         {
             IPAddress? remoteIP;
 
-            if (ClientConnection.AreClientsConnected(_clients))
+            if (ConnectionClient.AreClientsConnected(_clients))
             {
                 Elements.ShowDialog("You must first disconnect to connect to another device");
 
@@ -200,10 +216,9 @@ namespace P2PShare
                 Interface.SelectedItem = _interface?.Name;
             }
 
-            if (_cancelConnecting is not null)
+            if (_cancelConnecting.TokenSource is not null)
             {
-                _cancelConnecting = Cancellation.Cancel(_cancelConnecting);
-                _cancelConnecting = null;
+                _cancelConnecting.Cancel();
             }
 
             if (_interface is null || _localIP is null || !IPAddress.TryParse(RemoteIP.Text.Trim(), out remoteIP))
@@ -215,25 +230,25 @@ namespace P2PShare
             
             _portConnect = PortHandling.FindPort(_localIP);
 
-            _cancelConnecting = new CancellationTokenSource();
+            _cancelConnecting!.NewTokenSource();
 
-            _connecting = ClientConnection.ConnectAll(remoteIP, _interface, _portConnect, _cancelConnecting.Token);
+            _timeOut = _cancelConnecting.TimeOut();
+
+            _connecting = ConnectionClient.ConnectAll(remoteIP, _interface, _portConnect, _cancelConnecting);
 
             Elements.Connecting(_portConnect, State, Cancel);
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            if (_cancelConnecting is null)
+            if (_cancelConnecting.TokenSource is null)
             {
                 return;
             }
             
             _cancelConnecting.Cancel();
-            _cancelConnecting.Dispose();
-            _cancelConnecting = null;
 
-            ClientConnection.GetRidOfClients(_clients);
+            ConnectionClient.GetRidOfClients(_clients);
         }
 
         private void onInterfaceDown(object? sender, EventArgs e)
@@ -380,7 +395,7 @@ namespace P2PShare
 
         private void Disconnect_Click(object sender, RoutedEventArgs e)
         {
-            ClientConnection.GetRidOfClients(_clients);
+            ConnectionClient.GetRidOfClients(_clients);
         }
     }
 }
