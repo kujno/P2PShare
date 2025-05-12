@@ -33,7 +33,8 @@ namespace P2PShare
         {
             InitializeComponent();
             Elements.RefreshInterfaces(Interface);
-            
+            Interface.SelectedIndex = 0;
+
             ClientConnection.Connected += OnConnected;
             ClientConnection.Disconnected += OnDisconnected;
             InterfaceHandling.InterfaceDown += onInterfaceDown;
@@ -176,6 +177,11 @@ namespace P2PShare
             Elements.Disconnected(State, Cancel, Disconnect, Interface);
 
             ClientConnection.GetRidOfClients(_clients);
+
+            if (Interface.Items.Contains(_interface?.Name))
+            {
+                Interface.SelectedItem = _interface?.Name;
+            }
         }
 
         private void Connect_Click(object sender, RoutedEventArgs e)
