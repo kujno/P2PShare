@@ -399,9 +399,14 @@ namespace P2PShare
 
             string pathsString = "";
             
-            foreach (string path in paths)
+            for (int i = 0; i < paths.Length; i++)
             {
-                pathsString += $"{path}{FileTransport.FileSeparator}";
+                pathsString += paths[i];
+                
+                if (paths.Length > 1 && i != paths.Length - 1)
+                {
+                    pathsString += FileTransport.FileSeparator;
+                }
             }
             
             File.Text = pathsString;
