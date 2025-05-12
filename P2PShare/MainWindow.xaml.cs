@@ -266,7 +266,7 @@ namespace P2PShare
                 Invite inviteWindow = new();
                 FileInfo? file = null;
 
-                inviteWindow.Text.Text = invite;
+                inviteWindow.Text.Text = invite + "\nAccept?";
                 inviteWindow.ShowDialog();
                 accepted = inviteWindow.Accepted;
 

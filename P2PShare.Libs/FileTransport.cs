@@ -219,7 +219,7 @@ namespace P2PShare.Libs
 
         private static byte[] createInvite(FileInfo fileInfo)
         {
-            return Encoding.UTF8.GetBytes($"{fileInfo.Name} {Separator}{fileInfo.Length}B>\nAccept?");
+            return Encoding.UTF8.GetBytes($"{fileInfo.Name} {Separator}{fileInfo.Length}B>");
         }
 
         private static void onInviteReceived(string? invite)
