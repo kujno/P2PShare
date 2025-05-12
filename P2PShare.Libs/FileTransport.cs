@@ -63,7 +63,7 @@ namespace P2PShare.Libs
 
                 await SendAck(streams[0]);
 
-                await streams[0].ReadAsync(rsaKey, 0, rsaKey.Length);
+                await streams[0].ReadExactlyAsync(rsaKey, 0, rsaKey.Length);
 
                 Array.Copy(rsaKey, 0, modulus, 0, modulusLength);
                 Array.Copy(rsaKey, modulusLength, exponent, 0, exponentLength);
@@ -173,7 +173,7 @@ namespace P2PShare.Libs
 
                 for (int i = 0; i < fileInfos.Length; i++)
                 {
-                    await stream.ReadAsync(buffer, 0, buffer.Length);
+                    await stream.ReadExactlyAsync(buffer, 0, buffer.Length);
                     aesKey = decryptor.Decrypt(buffer);
                     EncryptionSymmetrical encryption = new(aesKey);
 
@@ -292,7 +292,7 @@ namespace P2PShare.Libs
         {
             byte[] buffer = new byte[Ack.Length];
 
-            await stream.ReadAsync(buffer, 0, Ack.Length);
+            await stream.ReadExactlyAsync(buffer, 0, Ack.Length);
 
             if (buffer.SequenceEqual(Ack))
             {

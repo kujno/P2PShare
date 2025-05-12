@@ -18,7 +18,7 @@ namespace P2PShare.Libs
                     byte[]? decryptedBuffer;
 
                     // get chunk
-                    await networkStream.ReadAsync(buffer, 0, buffer.Length);
+                    await networkStream.ReadExactlyAsync(buffer, 0, buffer.Length);
 
                     decryptedBuffer = encryption.Decrypt(buffer);
 
