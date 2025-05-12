@@ -8,12 +8,12 @@ namespace P2PShare.Libs
     {
         public static event EventHandler<TcpClient>? Connected;
         public static event EventHandler? Disconnected;
-        public static int Timeout { get; } = 120000;
 
         public static async Task Connect(IPAddress ip, NetworkInterface @interface, int port, Cancellation cancellation)
         {
             IPAddress? ipLocal = IPHandling.GetLocalIPv4(@interface);
             TcpClient client = new();
+            ValueTask connecting;
 
             if (ipLocal is null || cancellation.TokenSource is null)
             {
@@ -24,28 +24,35 @@ namespace P2PShare.Libs
                 return;
             }
 
-            client.Client.Bind(new IPEndPoint(ipLocal, port));
-
-            CancellationTokenSource cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellation.TokenSource.Token);
-
             try
             {
-                await Task.WhenAny(client.ConnectAsync(ip, port, cancellationTokenSource.Token).AsTask(), Task.Delay(Timeout, cancellationTokenSource.Token));
+                client.Client.Bind(new IPEndPoint(ipLocal, port));
 
-                cancellationTokenSource.Cancel();
-                cancellation.Cancel();
-
-                cancellationTokenSource.Dispose();
-
-                if (client.Connected)
+                do
                 {
-                    OnConnected(client);
+                    try
+                    {
+                        connecting = client.ConnectAsync(ip, port, cancellation.TokenSource.Token);
 
-                    return;
+                        await connecting;
+                    }
+                    catch
+                    {
+                    }
                 }
+                while (!client.Connected && cancellation.TokenSource is not null);
             }
             catch
             {
+            }
+
+            cancellation.Cancel();
+
+            if (client.Connected)
+            {
+                OnConnected(client);
+
+                return;
             }
 
             client.Dispose();

@@ -3,6 +3,7 @@
     public class Cancellation
     {
         private CancellationTokenSource? _tokenSource;
+        private int _timeout;
         public CancellationTokenSource? TokenSource
         {
             get
@@ -12,7 +13,8 @@
         }
 
         public Cancellation()
-        {        
+        {
+            _timeout = 120000; // 2 min
         }
 
         public void Cancel()
@@ -27,7 +29,7 @@
 
         public async Task TimeOut()
         {
-            await Task.Delay(ConnectionClient.Timeout);
+            await Task.Delay(_timeout);
 
             Cancel();
         }

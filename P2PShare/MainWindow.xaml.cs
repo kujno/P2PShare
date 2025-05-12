@@ -232,6 +232,8 @@ namespace P2PShare
 
             _cancelConnecting!.NewTokenSource();
 
+            _timeOut = _cancelConnecting.TimeOut();
+
             _connecting = ConnectionClient.ConnectAll(remoteIP, _interface, _portConnect, _cancelConnecting);
 
             Elements.Connecting(_portConnect, State, Cancel);
