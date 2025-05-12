@@ -18,7 +18,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Grid.Row="0" Margin="0, 20px, 0, 0" MaxHeight="115" VerticalAlignment="Center">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Grid.Row="0" Margin="0, 80px, 0, 0" MaxHeight="115" VerticalAlignment="Center">
             <TextBlock x:Name="Text" FontSize="20px" FontFamily="Arial" Foreground="#c2c2c2" HorizontalAlignment="Center" Margin="0" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" TextAlignment="Center" VerticalAlignment="Center"/>
         </ScrollViewer>
         <StackPanel VerticalAlignment="Bottom" Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1" Margin="0, 0, 0, 45px">

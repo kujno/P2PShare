@@ -264,7 +264,7 @@ namespace P2PShare
             if (!String.IsNullOrEmpty(invite))
             {
                 bool accepted;
-                Invite inviteWindow = new();
+                Invite inviteWindow;
                 FileInfo[]? fileInfos = null;
                 string[] files = invite.Split(FileTransport.FileSeparator);
 
@@ -273,48 +273,55 @@ namespace P2PShare
                 {
                     invite += file + "\n";
                 }
-                inviteWindow.Text.Text = invite + "Accept?";
+                inviteWindow = new(invite + "Accept?");
                 inviteWindow.ShowDialog();
                 accepted = inviteWindow.Accepted;
 
-                if (_clients[0] is not null || _clients[0]!.Connected)
+                try
                 {
-                    bool? selected = null;
-                    bool receive;
-                    string? path = null;
-
-                    if (accepted)
+                    if (_clients[0] is not null || _clients[0]!.Connected)
                     {
-                        path = FileDialogs.SelectFolder(out selected);
-                    }
+                        bool? selected = null;
+                        bool receive;
+                        string? path = null;
 
-                    if (selected is not null && path is not null && selected == true)
-                    {
-                        receive = true;
-
-                        _decryptographer = new();
-                    }
-                    else
-                    {
-                        receive = false;
-                    }
-
-                    await FileTransport.Reply(_clients[0]!, receive);
-
-                    if (path is not null)
-                    {
-                        string[] fileNames = FileTransport.GetNamesFromFiles(files);
-                        string[] paths = new string[files.Length];
-
-                        await FileTransport.SendRSAPublicKey(_clients[0]!.GetStream(), _decryptographer!.PublicKey);
-                        
-                        for (int i = 0; i < paths.Length; i++)
+                        if (accepted)
                         {
-                            paths[i] = $"{path}\\{fileNames[i]}";
+                            path = FileDialogs.SelectFolder(out selected);
                         }
 
-                        fileInfos = await FileTransport.ReceiveFile(_clients[0]!, paths, FileTransport.GetLenghtsFromFiles(files), _decryptographer);
+                        if (selected is not null && path is not null && selected == true)
+                        {
+                            receive = true;
+
+                            _decryptographer = new();
+                        }
+                        else
+                        {
+                            receive = false;
+                        }
+
+                        await FileTransport.Reply(_clients[0]!, receive);
+
+                        if (path is not null)
+                        {
+                            string[] fileNames = FileTransport.GetNamesFromFiles(files);
+                            string[] paths = new string[files.Length];
+
+                            await FileTransport.SendRSAPublicKey(_clients[0]!.GetStream(), _decryptographer!.PublicKey);
+
+                            for (int i = 0; i < paths.Length; i++)
+                            {
+                                paths[i] = $"{path}\\{fileNames[i]}";
+                            }
+
+                            fileInfos = await FileTransport.ReceiveFile(_clients[0]!, paths, FileTransport.GetLenghtsFromFiles(files), _decryptographer);
+                        }
                     }
+                }
+                catch
+                {
+                    fileInfos = null;
                 }
 
                 if (fileInfos is null)
