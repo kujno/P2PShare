@@ -12,7 +12,7 @@ namespace P2PShare.Libs
         public static async Task Connect(IPAddress ip, NetworkInterface @interface, int port, CancellationToken cancellationToken)
         {
             IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
-            TcpClient? client = new();
+            TcpClient client = new();
 
             if (ipLocal is null)
             {
@@ -72,6 +72,27 @@ namespace P2PShare.Libs
             }
 
             return true;
+        }
+
+        public static void GetRidOfClients(TcpClient?[] clients)
+        {
+            for (int i = 0; i < clients.Length; i++)
+            {
+                clients[i]?.Dispose();
+                clients[i] = null;
+            }
+        }
+
+        public static Task[] ConnectAll(IPAddress ip, NetworkInterface @interface, int port, CancellationToken cancellationToken)
+        {
+            Task[] connecting = new Task[2];
+
+            for (int i = 0; i < 2; i++)
+            {
+                connecting[i] = Connect(ip, @interface, port + i, cancellationToken);
+            }
+
+            return connecting;
         }
     }
 }
