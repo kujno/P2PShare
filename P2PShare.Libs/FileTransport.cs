@@ -102,8 +102,6 @@ namespace P2PShare.Libs
                             await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
 
                             ackBool = await ack(streams[0]);
-
-                            await streams[0].FlushAsync();
                         }
                         while (!ackBool);
 
