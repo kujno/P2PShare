@@ -4,13 +4,13 @@ using System.Net.Sockets;
 
 namespace P2PShare.Libs
 {
-    public class ListenerConnection
+    public class ConnectionListener
     {
-        public static async Task<TcpClient?> WaitForConnection(int port, NetworkInterface @interface, CancellationToken cancellationToken)
+        public static async Task<TcpClient?> WaitForConnection(int port, NetworkInterface @interface, Cancellation cancellation)
         {
-            IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
+            IPAddress? ipLocal = IPHandling.GetLocalIPv4(@interface);
 
-            if (ipLocal is null)
+            if (ipLocal is null || cancellation.TokenSource is null)
             {
                 return null;
             }
@@ -21,7 +21,7 @@ namespace P2PShare.Libs
             try
             {
                 listener.Start();
-                client = await listener.AcceptTcpClientAsync(cancellationToken);
+                client = await listener.AcceptTcpClientAsync(cancellation.TokenSource.Token);
             }
             catch (OperationCanceledException)
             {
@@ -35,23 +35,23 @@ namespace P2PShare.Libs
             return client;
         }
 
-        public static async Task ListenLoop(int port, NetworkInterface @interface, CancellationToken cancellationToken)
+        public static async Task ListenLoop(int port, NetworkInterface @interface, Cancellation cancellation)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (cancellation.TokenSource is not null && !cancellation.TokenSource.Token.IsCancellationRequested)
             {
-                TcpClient? client = await WaitForConnection(port, @interface, cancellationToken);
+                TcpClient? client = await WaitForConnection(port, @interface, cancellation);
 
                 if (client is null)
                 {
                     continue;
                 }
 
-                ClientConnection.OnConnected(client);
+                ConnectionClient.OnConnected(client);
 
                 return;
             }
 
-            ClientConnection.OnDisconnected();
+            ConnectionClient.OnDisconnected();
         }
 
         public static void GetRidOfListener(ref TcpListener listener)

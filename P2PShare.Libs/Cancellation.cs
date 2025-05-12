@@ -2,15 +2,39 @@
 {
     public class Cancellation
     {
-        public static CancellationTokenSource? Cancel(CancellationTokenSource? cancellationTokenSource)
+        private CancellationTokenSource? _tokenSource;
+        public CancellationTokenSource? TokenSource
         {
-            if (cancellationTokenSource is not null)
+            get
             {
-                cancellationTokenSource.Cancel();
-                cancellationTokenSource.Dispose();
+                return _tokenSource;
             }
-            
-            return null;
+        }
+
+        public Cancellation()
+        {        
+        }
+
+        public void Cancel()
+        {
+            if (TokenSource is not null)
+            {
+                TokenSource.Cancel();
+                TokenSource.Dispose();
+            }
+            _tokenSource = null;
+        }
+
+        public async Task TimeOut()
+        {
+            await Task.Delay(ConnectionClient.Timeout);
+
+            Cancel();
+        }
+
+        public void NewTokenSource()
+        {
+            _tokenSource = new();
         }
     }
 }

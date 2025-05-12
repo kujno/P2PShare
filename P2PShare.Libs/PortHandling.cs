@@ -37,7 +37,7 @@ namespace P2PShare.Libs
             {
                 listener = new TcpListener(ip, port);
 
-                ListenerConnection.StartTestOfListener(listener);
+                ConnectionListener.StartTestOfListener(listener);
 
                 return true;
             }
@@ -49,7 +49,7 @@ namespace P2PShare.Libs
             {
                 if (listener is not null)
                 {
-                    ListenerConnection.GetRidOfListener(ref listener);
+                    ConnectionListener.GetRidOfListener(ref listener);
                 }
             }
         }

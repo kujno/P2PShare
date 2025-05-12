@@ -4,17 +4,18 @@ using System.Net.Sockets;
 
 namespace P2PShare.Libs
 {
-    public class ClientConnection
+    public class ConnectionClient
     {
         public static event EventHandler<TcpClient>? Connected;
         public static event EventHandler? Disconnected;
+        public static int Timeout { get; } = 120000;
 
-        public static async Task Connect(IPAddress ip, NetworkInterface @interface, int port, CancellationToken cancellationToken)
+        public static async Task Connect(IPAddress ip, NetworkInterface @interface, int port, Cancellation cancellation)
         {
-            IPAddress? ipLocal = IPv4Handling.GetLocalIPv4(@interface);
+            IPAddress? ipLocal = IPHandling.GetLocalIPv4(@interface);
             TcpClient client = new();
 
-            if (ipLocal is null)
+            if (ipLocal is null || cancellation.TokenSource is null)
             {
                 client.Dispose();
 
@@ -25,13 +26,14 @@ namespace P2PShare.Libs
 
             client.Client.Bind(new IPEndPoint(ipLocal, port));
 
-            CancellationTokenSource cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            CancellationTokenSource cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellation.TokenSource.Token);
 
             try
             {
-                await Task.WhenAny(client.ConnectAsync(ip, port, cancellationTokenSource.Token).AsTask(), Task.Delay(30000, cancellationTokenSource.Token));
+                await Task.WhenAny(client.ConnectAsync(ip, port, cancellationTokenSource.Token).AsTask(), Task.Delay(Timeout, cancellationTokenSource.Token));
 
                 cancellationTokenSource.Cancel();
+                cancellation.Cancel();
 
                 cancellationTokenSource.Dispose();
 
@@ -83,13 +85,13 @@ namespace P2PShare.Libs
             }
         }
 
-        public static Task[] ConnectAll(IPAddress ip, NetworkInterface @interface, int port, CancellationToken cancellationToken)
+        public static Task[] ConnectAll(IPAddress ip, NetworkInterface @interface, int port, Cancellation cancellation)
         {
             Task[] connecting = new Task[2];
 
             for (int i = 0; i < 2; i++)
             {
-                connecting[i] = Connect(ip, @interface, port + i, cancellationToken);
+                connecting[i] = Connect(ip, @interface, port + i, cancellation);
             }
 
             return connecting;
