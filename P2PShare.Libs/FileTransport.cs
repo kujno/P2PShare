@@ -71,11 +71,11 @@ namespace P2PShare.Libs
 
                 onFilesBeingTransported(new(fileInfos, Receive_Send.Send));
 
-                for (int i = 0; i < fileInfos.Length; i++)
+                foreach (FileInfo fileInfo in fileInfos)
                 {
                     int bytesRead;
                     int bytesSent = 0;
-                    using FileStream fileStream = new FileStream(fileInfos[i].FullName, FileMode.Open, FileAccess.Read);
+                    using FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read);
                     byte[] aesKey = new byte[AesKeySize];
                     byte[] aesKeyEncrypted;
                     byte[] buffer2;
@@ -90,7 +90,7 @@ namespace P2PShare.Libs
 
                     await ack(streams[0]);
 
-                    while ((bytesRead = await fileStream.ReadAsync(buffer2 = new byte[Math.Min(BufferSize, fileInfos[i].Length - bytesSent)], 0, buffer2.Length)) > 0)
+                    while (bytesSent != fileInfo.Length && (bytesRead = await fileStream.ReadAsync(buffer2 = new byte[Math.Min(BufferSize, fileInfo.Length - bytesSent)], 0, buffer2.Length)) > 0)
                     {
                         bool ackBool;
 
@@ -106,7 +106,7 @@ namespace P2PShare.Libs
                         while (!ackBool);
 
                         bytesSent += bytesRead;
-                        OnFilePartTransported(FileHandling.CalculatePercentage(fileInfos[i].Length, bytesSent));
+                        OnFilePartTransported(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
                     }
                 }
             }
