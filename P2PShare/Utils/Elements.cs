@@ -91,7 +91,7 @@ namespace P2PShare.Utils
 
         public static void ChangeFileTransferState(Send_Receive sendReceiveWindow, int part, Receive_Send receive_Send)
         {
-            sendReceiveWindow.Text.Text = $"{received_Sent(receive_Send)}: {part}%";
+            sendReceiveWindow.Text.Text = $"{Received_Sent(receive_Send)}: {part}%";
 
             if (part != 100)
             {
@@ -101,7 +101,7 @@ namespace P2PShare.Utils
             sendReceiveWindow.Close();
         }
 
-        private static string received_Sent(Receive_Send receive_Send)
+        public static string Received_Sent(Receive_Send receive_Send)
         {
             switch (receive_Send)
             {

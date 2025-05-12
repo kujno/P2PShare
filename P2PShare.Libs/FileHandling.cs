@@ -30,7 +30,7 @@ namespace P2PShare.Libs
 
                         totalBytesRead += decryptedBuffer.Length;
 
-                        FileTransport.OnFilePartReceived(CalculatePercentage(fileLength, totalBytesRead));
+                        FileTransport.OnFilePartTransported(CalculatePercentage(fileLength, totalBytesRead));
 
                         continue;
                     }

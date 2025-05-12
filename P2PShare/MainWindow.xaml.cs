@@ -6,6 +6,9 @@ using System.Windows;
 using System.Windows.Input;
 using P2PShare.Utils;
 using P2PShare.Libs;
+using P2PShare.Libs.Models;
+using System.Diagnostics.CodeAnalysis;
+using static System.Net.WebRequestMethods;
 
 namespace P2PShare
 {
@@ -40,10 +43,8 @@ namespace P2PShare
             ConnectionClient.Disconnected += OnDisconnected;
             InterfaceHandling.InterfaceDown += onInterfaceDown;
             FileTransport.InviteReceived += onInviteReceived;
-            FileTransport.FileBeingReceived += onFileBeingReceived;
-            FileTransport.FilePartReceived += onFilePartReceived;
-            FileTransport.FilePartSent += onFilePartSent;
-            FileTransport.FileBeingSent += onFileBeingSent;
+            FileTransport.FilePartTransported += onFilePartTransported;
+            FileTransport.FilesBeingTransported += onFilesBeingTransported;
 
             _listening = new Task?[2];
             _monitorConnections = new Task?[2];
@@ -264,7 +265,7 @@ namespace P2PShare
             {
                 bool accepted;
                 Invite inviteWindow = new();
-                FileInfo? file = null;
+                FileInfo[]? fileInfos = null;
 
                 inviteWindow.Text.Text = invite + "\nAccept?";
                 inviteWindow.ShowDialog();
@@ -296,57 +297,64 @@ namespace P2PShare
 
                     if (path is not null)
                     {
+                        string[] files = invite.Split(FileTransport.FileSeparator);
+                        string[] fileNames = FileTransport.GetNamesFromFiles(files);
+                        string[] paths = new string[files.Length];
+
                         await FileTransport.SendRSAPublicKey(_clients[0]!.GetStream(), _decryptographer!.PublicKey);
                         
-                        file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), $"{path}\\{FileTransport.GetFileNameFromInvite(invite)}", _decryptographer);
+                        for (int i = 0; i < paths.Length; i++)
+                        {
+                            paths[i] = $"{path}\\{fileNames[i]}";
+                        }
+
+                        fileInfos = await FileTransport.ReceiveFile(_clients[0]!, paths, FileTransport.GetLenghtsFromFiles(files), _decryptographer);
                     }
                 }
 
-                if (file is null)
+                if (fileInfos is null)
                 {
                     Elements.FileTransferEndDialog(false, _sendReceiveWindow);
                 }
                 else 
                 {
-                    Elements.ShowDialog($"The file has been saved to:\n{file.FullName}");
+                    string message;
+
+                    switch (fileInfos.Length)
+                    {
+                        case 1:
+                            message = $"The file has been saved as:\n{fileInfos[0].FullName}";
+
+                            break;
+
+                        default:
+                            message = $"The files have been saved to:\n{fileInfos[0].DirectoryName}";
+
+                            break;
+                    }
+
+                    Elements.ShowDialog(message);
                 }
             }
 
             await FileTransport.ReceiveInvite(_clients);
         }
 
-        private void onFileBeingReceived(object? sender, EventArgs e)
-        {
-            _sendReceiveWindow = new();
-            _sendReceiveWindow.Text.Text = "Received: 0%";
-            _sendReceiveWindow.Show();
-        }
-
-        private void onFilePartReceived(object? sender, int part)
+        private void onFilePartTransported(object? sender, int part)
         {
             if (_sendReceiveWindow is null)
             {
                 return;
             }
 
-            Elements.ChangeFileTransferState(_sendReceiveWindow, part, Models.Receive_Send.Receive);
-        }
-
-        private void onFilePartSent(object? sender, int part)
-        {
-            if (_sendReceiveWindow is null)
-            {
-                return;
-            }
-
-            Elements.ChangeFileTransferState(_sendReceiveWindow, part, Models.Receive_Send.Send);
+            _sendReceiveWindow.ChangeText(part);
         }
 
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
             if (_inviteSent)
             {
-                Elements.ShowDialog("You cannot send multiple files at once");
+                Elements.ShowDialog("You cannot send multiple sharing invites at once");
                 
                 return;
             }
@@ -356,18 +364,23 @@ namespace P2PShare
                 Elements.ShowDialog("You must be connected to share");
                 return;
             }
-            
-            FileInfo fileInfo = new(File.Text.Trim());
 
-            if (!fileInfo.Exists)
+            string[] paths = File.Text.Trim().Split(FileTransport.FileSeparator);
+            FileInfo[] fileInfos = new FileInfo[paths.Length];
+            for (int i = 0; i < fileInfos.Length; i++)
             {
-                Elements.ShowDialog("Select a valid file");
+                fileInfos[i] = new FileInfo(paths[i]);
+            }
+
+            if (!fileInfos.All(fileInfo => fileInfo.Exists))
+            {
+                Elements.ShowDialog("Select a valid file(s)");
                 return;
             }
 
             _inviteSent = true;
 
-            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfo), _sendReceiveWindow);
+            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfos), _sendReceiveWindow);
 
             _inviteSent = false;
             
@@ -376,7 +389,22 @@ namespace P2PShare
 
         private void Select_Click(object sender, RoutedEventArgs e)
         {
-            File.Text = FileDialogs.SelectFile();
+            string[]? paths = FileDialogs.SelectFiles();
+
+
+            if (paths is null)
+            {
+                return;
+            }
+
+            string pathsString = "";
+            
+            foreach (string path in paths)
+            {
+                pathsString += $"{path}{FileTransport.FileSeparator}";
+            }
+            
+            File.Text = pathsString;
         }
 
         private void onTransferFailed(object? sender, EventArgs e)
@@ -386,10 +414,9 @@ namespace P2PShare
             Elements.ShowDialog("The file transfer failed");
         }
 
-        private void onFileBeingSent(object? sender, EventArgs e)
+        private void onFilesBeingTransported(object? sender, FilesBeingTransportedEventArgs filesBeingTransportedEventArgs)
         {
-            _sendReceiveWindow = new();
-            _sendReceiveWindow.Text.Text = "Sent: 0%";
+            _sendReceiveWindow = new(filesBeingTransportedEventArgs.ReceiveSend, filesBeingTransportedEventArgs.FileInfos);
             _sendReceiveWindow.Show();
         }
 

@@ -1,4 +1,8 @@
-﻿using System.Net.Sockets;
+﻿using P2PShare.Libs.Models;
+using P2PShare.Models;
+using System;
+using System.ComponentModel;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -7,18 +11,16 @@ namespace P2PShare.Libs
     public class FileTransport
     {
         public static event EventHandler<string?>? InviteReceived;
-        public static event EventHandler? FileBeingReceived;
-        public static event EventHandler? FileBeingSent;
-        public static event EventHandler<int>? FilePartReceived;
-        public static event EventHandler<int>? FilePartSent;
+        public static event EventHandler<FilesBeingTransportedEventArgs>? FilesBeingTransported;
+        public static event EventHandler<int>? FilePartTransported;
         public static int BufferSize { get; } = 8192;
         private static int AesKeySize { get; } = 32;
         public static byte[] Ack { get; } = Encoding.UTF8.GetBytes("y");
-        private static char Separator { get; } = '<';
+        private static char FileLengthSymbol { get; } = '<';
+        public static char FileSeparator { get; } = '|';
 
-        public static async Task<bool> SendFile(TcpClient[] clients, FileInfo fileInfo)
+        public static async Task<bool> SendFile(TcpClient[] clients, FileInfo[] fileInfos)
         {
-            int yLength = Encoding.UTF8.GetBytes("y").Length;
             int modulusLength;
             int exponentLength;
             int? rsaKeyLength = EncryptionAsymmetrical.GetPublicKeyLength(out modulusLength, out exponentLength);
@@ -29,7 +31,7 @@ namespace P2PShare.Libs
             }
 
             NetworkStream[] streams = new NetworkStream[2];
-            byte[] inviteBytes = createInvite(fileInfo);
+            byte[] inviteBytes = createInvite(fileInfos);
             byte[] buffer = new byte[Ack.Length];
             byte[] rsaKey = new byte[(int)rsaKeyLength];
             bool response;
@@ -55,54 +57,59 @@ namespace P2PShare.Libs
                     return false;
                 }
 
+                EncryptorAsymmetrical encryptorAsymmetrical;
+                byte[] modulus = new byte[modulusLength];
+                byte[] exponent = new byte[exponentLength];
+
                 await SendAck(streams[0]);
 
                 await streams[0].ReadAsync(rsaKey, 0, rsaKey.Length);
 
-                int bytesRead;
-                int bytesSent = 0;
-                using FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read);
-                byte[] aesKey = new byte[AesKeySize];
-                byte[] aesKeyEncrypted;
-                byte[] buffer2;
-                byte[] modulus = new byte[modulusLength];
-                byte[] exponent = new byte[exponentLength];
-                EncryptorAsymmetrical encryptorAsymmetrical;
-                EncryptionSymmetrical cryptographySymmetrical;
-
-                RandomNumberGenerator.Fill(aesKey);
-                cryptographySymmetrical = new(aesKey);
-
                 Array.Copy(rsaKey, 0, modulus, 0, modulusLength);
                 Array.Copy(rsaKey, modulusLength, exponent, 0, exponentLength);
                 encryptorAsymmetrical = new(modulus, exponent);
-                aesKeyEncrypted = encryptorAsymmetrical.Encrypt(aesKey);
 
-                onFileBeingSent();
+                onFilesBeingTransported(new(fileInfos, Receive_Send.Send));
 
-                await streams[0].WriteAsync(aesKeyEncrypted, 0, aesKeyEncrypted.Length);
-
-                await ack(streams[0]);
-
-                while ((bytesRead = await fileStream.ReadAsync(buffer2 = new byte[Math.Min(BufferSize, fileInfo.Length - bytesSent)], 0, buffer2.Length)) > 0)
+                for (int i = 0; i < fileInfos.Length; i++)
                 {
-                    bool ackBool;
+                    int bytesRead;
+                    int bytesSent = 0;
+                    using FileStream fileStream = new FileStream(fileInfos[i].FullName, FileMode.Open, FileAccess.Read);
+                    byte[] aesKey = new byte[AesKeySize];
+                    byte[] aesKeyEncrypted;
+                    byte[] buffer2;
+                    EncryptionSymmetrical cryptographySymmetrical;
 
-                    do
+                    RandomNumberGenerator.Fill(aesKey);
+                    cryptographySymmetrical = new(aesKey);
+
+                    aesKeyEncrypted = encryptorAsymmetrical.Encrypt(aesKey);
+
+                    await streams[0].WriteAsync(aesKeyEncrypted, 0, aesKeyEncrypted.Length);
+
+                    await ack(streams[0]);
+
+                    while ((bytesRead = await fileStream.ReadAsync(buffer2 = new byte[Math.Min(BufferSize, fileInfos.Length - bytesSent)], 0, buffer2.Length)) > 0)
                     {
-                        byte[] encryptedData = cryptographySymmetrical.Encrypt(buffer2);
+                        bool ackBool;
 
-                        // send chunk
-                        await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
+                        do
+                        {
+                            byte[] encryptedData = cryptographySymmetrical.Encrypt(buffer2);
 
-                        ackBool = await ack(streams[0]);
+                            // send chunk
+                            await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
 
-                        await streams[0].FlushAsync();
+                            ackBool = await ack(streams[0]);
+
+                            await streams[0].FlushAsync();
+                        }
+                        while (!ackBool);
+
+                        bytesSent += bytesRead;
+                        OnFilePartTransported(FileHandling.CalculatePercentage(fileInfos.Length, bytesSent));
                     }
-                    while (!ackBool);
-
-                    bytesSent += bytesRead;
-                    OnFilePartSent(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
                 }
             }
             catch (Exception)
@@ -140,7 +147,7 @@ namespace P2PShare.Libs
             }
         }
 
-        public static async Task<FileInfo?> ReceiveFile(TcpClient client, int fileLength, string filePath, DecryptorAsymmetrical decryptor)
+        public static async Task<FileInfo[]?> ReceiveFile(TcpClient client, string[] filePaths, int[] fileLengths, DecryptorAsymmetrical decryptor)
         {
             NetworkStream stream;
             byte[] aesKey = new byte[AesKeySize];
@@ -153,24 +160,34 @@ namespace P2PShare.Libs
             }
             buffer = new byte[exampleKey.Modulus!.Length];
 
+            FileInfo[] fileInfos = new FileInfo[filePaths.Length];
+
             try
             {
                 stream = client.GetStream();
 
-                onFileBeingReceived();
+                for (int i = 0; i < fileInfos.Length; i++)
+                {
+                    fileInfos[i] = new FileInfo(filePaths[i]);
+                }
 
-                await stream.ReadAsync(buffer, 0, buffer.Length);
-                aesKey = decryptor.Decrypt(buffer);
-                EncryptionSymmetrical encryption = new(aesKey);
+                onFilesBeingTransported(new(fileInfos, Receive_Send.Receive));
 
-                await FileHandling.CreateFile(stream, filePath, fileLength, encryption);
+                for (int i = 0; i < fileInfos.Length; i++)
+                {
+                    await stream.ReadAsync(buffer, 0, buffer.Length);
+                    aesKey = decryptor.Decrypt(buffer);
+                    EncryptionSymmetrical encryption = new(aesKey);
+
+                    await FileHandling.CreateFile(stream, filePaths[i], fileLengths[i], encryption);
+                }
             }
             catch (Exception)
             {
                 return null;
             }
 
-            return new FileInfo(filePath);
+            return fileInfos;
         }
 
         public static async Task Reply(TcpClient client, bool accepted)
@@ -217,9 +234,15 @@ namespace P2PShare.Libs
             await stream.WriteAsync(buffer, 0, buffer.Length);
         }
 
-        private static byte[] createInvite(FileInfo fileInfo)
+        private static byte[] createInvite(FileInfo[] fileInfos)
         {
-            return Encoding.UTF8.GetBytes($"{fileInfo.Name} {Separator}{fileInfo.Length}B>");
+            string invite = string.Empty;
+
+            foreach (FileInfo fileInfo in fileInfos)
+            {
+                invite += $"{fileInfo.Name} {FileLengthSymbol}{fileInfo.Length}B>{FileSeparator}";
+            }
+            return Encoding.UTF8.GetBytes(invite);
         }
 
         private static void onInviteReceived(string? invite)
@@ -227,36 +250,39 @@ namespace P2PShare.Libs
             InviteReceived?.Invoke(null, invite);
         }
 
-        public static int GetFileLenghtFromInvite(string invite)
+        public static int[] GetLenghtsFromFiles(string[] files)
         {
-            int separatorIndex = invite.IndexOf(Separator);
+            int[] lengths = new int[files.Length];
 
-            return int.Parse(invite.Substring(separatorIndex + 1, invite.LastIndexOf('B') - separatorIndex - 1));
+            for (int i = 0; i < lengths.Length; i++)
+            {
+                int separatorIndex = files[i].IndexOf(FileLengthSymbol);
+                lengths[i] = int.Parse(files[i].Substring(separatorIndex + 1, files[i].LastIndexOf('B') - separatorIndex - 1));
+            }
+
+            return lengths;
         }
 
-        public static string GetFileNameFromInvite(string invite)
+        public static string[] GetNamesFromFiles(string[] files)
         {
-            return invite.Substring(0, invite.IndexOf($" {Separator}"));
+            string[] names = new string[files.Length];
+
+            for (int i = 0; i < names.Length; i++)
+            {
+                names[i] = files[i].Substring(0, files[i].IndexOf($" {FileLengthSymbol}"));
+            }
+
+            return names;
         }
 
-        private static void onFileBeingReceived()
+        private static void onFilesBeingTransported(FilesBeingTransportedEventArgs filesBeingTransportedEventArgs)
         {
-            FileBeingReceived?.Invoke(null, EventArgs.Empty);
+            FilesBeingTransported?.Invoke(null, filesBeingTransportedEventArgs);
         }
 
-        private static void onFileBeingSent()
+        public static void OnFilePartTransported(int percentage)
         {
-            FileBeingSent?.Invoke(null, EventArgs.Empty);
-        }
-
-        public static void OnFilePartReceived(int percentage)
-        {
-            FilePartReceived?.Invoke(null, percentage);
-        }
-
-        public static void OnFilePartSent(int percentage)
-        {
-            FilePartSent?.Invoke(null, percentage);
+            FilePartTransported?.Invoke(null, percentage);
         }
 
         private static async Task<bool> ack(NetworkStream stream)
