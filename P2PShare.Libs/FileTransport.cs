@@ -108,7 +108,7 @@ namespace P2PShare.Libs
                         while (!ackBool);
 
                         bytesSent += bytesRead;
-                        OnFilePartTransported(FileHandling.CalculatePercentage(fileInfos.Length, bytesSent));
+                        OnFilePartTransported(FileHandling.CalculatePercentage(fileInfos[i].Length, bytesSent));
                     }
                 }
             }
