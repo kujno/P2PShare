@@ -10,32 +10,22 @@ namespace P2PShare.Libs
             {
                 int totalBytesRead = 0;
 
-                await FileTransport.SendAck(networkStream);
-
                 while (totalBytesRead < fileLength)
                 {
                     byte[] buffer = new byte[Math.Min(FileTransport.BufferSize, fileLength - totalBytesRead) + encryption.TagSize + encryption.NonceSize];
                     byte[]? decryptedBuffer;
 
-                    // get chunk
                     await networkStream.ReadExactlyAsync(buffer, 0, buffer.Length);
 
                     decryptedBuffer = encryption.Decrypt(buffer);
 
                     if (decryptedBuffer is not null)
                     {
-                        await FileTransport.SendAck(networkStream, true);
-
                         await fileStream.WriteAsync(decryptedBuffer, 0, decryptedBuffer.Length);
 
                         totalBytesRead += decryptedBuffer.Length;
-
-                        FileTransport.OnFilePartTransported(CalculatePercentage(fileLength, totalBytesRead));
-
-                        continue;
                     }
-
-                    await FileTransport.SendAck(networkStream, false);
+                    FileTransport.OnFilePartTransported(CalculatePercentage(fileLength, totalBytesRead));
                 }
             }
         }

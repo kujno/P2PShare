@@ -1,7 +1,5 @@
 ﻿using P2PShare.Libs.Models;
 using P2PShare.Models;
-using System;
-using System.ComponentModel;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
@@ -61,8 +59,6 @@ namespace P2PShare.Libs
                 byte[] modulus = new byte[modulusLength];
                 byte[] exponent = new byte[exponentLength];
 
-                await SendAck(streams[0]);
-
                 await streams[0].ReadExactlyAsync(rsaKey, 0, rsaKey.Length);
 
                 Array.Copy(rsaKey, 0, modulus, 0, modulusLength);
@@ -88,22 +84,11 @@ namespace P2PShare.Libs
 
                     await streams[0].WriteAsync(aesKeyEncrypted, 0, aesKeyEncrypted.Length);
 
-                    await ack(streams[0]);
-
                     while (bytesSent != fileInfo.Length && (bytesRead = await fileStream.ReadAsync(buffer2 = new byte[Math.Min(BufferSize, fileInfo.Length - bytesSent)], 0, buffer2.Length)) > 0)
                     {
-                        bool ackBool;
+                        byte[] encryptedData = cryptographySymmetrical.Encrypt(buffer2);
 
-                        do
-                        {
-                            byte[] encryptedData = cryptographySymmetrical.Encrypt(buffer2);
-
-                            // send chunk
-                            await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
-
-                            ackBool = await ack(streams[0]);
-                        }
-                        while (!ackBool);
+                        await streams[0].WriteAsync(encryptedData, 0, encryptedData.Length);
 
                         bytesSent += bytesRead;
                         OnFilePartTransported(FileHandling.CalculatePercentage(fileInfo.Length, bytesSent));
@@ -226,8 +211,6 @@ namespace P2PShare.Libs
             }
 
             byte[] buffer = rsaParameters.Modulus!.Concat(rsaParameters.Exponent!).ToArray();
-
-            await ack(stream);
 
             await stream.WriteAsync(buffer, 0, buffer.Length);
         }
