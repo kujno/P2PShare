@@ -19,7 +19,7 @@
         </Grid.RowDefinitions>
 
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Grid.Row="0" MaxHeight="135" VerticalAlignment="Stretch">
-            <TextBlock x:Name="Text" FontSize="20px" FontFamily="Arial" Foreground="#c2c2c2" HorizontalAlignment="Center" Margin="0" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" TextAlignment="Center"/>
+            <TextBlock x:Name="Text" FontSize="20px" FontFamily="Arial" Foreground="#c2c2c2" HorizontalAlignment="Center" Margin="0" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" TextAlignment="Center" VerticalAlignment="Stretch"/>
         </ScrollViewer>
         <StackPanel VerticalAlignment="Bottom" Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1" Margin="0, 0, 0, 45px">
             <Button x:Name="No" Content="No" Background="#292929" BorderThickness="0" Foreground="#c2c2c2" Margin="0" Width="70px" Height="20px" Click="No_Click"/>
