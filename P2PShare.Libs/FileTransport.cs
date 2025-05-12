@@ -238,9 +238,14 @@ namespace P2PShare.Libs
         {
             string invite = string.Empty;
 
-            foreach (FileInfo fileInfo in fileInfos)
+            for (int i = 0; i < fileInfos.Length; i++)
             {
-                invite += $"{fileInfo.Name} {FileLengthSymbol}{fileInfo.Length}B>{FileSeparator}";
+                invite += $"{fileInfos[i].Name} {FileLengthSymbol}{fileInfos[i].Length}B>";
+
+                if (fileInfos.Length > 1 && i != fileInfos.Length - 1)
+                {
+                    invite += FileSeparator;
+                }
             }
             return Encoding.UTF8.GetBytes(invite);
         }
