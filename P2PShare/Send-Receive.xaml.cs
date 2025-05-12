@@ -56,7 +56,7 @@ namespace P2PShare
             {
                 text += $" {_i}/{_filesCount}";
             }
-            Text.Text = text + $"\n{Elements.Received_Sent(_receiveSend)}: {percentage}";
+            Text.Text = text + $"\n{Elements.Received_Sent(_receiveSend)}: {percentage}%";
         }
     }
 }
