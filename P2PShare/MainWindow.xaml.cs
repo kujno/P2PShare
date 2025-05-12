@@ -266,8 +266,14 @@ namespace P2PShare
                 bool accepted;
                 Invite inviteWindow = new();
                 FileInfo[]? fileInfos = null;
+                string[] files = invite.Split(FileTransport.FileSeparator);
 
-                inviteWindow.Text.Text = invite + "\nAccept?";
+                invite = String.Empty;
+                foreach (string file in files)
+                {
+                    invite += file + "\n";
+                }
+                inviteWindow.Text.Text = invite + "Accept?";
                 inviteWindow.ShowDialog();
                 accepted = inviteWindow.Accepted;
 
@@ -297,7 +303,6 @@ namespace P2PShare
 
                     if (path is not null)
                     {
-                        string[] files = invite.Split(FileTransport.FileSeparator);
                         string[] fileNames = FileTransport.GetNamesFromFiles(files);
                         string[] paths = new string[files.Length];
 
