@@ -21,16 +21,18 @@ namespace P2PShare.Utils
             }
         }
 
-        public static void Disconnected(TextBlock State, Button Cancel, ComboBox @interface)
+        public static void Disconnected(TextBlock State, Button Cancel, Button Disconnect, ComboBox @interface)
         {
             State.Text = "Disconnected";
             State.Foreground = System.Windows.Media.Brushes.Red;
             Cancel.Visibility = Visibility.Collapsed;
 
+            Disconnect.Visibility = Visibility.Collapsed;
+
             RefreshInterfaces(@interface);
         }
 
-        public static void Connected(TextBlock State, Button Cancel, IPAddress ip)
+        public static void Connected(TextBlock State, Button Cancel, Button Disconnect, IPAddress ip)
         {
             string ipString = ip.ToString();
 
@@ -42,6 +44,8 @@ namespace P2PShare.Utils
             State.Text = $"Connected to {ipString}";
             State.Foreground = System.Windows.Media.Brushes.Green;
             Cancel.Visibility = Visibility.Collapsed;
+            
+            Disconnect.Visibility = Visibility.Visible;
         }
 
         public static void Listening(int port, TextBlock State, Button Cancel)
