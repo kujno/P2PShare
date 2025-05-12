@@ -46,8 +46,6 @@ namespace P2PShare.Libs
             {
             }
 
-            cancellation.Cancel();
-
             if (client.Connected)
             {
                 OnConnected(client);
