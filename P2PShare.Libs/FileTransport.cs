@@ -90,7 +90,7 @@ namespace P2PShare.Libs
 
                     await ack(streams[0]);
 
-                    while ((bytesRead = await fileStream.ReadAsync(buffer2 = new byte[Math.Min(BufferSize, fileInfos.Length - bytesSent)], 0, buffer2.Length)) > 0)
+                    while ((bytesRead = await fileStream.ReadAsync(buffer2 = new byte[Math.Min(BufferSize, fileInfos[i].Length - bytesSent)], 0, buffer2.Length)) > 0)
                     {
                         bool ackBool;
 
