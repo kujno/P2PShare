@@ -15,6 +15,10 @@ namespace P2PShare.Utils
             List<NetworkInterface> interfaces = InterfaceHandling.GetUpInterfaces();
 
             @interface.Items.Clear();
+            foreach (NetworkInterface ni in interfaces)
+            {
+                @interface.Items.Add(ni.Name);
+            }
 
             if (nic is not null)
             {

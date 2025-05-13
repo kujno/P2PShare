@@ -1,6 +1,5 @@
 ﻿using P2PShare.Libs.Models;
 using P2PShare.Models;
-using System.Data.SqlTypes;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
@@ -67,7 +66,7 @@ namespace P2PShare.Libs
                     return false;
                 }
 
-                
+
 
                 if (encryption == EncryptionEnum.Enabled)
                 {
@@ -177,7 +176,26 @@ namespace P2PShare.Libs
 
                 for (int i = 0; i < fileInfos.Length; i++)
                 {
-                    fileInfos[i] = new FileInfo(filePaths[i]);
+                    int j = 0;
+
+                    do
+                    {
+                        if (j == 1)
+                        {
+                            int dotIndex = filePaths[i].LastIndexOf('.');
+
+                            filePaths[i] = filePaths[i].Substring(0, dotIndex) + $"({j})" + filePaths[i].Substring(dotIndex);
+                        }
+                        else if (j > 1)
+                        {
+                            filePaths[i] = filePaths[i].Substring(0, filePaths[i].LastIndexOf('(') + 1) + $"{j})";
+                        }
+
+                        fileInfos[i] = new FileInfo(filePaths[i]);
+
+                        j++;
+                    }
+                    while (fileInfos[i].Exists);
                 }
 
                 onFilesBeingTransported(new(fileInfos, ReceiveSendEnum.Receive));
