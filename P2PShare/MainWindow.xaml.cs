@@ -7,8 +7,6 @@ using System.Windows.Input;
 using P2PShare.Utils;
 using P2PShare.Libs;
 using P2PShare.Libs.Models;
-using System.Diagnostics.CodeAnalysis;
-using static System.Net.WebRequestMethods;
 
 namespace P2PShare
 {
@@ -36,7 +34,7 @@ namespace P2PShare
         public MainWindow()
         {
             InitializeComponent();
-            Elements.RefreshInterfaces(Interface);
+            Elements.RefreshInterfaces(Interface, null);
             Interface.SelectedIndex = 0;
 
             ConnectionClient.Connected += OnConnected;
@@ -76,7 +74,7 @@ namespace P2PShare
 
         private void Refresh_Click(object sender, RoutedEventArgs e)
         {
-            Elements.RefreshInterfaces(Interface);
+            Elements.RefreshInterfaces(Interface, _interface?.Name);
         }
 
         private void Interface_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -191,7 +189,7 @@ namespace P2PShare
 
         private void OnDisconnected(object? sender, EventArgs e)
         {
-            Elements.Disconnected(State, Cancel, Disconnect, Interface);
+            Elements.Disconnected(State, Cancel, Disconnect, Interface, _interface?.Name);
 
             ConnectionClient.GetRidOfClients(_clients);
 
@@ -210,11 +208,6 @@ namespace P2PShare
                 Elements.ShowDialog("You must first disconnect to connect to another device");
 
                 return;
-            }
-            
-            if (Interface.SelectedItem?.ToString() != _interface?.Name)
-            {
-                Interface.SelectedItem = _interface?.Name;
             }
 
             if (_cancelConnecting.TokenSource is not null)
@@ -254,7 +247,7 @@ namespace P2PShare
 
         private void onInterfaceDown(object? sender, EventArgs e)
         {
-            Elements.RefreshInterfaces(Interface);
+            Elements.RefreshInterfaces(Interface, _interface?.Name);
 
             _interface = null;
         }

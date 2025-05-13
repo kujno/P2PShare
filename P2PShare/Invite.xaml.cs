@@ -9,7 +9,6 @@ namespace P2PShare
     public partial class Invite : Window
     {
         private bool _accepted;
-        private double _defaultTextHeight;
         
         public bool Accepted 
         {
@@ -22,9 +21,7 @@ namespace P2PShare
         public Invite(string text)
         {
             InitializeComponent();
-            _defaultTextHeight = Text.Height;
             Text.Text = text;
-            Text.Margin = new Thickness(0, 80 - (Text.Height - _defaultTextHeight), 0, 0);
         }
 
         private void No_Click(object sender, RoutedEventArgs e)

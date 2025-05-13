@@ -9,7 +9,7 @@ namespace P2PShare.Utils
 {
     public class Elements
     {
-        public static void RefreshInterfaces(ComboBox @interface)
+        public static void RefreshInterfaces(ComboBox @interface, string? nic)
         {
             List<NetworkInterface> interfaces = InterfaceHandling.GetUpInterfaces();
 
@@ -19,9 +19,14 @@ namespace P2PShare.Utils
             {
                 @interface.Items.Add(@interface2.Name);
             }
+
+            if (nic is not null)
+            {
+                pickNICAgain(@interface, nic);
+            }
         }
 
-        public static void Disconnected(TextBlock State, Button Cancel, Button Disconnect, ComboBox @interface)
+        public static void Disconnected(TextBlock State, Button Cancel, Button Disconnect, ComboBox @interface, string? nic)
         {
             State.Text = "Disconnected";
             State.Foreground = System.Windows.Media.Brushes.Red;
@@ -29,7 +34,7 @@ namespace P2PShare.Utils
 
             Disconnect.Visibility = Visibility.Collapsed;
 
-            RefreshInterfaces(@interface);
+            RefreshInterfaces(@interface, nic);
         }
 
         public static void Connected(TextBlock State, Button Cancel, Button Disconnect, IPAddress ip)
@@ -135,6 +140,14 @@ namespace P2PShare.Utils
             sendReceiveWindow?.Close();
 
             ShowDialog($"The file transfer {message}");
+        }
+
+        private static void pickNICAgain(ComboBox nicComboBox, string nic)
+        {
+            if (nicComboBox.SelectedItem?.ToString() != nic && nicComboBox.Items.Contains(nic))
+            {
+                nicComboBox.SelectedItem = nic;
+            }
         }
     }
 }
