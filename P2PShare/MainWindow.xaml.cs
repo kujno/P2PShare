@@ -30,12 +30,15 @@ namespace P2PShare
         private DecryptorAsymmetrical? _decryptographer;
         private bool _inviteSent;
         private Task? _timeOut;
+        private EncryptionEnum _encryption;
 
         public MainWindow()
         {
             InitializeComponent();
             Elements.RefreshInterfaces(Interface, null);
             Interface.SelectedIndex = 0;
+            Elements.InitializeEncryptionComboBox(Encryption);
+            Encryption.SelectedIndex = 0;
 
             ConnectionClient.Connected += OnConnected;
             ConnectionClient.Disconnected += OnDisconnected;
@@ -433,6 +436,11 @@ namespace P2PShare
         private void Disconnect_Click(object sender, RoutedEventArgs e)
         {
             ConnectionClient.GetRidOfClients(_clients);
+        }
+
+        private void Encryption_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            _encryption = (EncryptionEnum)Encryption.SelectedItem;
         }
     }
 }

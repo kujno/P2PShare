@@ -1,6 +1,6 @@
 ﻿namespace P2PShare.Models
 {
-    public enum Receive_Send
+    public enum ReceiveSendEnum
     {
         Receive,
         Send

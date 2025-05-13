@@ -83,7 +83,10 @@
                 <GroupBox Header="Interface:" Foreground="#c2c2c2" BorderThickness="0px" VerticalAlignment="Top" FontFamily="Arial">
                     <ComboBox x:Name="Interface" SelectionChanged="Interface_SelectionChanged"/>
                 </GroupBox>
-                <Button x:Name="Refresh" Grid.Column="0" Height="24px" Width="80px" Margin="0, 4px, 0, 0" Click="Refresh_Click">Refresh</Button>
+                <Button x:Name="Refresh" Grid.Column="0" Height="24px" Width="80px" Margin="0, 4px, 0, 12px" Click="Refresh_Click">Refresh</Button>
+                <GroupBox Header="Encryption:" Foreground="#c2c2c2" BorderThickness="0px" VerticalAlignment="Top" FontFamily="Arial">
+                    <ComboBox x:Name="Encryption" SelectionChanged="Encryption_SelectionChanged"/>
+                </GroupBox>
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Vertical">
