@@ -65,7 +65,7 @@ namespace P2PShare.Libs
                 Array.Copy(rsaKey, modulusLength, exponent, 0, exponentLength);
                 encryptorAsymmetrical = new(modulus, exponent);
 
-                onFilesBeingTransported(new(fileInfos, Receive_Send.Send));
+                onFilesBeingTransported(new(fileInfos, ReceiveSendEnum.Send));
 
                 foreach (FileInfo fileInfo in fileInfos)
                 {
@@ -154,7 +154,7 @@ namespace P2PShare.Libs
                     fileInfos[i] = new FileInfo(filePaths[i]);
                 }
 
-                onFilesBeingTransported(new(fileInfos, Receive_Send.Receive));
+                onFilesBeingTransported(new(fileInfos, ReceiveSendEnum.Receive));
 
                 for (int i = 0; i < fileInfos.Length; i++)
                 {
