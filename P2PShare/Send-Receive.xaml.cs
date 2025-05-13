@@ -11,13 +11,13 @@ namespace P2PShare
     /// </summary>
     public partial class Send_Receive : Window
     {
-        private Receive_Send _receiveSend;
+        private ReceiveSendEnum _receiveSend;
         private int _filesCount;
         private int _i;
         private FileInfo[] _fileInfos;
         public bool Done { get; }
         
-        public Send_Receive(Receive_Send receiveSend, FileInfo[] fileInfos)
+        public Send_Receive(ReceiveSendEnum receiveSend, FileInfo[] fileInfos)
         {
             InitializeComponent();
             _receiveSend = receiveSend;

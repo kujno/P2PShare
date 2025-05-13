@@ -11,7 +11,6 @@ namespace P2PShare.Libs
             NetworkInterface?[] interfacesNullable = NetworkInterface.GetAllNetworkInterfaces();
             List<NetworkInterface> interfacesUp = new List<NetworkInterface>();
 
-            // interfaces check
             if (interfacesNullable is null)
             {
                 throw new Exception("No network interfaces found");
@@ -19,12 +18,31 @@ namespace P2PShare.Libs
 
             NetworkInterface[] interfaces = interfacesNullable.Where(ni => ni != null).Cast<NetworkInterface>().ToArray();
 
-            // up interfaces check
             for (int i = 0; i < interfaces.Length; i++)
             {
-                if (interfaces[i].OperationalStatus == OperationalStatus.Up && !interfaces[i].Name.ToLower().Contains("loopback"))
+                NetworkInterface ni = interfaces[i];
+                string description = ni.Description.ToLowerInvariant();
+                string id = ni.Id.ToLowerInvariant();
+                bool isVirtual =
+                    description.Contains("virtual") ||
+                    description.Contains("vmware") ||
+                    description.Contains("hyper-v") ||
+                    description.Contains("loopback") ||
+                    description.Contains("tunnel") ||
+                    description.Contains("pseudo") ||
+                    id.Contains("virtual") ||
+                    id.Contains("vmware") ||
+                    id.Contains("hyper-v");
+
+                if (
+                    ni.OperationalStatus == OperationalStatus.Up &&
+                    ni.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
+                    ni.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
+                    !isVirtual &&
+                    ni.GetIPProperties().UnicastAddresses.Count > 0
+                )
                 {
-                    interfacesUp.Add(interfaces[i]);
+                    interfacesUp.Add(ni);
                 }
             }
 
@@ -41,7 +59,7 @@ namespace P2PShare.Libs
                     {
                         return;
                     }
-                    
+
                     await Task.Delay(1000);
                 }
             }
@@ -49,7 +67,7 @@ namespace P2PShare.Libs
             {
 
             }
-            
+
             OnInterfaceDown();
         }
 

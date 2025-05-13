@@ -1,10 +1,11 @@
-﻿using System.Net.Sockets;
+﻿using P2PShare.Libs.Models;
+using System.Net.Sockets;
 
 namespace P2PShare.Libs
 {
     public class FileHandling
     {
-        public static async Task CreateFile(NetworkStream networkStream, string filePath, int fileLength, EncryptionSymmetrical encryption)
+        public static async Task CreateFile(NetworkStream networkStream, string filePath, int fileLength, EncryptionSymmetrical encryption, EncryptionEnum encryptionEnum)
         {
             using (FileStream fileStream = new FileStream(filePath, getFileMode(filePath)))
             {
@@ -12,19 +13,36 @@ namespace P2PShare.Libs
 
                 while (totalBytesRead < fileLength)
                 {
-                    byte[] buffer = new byte[Math.Min(FileTransport.BufferSize, fileLength - totalBytesRead) + encryption.TagSize + encryption.NonceSize];
-                    byte[]? decryptedBuffer;
+                    int bufferSize = Math.Min(FileTransport.BufferSize, fileLength - totalBytesRead);
+                    byte[] buffer;
+                    byte[]? decryptedBuffer = null;
+
+                    if (encryptionEnum == EncryptionEnum.Enabled)
+                    {
+                        bufferSize += encryption.TagSize + encryption.NonceSize;
+                    }
+
+                    buffer = new byte[bufferSize];
 
                     await networkStream.ReadExactlyAsync(buffer, 0, buffer.Length);
 
-                    decryptedBuffer = encryption.Decrypt(buffer);
+                    if (encryptionEnum == EncryptionEnum.Enabled)
+                    {
+                        decryptedBuffer = encryption.Decrypt(buffer);
+                    }
 
                     if (decryptedBuffer is not null)
                     {
-                        await fileStream.WriteAsync(decryptedBuffer, 0, decryptedBuffer.Length);
-
-                        totalBytesRead += decryptedBuffer.Length;
+                        buffer = decryptedBuffer;
                     }
+                    else if (encryptionEnum == EncryptionEnum.Enabled && decryptedBuffer is null)
+                    {
+                        buffer = Array.Empty<byte>();
+                    }
+
+                    await fileStream.WriteAsync(buffer, 0, buffer.Length);
+                    totalBytesRead += buffer.Length;
+
                     FileTransport.OnFilePartTransported(CalculatePercentage(fileLength, totalBytesRead));
                 }
             }

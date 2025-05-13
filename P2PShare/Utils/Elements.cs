@@ -102,7 +102,7 @@ namespace P2PShare.Utils
             sendReceiveWindow.Close();
         }
 
-        private static string received_Sent(ReceiveSendEnum receive_Send)
+        public static string Received_Sent(ReceiveSendEnum receive_Send)
         {
             switch (receive_Send)
             {
@@ -136,6 +136,11 @@ namespace P2PShare.Utils
             sendReceiveWindow?.Close();
 
             ShowDialog($"The file transfer {message}");
+        }
+
+        public static void InitializeEncryptionComboBox(ComboBox encryption)
+        {
+            Enum.GetNames(typeof(EncryptionEnum)).ToList().ForEach(option => encryption.Items.Add(option));
         }
 
         public static void InitializeEncryptionComboBox(ComboBox encryption)

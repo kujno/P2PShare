@@ -27,7 +27,7 @@ namespace P2PShare
         private TcpClient?[] _clients;
         private Cancellation _cancelConnecting;
         private Cancellation _cancelMonitoring;
-        private DecryptorAsymmetrical? _decryptographer;
+        private DecryptorAsymmetrical? _decryptor;
         private bool _inviteSent;
         private Task? _timeOut;
         private EncryptionEnum _encryption;
@@ -262,7 +262,11 @@ namespace P2PShare
                 bool accepted;
                 Invite inviteWindow;
                 FileInfo[]? fileInfos = null;
-                string[] files = invite.Split(FileTransport.FileSeparator);
+                EncryptionEnum encryption;
+                string[] filesAndEncryption = invite.Split(FileTransport.EncryptionSymbol);
+                string[] files = filesAndEncryption[0].Split(FileTransport.FileSeparator);
+
+                Enum.TryParse<EncryptionEnum>(filesAndEncryption[1], out encryption);
 
                 invite = String.Empty;
                 foreach (string file in files)
@@ -290,7 +294,10 @@ namespace P2PShare
                         {
                             receive = true;
 
-                            _decryptographer = new();
+                            if (encryption == EncryptionEnum.Enabled)
+                            {
+                                _decryptor = new();
+                            }
                         }
                         else
                         {
@@ -304,14 +311,17 @@ namespace P2PShare
                             string[] fileNames = FileTransport.GetNamesFromFiles(files);
                             string[] paths = new string[files.Length];
 
-                            await FileTransport.SendRSAPublicKey(_clients[0]!.GetStream(), _decryptographer!.PublicKey);
+                            if (encryption == EncryptionEnum.Enabled)
+                            {
+                                await FileTransport.SendRSAPublicKey(_clients[0]!.GetStream(), _decryptor!.PublicKey);
+                            }
 
                             for (int i = 0; i < paths.Length; i++)
                             {
                                 paths[i] = $"{path}\\{fileNames[i]}";
                             }
 
-                            fileInfos = await FileTransport.ReceiveFile(_clients[0]!, paths, FileTransport.GetLenghtsFromFiles(files), _decryptographer);
+                            fileInfos = await FileTransport.ReceiveFile(_clients[0]!, paths, FileTransport.GetLenghtsFromFiles(files), _decryptor, encryption);
                         }
                     }
                 }
@@ -388,7 +398,7 @@ namespace P2PShare
 
             _inviteSent = true;
 
-            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfos), _sendReceiveWindow);
+            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfos, _encryption), _sendReceiveWindow);
 
             _inviteSent = false;
             
@@ -440,7 +450,7 @@ namespace P2PShare
 
         private void Encryption_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            _encryption = (EncryptionEnum)Encryption.SelectedItem;
+            Enum.TryParse<EncryptionEnum>(Encryption.SelectedItem.ToString(), out _encryption);
         }
     }
 }

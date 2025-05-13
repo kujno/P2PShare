@@ -16,6 +16,13 @@ namespace P2PShare.Libs
             _key = key;
         }
 
+        public EncryptionSymmetrical()
+        {
+            TagSize = 16;
+            NonceSize = 12;
+            _key = Array.Empty<byte>();
+        }
+
         public byte[] Encrypt(byte[] data)
         {
             AesGcm aes;
