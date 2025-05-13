@@ -9,7 +9,7 @@ namespace P2PShare.Utils
 {
     public class Elements
     {
-        public static void RefreshInterfaces(ComboBox @interface)
+        public static void RefreshInterfaces(ComboBox @interface, string? nic)
         {
             List<NetworkInterface> interfaces = InterfaceHandling.GetUpInterfaces();
 
@@ -19,9 +19,14 @@ namespace P2PShare.Utils
             {
                 @interface.Items.Add(@interface2.Name);
             }
+
+            if (nic is not null)
+            {
+                pickNICAgain(@interface, nic);
+            }
         }
 
-        public static void Disconnected(TextBlock State, Button Cancel, Button Disconnect, ComboBox @interface)
+        public static void Disconnected(TextBlock State, Button Cancel, Button Disconnect, ComboBox @interface, string? nic)
         {
             State.Text = "Disconnected";
             State.Foreground = System.Windows.Media.Brushes.Red;
@@ -29,7 +34,7 @@ namespace P2PShare.Utils
 
             Disconnect.Visibility = Visibility.Collapsed;
 
-            RefreshInterfaces(@interface);
+            RefreshInterfaces(@interface, nic);
         }
 
         public static void Connected(TextBlock State, Button Cancel, Button Disconnect, IPAddress ip)
@@ -91,7 +96,7 @@ namespace P2PShare.Utils
 
         public static void ChangeFileTransferState(Send_Receive sendReceiveWindow, int part, Receive_Send receive_Send)
         {
-            sendReceiveWindow.Text.Text = $"{received_Sent(receive_Send)}: {part}%";
+            sendReceiveWindow.Text.Text = $"{Received_Sent(receive_Send)}: {part}%";
 
             if (part != 100)
             {
@@ -101,7 +106,7 @@ namespace P2PShare.Utils
             sendReceiveWindow.Close();
         }
 
-        private static string received_Sent(Receive_Send receive_Send)
+        public static string Received_Sent(Receive_Send receive_Send)
         {
             switch (receive_Send)
             {
@@ -135,6 +140,14 @@ namespace P2PShare.Utils
             sendReceiveWindow?.Close();
 
             ShowDialog($"The file transfer {message}");
+        }
+
+        private static void pickNICAgain(ComboBox nicComboBox, string nic)
+        {
+            if (nicComboBox.SelectedItem?.ToString() != nic && nicComboBox.Items.Contains(nic))
+            {
+                nicComboBox.SelectedItem = nic;
+            }
         }
     }
 }

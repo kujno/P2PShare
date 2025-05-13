@@ -26,14 +26,15 @@
             return dialog;
         }
 
-        public static string? SelectFile()
+        public static string[]? SelectFiles()
         {
             Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
+            dialog.Multiselect = true;
             bool? selected = dialog.ShowDialog();
 
             if (selected == true)
             {
-                return dialog.FileName;
+                return dialog.FileNames;
             }
 
             return null;

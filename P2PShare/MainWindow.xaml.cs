@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Input;
 using P2PShare.Utils;
 using P2PShare.Libs;
+using P2PShare.Libs.Models;
 
 namespace P2PShare
 {
@@ -33,17 +34,15 @@ namespace P2PShare
         public MainWindow()
         {
             InitializeComponent();
-            Elements.RefreshInterfaces(Interface);
+            Elements.RefreshInterfaces(Interface, null);
             Interface.SelectedIndex = 0;
 
             ConnectionClient.Connected += OnConnected;
             ConnectionClient.Disconnected += OnDisconnected;
             InterfaceHandling.InterfaceDown += onInterfaceDown;
             FileTransport.InviteReceived += onInviteReceived;
-            FileTransport.FileBeingReceived += onFileBeingReceived;
-            FileTransport.FilePartReceived += onFilePartReceived;
-            FileTransport.FilePartSent += onFilePartSent;
-            FileTransport.FileBeingSent += onFileBeingSent;
+            FileTransport.FilePartTransported += onFilePartTransported;
+            FileTransport.FilesBeingTransported += onFilesBeingTransported;
 
             _listening = new Task?[2];
             _monitorConnections = new Task?[2];
@@ -75,7 +74,7 @@ namespace P2PShare
 
         private void Refresh_Click(object sender, RoutedEventArgs e)
         {
-            Elements.RefreshInterfaces(Interface);
+            Elements.RefreshInterfaces(Interface, _interface?.Name);
         }
 
         private void Interface_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -190,7 +189,7 @@ namespace P2PShare
 
         private void OnDisconnected(object? sender, EventArgs e)
         {
-            Elements.Disconnected(State, Cancel, Disconnect, Interface);
+            Elements.Disconnected(State, Cancel, Disconnect, Interface, _interface?.Name);
 
             ConnectionClient.GetRidOfClients(_clients);
 
@@ -209,11 +208,6 @@ namespace P2PShare
                 Elements.ShowDialog("You must first disconnect to connect to another device");
 
                 return;
-            }
-            
-            if (Interface.SelectedItem?.ToString() != _interface?.Name)
-            {
-                Interface.SelectedItem = _interface?.Name;
             }
 
             if (_cancelConnecting.TokenSource is not null)
@@ -253,7 +247,7 @@ namespace P2PShare
 
         private void onInterfaceDown(object? sender, EventArgs e)
         {
-            Elements.RefreshInterfaces(Interface);
+            Elements.RefreshInterfaces(Interface, _interface?.Name);
 
             _interface = null;
         }
@@ -263,90 +257,109 @@ namespace P2PShare
             if (!String.IsNullOrEmpty(invite))
             {
                 bool accepted;
-                Invite inviteWindow = new();
-                FileInfo? file = null;
+                Invite inviteWindow;
+                FileInfo[]? fileInfos = null;
+                string[] files = invite.Split(FileTransport.FileSeparator);
 
-                inviteWindow.Text.Text = invite;
+                invite = String.Empty;
+                foreach (string file in files)
+                {
+                    invite += file + "\n";
+                }
+                inviteWindow = new(invite + "Accept?");
                 inviteWindow.ShowDialog();
                 accepted = inviteWindow.Accepted;
 
-                if (_clients[0] is not null || _clients[0]!.Connected)
+                try
                 {
-                    bool? selected = null;
-                    bool receive;
-                    string? path = null;
-
-                    if (accepted)
+                    if (_clients[0] is not null || _clients[0]!.Connected)
                     {
-                        path = FileDialogs.SelectFolder(out selected);
-                    }
+                        bool? selected = null;
+                        bool receive;
+                        string? path = null;
 
-                    if (selected is not null && path is not null && selected == true)
-                    {
-                        receive = true;
+                        if (accepted)
+                        {
+                            path = FileDialogs.SelectFolder(out selected);
+                        }
 
-                        _decryptographer = new();
-                    }
-                    else
-                    {
-                        receive = false;
-                    }
+                        if (selected is not null && path is not null && selected == true)
+                        {
+                            receive = true;
 
-                    await FileTransport.Reply(_clients[0]!, receive);
+                            _decryptographer = new();
+                        }
+                        else
+                        {
+                            receive = false;
+                        }
 
-                    if (path is not null)
-                    {
-                        await FileTransport.SendRSAPublicKey(_clients[0]!.GetStream(), _decryptographer!.PublicKey);
-                        
-                        file = await FileTransport.ReceiveFile(_clients[0]!, FileTransport.GetFileLenghtFromInvite(invite), $"{path}\\{FileTransport.GetFileNameFromInvite(invite)}", _decryptographer);
+                        await FileTransport.Reply(_clients[0]!, receive);
+
+                        if (path is not null)
+                        {
+                            string[] fileNames = FileTransport.GetNamesFromFiles(files);
+                            string[] paths = new string[files.Length];
+
+                            await FileTransport.SendRSAPublicKey(_clients[0]!.GetStream(), _decryptographer!.PublicKey);
+
+                            for (int i = 0; i < paths.Length; i++)
+                            {
+                                paths[i] = $"{path}\\{fileNames[i]}";
+                            }
+
+                            fileInfos = await FileTransport.ReceiveFile(_clients[0]!, paths, FileTransport.GetLenghtsFromFiles(files), _decryptographer);
+                        }
                     }
                 }
+                catch
+                {
+                    fileInfos = null;
+                }
 
-                if (file is null)
+                if (fileInfos is null)
                 {
                     Elements.FileTransferEndDialog(false, _sendReceiveWindow);
                 }
                 else 
                 {
-                    Elements.ShowDialog($"The file has been saved to:\n{file.FullName}");
+                    string message;
+
+                    switch (fileInfos.Length)
+                    {
+                        case 1:
+                            message = $"The file has been saved as:\n{fileInfos[0].FullName}";
+
+                            break;
+
+                        default:
+                            message = $"The files have been saved to:\n{fileInfos[0].DirectoryName}";
+
+                            break;
+                    }
+
+                    Elements.ShowDialog(message);
                 }
             }
 
             await FileTransport.ReceiveInvite(_clients);
         }
 
-        private void onFileBeingReceived(object? sender, EventArgs e)
-        {
-            _sendReceiveWindow = new();
-            _sendReceiveWindow.Text.Text = "Received: 0%";
-            _sendReceiveWindow.Show();
-        }
-
-        private void onFilePartReceived(object? sender, int part)
+        private void onFilePartTransported(object? sender, int part)
         {
             if (_sendReceiveWindow is null)
             {
                 return;
             }
 
-            Elements.ChangeFileTransferState(_sendReceiveWindow, part, Models.Receive_Send.Receive);
-        }
-
-        private void onFilePartSent(object? sender, int part)
-        {
-            if (_sendReceiveWindow is null)
-            {
-                return;
-            }
-
-            Elements.ChangeFileTransferState(_sendReceiveWindow, part, Models.Receive_Send.Send);
+            _sendReceiveWindow.ChangeText(part);
         }
 
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
             if (_inviteSent)
             {
-                Elements.ShowDialog("You cannot send multiple files at once");
+                Elements.ShowDialog("You cannot send multiple sharing invites at once");
                 
                 return;
             }
@@ -356,18 +369,23 @@ namespace P2PShare
                 Elements.ShowDialog("You must be connected to share");
                 return;
             }
-            
-            FileInfo fileInfo = new(File.Text.Trim());
 
-            if (!fileInfo.Exists)
+            string[] paths = File.Text.Trim().Split(FileTransport.FileSeparator);
+            FileInfo[] fileInfos = new FileInfo[paths.Length];
+            for (int i = 0; i < fileInfos.Length; i++)
             {
-                Elements.ShowDialog("Select a valid file");
+                fileInfos[i] = new FileInfo(paths[i]);
+            }
+
+            if (!fileInfos.All(fileInfo => fileInfo.Exists))
+            {
+                Elements.ShowDialog("Select a valid file(s)");
                 return;
             }
 
             _inviteSent = true;
 
-            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfo), _sendReceiveWindow);
+            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfos), _sendReceiveWindow);
 
             _inviteSent = false;
             
@@ -376,7 +394,27 @@ namespace P2PShare
 
         private void Select_Click(object sender, RoutedEventArgs e)
         {
-            File.Text = FileDialogs.SelectFile();
+            string[]? paths = FileDialogs.SelectFiles();
+
+
+            if (paths is null)
+            {
+                return;
+            }
+
+            string pathsString = "";
+            
+            for (int i = 0; i < paths.Length; i++)
+            {
+                pathsString += paths[i];
+                
+                if (paths.Length > 1 && i != paths.Length - 1)
+                {
+                    pathsString += FileTransport.FileSeparator;
+                }
+            }
+            
+            File.Text = pathsString;
         }
 
         private void onTransferFailed(object? sender, EventArgs e)
@@ -386,10 +424,9 @@ namespace P2PShare
             Elements.ShowDialog("The file transfer failed");
         }
 
-        private void onFileBeingSent(object? sender, EventArgs e)
+        private void onFilesBeingTransported(object? sender, FilesBeingTransportedEventArgs filesBeingTransportedEventArgs)
         {
-            _sendReceiveWindow = new();
-            _sendReceiveWindow.Text.Text = "Sent: 0%";
+            _sendReceiveWindow = new(filesBeingTransportedEventArgs.ReceiveSend, filesBeingTransportedEventArgs.FileInfos);
             _sendReceiveWindow.Show();
         }
 

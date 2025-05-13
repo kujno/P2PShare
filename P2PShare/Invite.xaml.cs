@@ -18,9 +18,10 @@ namespace P2PShare
             }
         }
 
-        public Invite()
+        public Invite(string text)
         {
             InitializeComponent();
+            Text.Text = text;
         }
 
         private void No_Click(object sender, RoutedEventArgs e)
