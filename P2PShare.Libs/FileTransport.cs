@@ -118,7 +118,7 @@ namespace P2PShare.Libs
             {
                 streams = ClientHandling.GetStreamsFromTcpClients(clients!);
 
-                bytesRead = await streams[1].ReadAsync(buffer, 0, buffer.Length);
+                bytesRead = await streams[1].ReadAtLeastAsync(buffer, 1);
 
                 await SendAck(streams[0]);
 
