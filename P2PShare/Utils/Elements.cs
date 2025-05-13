@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Windows;
 using System.Windows.Controls;
+using P2PShare.Libs.Models;
 
 namespace P2PShare.Utils
 {
@@ -94,7 +95,7 @@ namespace P2PShare.Utils
             return null;
         }
 
-        public static void ChangeFileTransferState(Send_Receive sendReceiveWindow, int part, Receive_Send receive_Send)
+        public static void ChangeFileTransferState(Send_Receive sendReceiveWindow, int part, ReceiveSendEnum receive_Send)
         {
             sendReceiveWindow.Text.Text = $"{Received_Sent(receive_Send)}: {part}%";
 
@@ -106,14 +107,14 @@ namespace P2PShare.Utils
             sendReceiveWindow.Close();
         }
 
-        public static string Received_Sent(Receive_Send receive_Send)
+        public static string Received_Sent(ReceiveSendEnum receive_Send)
         {
             switch (receive_Send)
             {
-                case Receive_Send.Receive:
+                case ReceiveSendEnum.Receive:
                     return "Received";
 
-                case Receive_Send.Send:
+                case ReceiveSendEnum.Send:
                     return "Sent";
             }
 
@@ -148,6 +149,11 @@ namespace P2PShare.Utils
             {
                 nicComboBox.SelectedItem = nic;
             }
+        }
+
+        public static void InitializeEncryptionComboBox(ComboBox encryption)
+        {
+            Enum.GetNames(typeof(EncryptionEnum)).ToList().ForEach(option => encryption.Items.Add(option));
         }
     }
 }
