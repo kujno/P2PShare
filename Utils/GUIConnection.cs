@@ -22,7 +22,7 @@ namespace P2PShare.Utils
                 await Task.Delay(1000);
             }
 
-            ConnectionClient.OnDisconnected();
+            TCPConnectionClient.OnDisconnected();
         }
     }
 }

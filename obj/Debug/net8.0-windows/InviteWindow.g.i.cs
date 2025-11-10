@@ -77,7 +77,7 @@ namespace P2PShare {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/P2PShare;V1.0.0.0;component/invitewindow.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/P2PShare;component/invitewindow.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\InviteWindow.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

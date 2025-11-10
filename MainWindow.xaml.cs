@@ -40,8 +40,8 @@ namespace P2PShare
             Elements.InitializeEncryptionComboBox(Encryption);
             Encryption.SelectedIndex = 0;
 
-            ConnectionClient.Connected += OnConnected;
-            ConnectionClient.Disconnected += OnDisconnected;
+            TCPConnectionClient.Connected += OnConnected;
+            TCPConnectionClient.Disconnected += OnDisconnected;
             InterfaceHandling.InterfaceDown += onInterfaceDown;
             FileTransport.InviteReceived += onInviteReceived;
             FileTransport.FilePartTransported += onFilePartTransported;
@@ -121,7 +121,7 @@ namespace P2PShare
             
             for (int i = 0; i < 2; i++)
             {
-                _listening[i] = ConnectionListener.ListenLoop(_portListen + i, _interface, _cancelConnecting);
+                _listening[i] = TCPConnectionListener.ListenLoop(_portListen + i, _interface, _cancelConnecting);
             }
 
             Elements.Listening(_portListen, State, Cancel);
@@ -155,7 +155,7 @@ namespace P2PShare
 
             _monitorConnections[i] = GUIConnection.MonitorClientConnection(_clients[i]!, State, Interface, Cancel);
 
-            if (!ConnectionClient.AreClientsConnected(_clients)) return;
+            if (!TCPConnectionClient.AreClientsConnected(_clients)) return;
 
             Elements.Connected(State, Cancel, Disconnect, ipRemote);
 
@@ -166,7 +166,7 @@ namespace P2PShare
         {
             Elements.Disconnected(State, Cancel, Disconnect, Interface, _interface?.Name);
 
-            ConnectionClient.GetRidOfClients(_clients);
+            TCPConnectionClient.GetRidOfClients(_clients);
 
             if (Interface.Items.Contains(_interface?.Name)) Interface.SelectedItem = _interface?.Name;
         }
@@ -175,7 +175,7 @@ namespace P2PShare
         {
             IPAddress? remoteIP;
 
-            if (ConnectionClient.AreClientsConnected(_clients))
+            if (TCPConnectionClient.AreClientsConnected(_clients))
             {
                 Elements.ShowDialog("You must first disconnect to connect to another device");
 
@@ -197,7 +197,7 @@ namespace P2PShare
 
             _timeOut = _cancelConnecting.TimeOut();
 
-            _connecting = ConnectionClient.ConnectAll(remoteIP, _interface, _portConnect, _cancelConnecting);
+            _connecting = TCPConnectionClient.ConnectAll(remoteIP, _interface, _portConnect, _cancelConnecting);
 
             Elements.Connecting(_portConnect, State, Cancel);
         }
@@ -208,7 +208,7 @@ namespace P2PShare
 
             _cancelConnecting.Cancel();
 
-            ConnectionClient.GetRidOfClients(_clients);
+            TCPConnectionClient.GetRidOfClients(_clients);
         }
 
         private void onInterfaceDown(object? sender, EventArgs e)
@@ -399,7 +399,7 @@ namespace P2PShare
 
         private void Disconnect_Click(object sender, RoutedEventArgs e)
         {
-            ConnectionClient.GetRidOfClients(_clients);
+            TCPConnectionClient.GetRidOfClients(_clients);
         }
 
         private void Encryption_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
