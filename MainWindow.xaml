@@ -54,20 +54,12 @@
         <Grid Grid.Row="0" MouseDown="ToolBar_MouseDown" Background="#333333">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0" Orientation="Horizontal">
-                <TextBlock Text="State:" VerticalAlignment="Center" Margin="5px, 0, 0, 0"/>
-                <TextBlock x:Name="State" Text="Disconnected" VerticalAlignment="Center" Margin="5px, 0, 0, 0" Foreground="Red"/>
-                <Button x:Name="Cancel" Content="Cancel" Margin="6px, 0, 0, 0" Height="20px" Width="50px" VerticalAlignment="Center" Visibility="Collapsed" Click="Cancel_Click"/>
-                <Button x:Name="Disconnect" Content="Disconnect" Margin="6px, 0, 0, 0" Height="20px" Width="70px" VerticalAlignment="Center" Visibility="Collapsed" Click="Disconnect_Click"/>
-            </StackPanel>
-            
-            <TextBlock Grid.Column="1" Text="P2PShare" HorizontalAlignment="Center" FontSize="20px" FontFamily="Arial Black"/>
+            <TextBlock Grid.Column="0" Text="P2PShare" HorizontalAlignment="Center" Margin="70px, 0, 0, 0" FontSize="20px" FontFamily="Arial Black"/>
 
-            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0px, 3px, 3px, 3px">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0px, 3px, 3px, 3px">
                 <Button x:Name="Minimize" Content="_" Width="32px" Height="Auto" Click="Minimize_Click" FontSize="12px" FontWeight="UltraBlack"/>
                 <Button x:Name="Close" Content="X" Width="32px" Height="Auto" Click="Close_Click" Margin="3px, 0px, 0px, 0px" FontSize="12px" FontWeight="Black"/>
             </StackPanel>
@@ -80,22 +72,18 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Orientation="Vertical" Grid.Column="0">
-                <GroupBox Header="Encryption:" Foreground="#c2c2c2" BorderThickness="0px" VerticalAlignment="Top" FontFamily="Arial">
-                    <ComboBox x:Name="Encryption" SelectionChanged="Encryption_SelectionChanged"/>
-                </GroupBox>
+                
                 <GroupBox Header="Interface:" Foreground="#c2c2c2" BorderThickness="0px" VerticalAlignment="Top" FontFamily="Arial">
                     <ComboBox x:Name="Interface" SelectionChanged="Interface_SelectionChanged"/>
                 </GroupBox>
+                
                 <Button x:Name="Refresh" Grid.Column="0" Height="24px" Width="80px" Margin="0, 4px" Click="Refresh_Click">Refresh</Button>
+                <CheckBox Content="Encryption" Foreground="#c2c2c2" Margin="6px, 8px, 0, 0"/>
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Vertical">
                 <TextBlock x:Name="YourIP" Text="Your IP address:" HorizontalAlignment="Center" FontSize="20" FontWeight="Medium"/>
                 <StackPanel Orientation="Horizontal" Margin="0, 20px, 0, 0" HorizontalAlignment="Center">
-                    <GroupBox Header="Listening port:" Width="100">
-                        <TextBox x:Name="Port" Width="80px" Margin="0, 5px, 0, 0"/>
-                    </GroupBox>
-                    <Button x:Name="Listen" Content="Listen" Height="22px" Width="60px" VerticalAlignment="Center" Margin="0, 0, 0, -13" Click="Listen_Click"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Column="1">
                     <GroupBox Header="Remote IP address:" Width="160px">

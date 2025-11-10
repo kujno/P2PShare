@@ -1,5 +1,4 @@
 ﻿using P2PShare.Models;
-using P2PShare.Utils;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
