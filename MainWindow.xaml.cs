@@ -24,7 +24,7 @@ namespace P2PShare
         private int _portListen;
         private int _portConnect;
         private Send_ReceiveWindow? _sendReceiveWindow;
-        private TcpClient?[] _clients;
+        private TcpClient?[] _tcpClients;
         private Cancellation _cancelConnecting;
         private Cancellation _cancelMonitoring;
         private DecryptorAsymmetrical? _decryptor;
@@ -50,7 +50,7 @@ namespace P2PShare
             _listening = new Task?[2];
             _monitorConnections = new Task?[2];
             _connecting = new Task?[2];
-            _clients = new TcpClient?[2];
+            _tcpClients = new TcpClient?[2];
             _inviteSent = false;
             _cancelConnecting = new();
             _cancelMonitoring = new();
@@ -132,41 +132,41 @@ namespace P2PShare
             IPAddress? ipRemote;
             int i = 0;
 
-            for (; i < _clients.Length; i++)
+            for (; i < _tcpClients.Length; i++)
             {
-                if (_clients[i] is not null) continue;
+                if (_tcpClients[i] is not null) continue;
 
-                _clients[i] = client2;
+                _tcpClients[i] = client2;
 
                 break;
             }
 
-            if (_clients[i] is null) return;
+            if (_tcpClients[i] is null) return;
 
-            ipRemote = IPHandling.GetRemoteIPAddress(_clients[i]!);
+            ipRemote = IPHandling.GetRemoteIPAddress(_tcpClients[i]!);
 
             if (ipRemote is null)
             {
-                _clients[i]!.Dispose();
-                _clients[i] = null;
+                _tcpClients[i]!.Dispose();
+                _tcpClients[i] = null;
 
                 return;
             }
 
-            _monitorConnections[i] = GUIConnection.MonitorClientConnection(_clients[i]!, State, Interface, Cancel);
+            _monitorConnections[i] = GUIConnection.MonitorClientConnection(_tcpClients[i]!, State, Interface, Cancel);
 
-            if (!TCPConnectionClient.AreClientsConnected(_clients)) return;
+            if (!TCPConnectionClient.AreClientsConnected(_tcpClients)) return;
 
             Elements.Connected(State, Cancel, Disconnect, ipRemote);
 
-            await FileTransport.ReceiveInvite(_clients);
+            await FileTransport.ReceiveInvite(_tcpClients);
         }
 
         private void OnDisconnected(object? sender, EventArgs e)
         {
             Elements.Disconnected(State, Cancel, Disconnect, Interface, _interface?.Name);
 
-            TCPConnectionClient.GetRidOfClients(_clients);
+            TCPConnectionClient.GetRidOfClients(_tcpClients);
 
             if (Interface.Items.Contains(_interface?.Name)) Interface.SelectedItem = _interface?.Name;
         }
@@ -175,7 +175,7 @@ namespace P2PShare
         {
             IPAddress? remoteIP;
 
-            if (TCPConnectionClient.AreClientsConnected(_clients))
+            if (TCPConnectionClient.AreClientsConnected(_tcpClients))
             {
                 Elements.ShowDialog("You must first disconnect to connect to another device");
 
@@ -208,7 +208,7 @@ namespace P2PShare
 
             _cancelConnecting.Cancel();
 
-            TCPConnectionClient.GetRidOfClients(_clients);
+            TCPConnectionClient.GetRidOfClients(_tcpClients);
         }
 
         private void onInterfaceDown(object? sender, EventArgs e)
@@ -242,7 +242,7 @@ namespace P2PShare
 
                 try
                 {
-                    if (_clients[0] is not null || _clients[0]!.Connected)
+                    if (_tcpClients[0] is not null || _tcpClients[0]!.Connected)
                     {
                         bool? selected = null;
                         bool receive;
@@ -267,7 +267,7 @@ namespace P2PShare
                             receive = false;
                         }
 
-                        await FileTransport.Reply(_clients[0]!, receive);
+                        await FileTransport.Reply(_tcpClients[0]!, receive);
 
                         if (path is not null)
                         {
@@ -276,7 +276,7 @@ namespace P2PShare
 
                             if (encryption == EncryptionEnum.Enabled)
                             {
-                                await FileTransport.SendRSAPublicKey(_clients[0]!.GetStream(), _decryptor!.PublicKey);
+                                await FileTransport.SendRSAPublicKey(_tcpClients[0]!.GetStream(), _decryptor!.PublicKey);
                             }
 
                             for (int i = 0; i < paths.Length; i++)
@@ -284,7 +284,7 @@ namespace P2PShare
                                 paths[i] = $"{path}\\{fileNames[i]}";
                             }
 
-                            fileInfos = await FileTransport.ReceiveFile(_clients[0]!, paths, FileTransport.GetLenghtsFromFiles(files), _decryptor, encryption);
+                            fileInfos = await FileTransport.ReceiveFile(_tcpClients[0]!, paths, FileTransport.GetLenghtsFromFiles(files), _decryptor, encryption);
                         }
                     }
                 }
@@ -315,7 +315,7 @@ namespace P2PShare
                 }
             }
 
-            await FileTransport.ReceiveInvite(_clients);
+            await FileTransport.ReceiveInvite(_tcpClients);
         }
 
         private void onFilePartTransported(object? sender, int part)
@@ -341,7 +341,7 @@ namespace P2PShare
                 return;
             }
             
-            if (_clients[0] is null || !_clients[0]!.Connected)
+            if (_tcpClients[0] is null || !_tcpClients[0]!.Connected)
             {
                 Elements.ShowDialog("You must be connected to share");
                 return;
@@ -362,11 +362,11 @@ namespace P2PShare
 
             _inviteSent = true;
 
-            Elements.FileTransferEndDialog(await FileTransport.SendFile(_clients!, fileInfos, _encryption), _sendReceiveWindow);
+            Elements.FileTransferEndDialog(await FileTransport.SendFile(_tcpClients!, fileInfos, _encryption), _sendReceiveWindow);
 
             _inviteSent = false;
             
-            await FileTransport.ReceiveInvite(_clients);
+            await FileTransport.ReceiveInvite(_tcpClients);
         }
 
         private void Select_Click(object sender, RoutedEventArgs e)
@@ -399,7 +399,7 @@ namespace P2PShare
 
         private void Disconnect_Click(object sender, RoutedEventArgs e)
         {
-            TCPConnectionClient.GetRidOfClients(_clients);
+            TCPConnectionClient.GetRidOfClients(_tcpClients);
         }
 
         private void Encryption_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
