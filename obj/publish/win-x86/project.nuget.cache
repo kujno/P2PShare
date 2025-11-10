@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "MdQbLB9F2UI=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\matej\\source\\repos\\P2PShare\\P2PShare\\P2PShare.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\matej\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x86\\8.0.15\\microsoft.netcore.app.runtime.win-x86.8.0.15.nupkg.sha512",
+    "C:\\Users\\matej\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x86\\8.0.15\\microsoft.windowsdesktop.app.runtime.win-x86.8.0.15.nupkg.sha512",
+    "C:\\Users\\matej\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x86\\8.0.15\\microsoft.aspnetcore.app.runtime.win-x86.8.0.15.nupkg.sha512"
+  ],
+  "logs": []
+}

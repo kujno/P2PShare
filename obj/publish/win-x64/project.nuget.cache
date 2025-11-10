@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "WRvBfB9nbNk=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\matej\\source\\repos\\P2PShare\\P2PShare\\P2PShare.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\matej\\.nuget\\packages\\microsoft.net.illink.tasks\\8.0.21\\microsoft.net.illink.tasks.8.0.21.nupkg.sha512",
+    "C:\\Users\\matej\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\8.0.21\\microsoft.netcore.app.runtime.win-x64.8.0.21.nupkg.sha512",
+    "C:\\Users\\matej\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\8.0.21\\microsoft.windowsdesktop.app.runtime.win-x64.8.0.21.nupkg.sha512",
+    "C:\\Users\\matej\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\8.0.21\\microsoft.aspnetcore.app.runtime.win-x64.8.0.21.nupkg.sha512"
+  ],
+  "logs": []
+}

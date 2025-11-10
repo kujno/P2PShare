@@ -1,0 +1,8 @@
+C:\Users\matej\Desktop\P2PShare\P2PShare.pdb
+C:\Users\matej\Desktop\P2PShare\D3DCompiler_47_cor3.dll
+C:\Users\matej\Desktop\P2PShare\PenImc_cor3.dll
+C:\Users\matej\Desktop\P2PShare\PresentationNative_cor3.dll
+C:\Users\matej\Desktop\P2PShare\vcruntime140_cor3.dll
+C:\Users\matej\Desktop\P2PShare\wpfgfx_cor3.dll
+C:\Users\matej\Desktop\P2PShare\P2PShare.Libs.pdb
+C:\Users\matej\Desktop\P2PShare\P2PShare.exe
