@@ -27,8 +27,6 @@ namespace P2PShare
             RefreshInterfaces();
             Interface.SelectedIndex = 0;
 
-            TCPClient.Connected += OnConnected;
-            TCPClient.Disconnected += OnDisconnected;
             InterfaceHandling.InterfaceDown += onInterfaceDown;
             FileTransport.InviteReceived += onInviteReceived;
             FileTransport.FilePartTransported += onFilePartTransported;
@@ -58,140 +56,14 @@ namespace P2PShare
 
         private void Interface_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if (Interface.SelectedItem is null)
-            {
-                ResetYourIp();
+            NetworkInterface? ni = GetSelectedInterface();
+            IPAddress? ip = null;
 
-                return;
-            }
+            if (ni is not null) ip = IPHandling.GetLocalIPv4(ni);
 
-            _interface = Elements.GetSelectedInterface(Interface);
+            // assing the local IP to the connection object
 
-            if (_interface is null) return;
-
-            _localIP = IPHandling.GetLocalIPv4(_interface);
-
-            if (_localIP is null) return;
-
-            YourIP.Text = $"Your IP address: {_localIP}";
-
-            _cancelMonitoring?.NewTokenSource();
-
-            if (_cancelMonitoring is null) return;
-
-            _monitorInterface = InterfaceHandling.MonitorInterface(_interface, _cancelMonitoring);
-        }
-
-        private void Listen_Click(object sender, RoutedEventArgs e)
-        {
-            _cancelConnecting.NewTokenSource();
-
-            if (_localIP is null || !int.TryParse(Port.Text.Trim(), out _portListen) || _interface is null || !PortHandling.IsPortAvailable(_localIP, _portListen))
-            {
-                Elements.ShowDialog("Select an interface & enter a valid port number");
-
-                return;
-            }
-
-            _timeOut = _cancelConnecting.TimeOut();
-            
-            for (int i = 0; i < 2; i++)
-            {
-                _listening[i] = TCPConnectionListener.ListenLoop(_portListen + i, _interface, _cancelConnecting);
-            }
-
-            Elements.Listening(_portListen, State, Cancel);
-        }
-
-        private async void OnConnected(object? sender, TcpClient client2)
-        {
-            IPAddress? ipRemote;
-            int i = 0;
-
-            for (; i < _tcpClients.Length; i++)
-            {
-                if (_tcpClients[i] is not null) continue;
-
-                _tcpClients[i] = client2;
-
-                break;
-            }
-
-            if (_tcpClients[i] is null) return;
-
-            ipRemote = IPHandling.GetRemoteIPAddress(_tcpClients[i]!);
-
-            if (ipRemote is null)
-            {
-                _tcpClients[i]!.Dispose();
-                _tcpClients[i] = null;
-
-                return;
-            }
-
-            _monitorConnections[i] = GUIConnection.MonitorClientConnection(_tcpClients[i]!, State, Interface, Cancel);
-
-            if (!TCPClient.AreClientsConnected(_tcpClients)) return;
-
-            Elements.Connected(State, Cancel, Disconnect, ipRemote);
-
-            await FileTransport.ReceiveInvite(_tcpClients);
-        }
-
-        private void OnDisconnected(object? sender, EventArgs e)
-        {
-            Elements.Disconnected(State, Cancel, Disconnect, Interface, _interface?.Name);
-
-            TCPClient.GetRidOfClients(_tcpClients);
-
-            if (Interface.Items.Contains(_interface?.Name)) Interface.SelectedItem = _interface?.Name;
-        }
-
-        private void Connect_Click(object sender, RoutedEventArgs e)
-        {
-            IPAddress? remoteIP;
-
-            if (TCPClient.AreClientsConnected(_tcpClients))
-            {
-                Elements.ShowDialog("You must first disconnect to connect to another device");
-
-                return;
-            }
-
-            if (_cancelConnecting.TokenSource is not null) _cancelConnecting.Cancel();
-
-            if (_interface is null || _localIP is null || !IPAddress.TryParse(RemoteIP.Text.Trim(), out remoteIP))
-            {
-                Elements.ShowDialog("Select an interface & enter a valid IP address");
-
-                return;
-            }
-            
-            _portConnect = PortHandling.FindPort(_localIP);
-
-            _cancelConnecting!.NewTokenSource();
-
-            _timeOut = _cancelConnecting.TimeOut();
-
-            _connecting = TCPClient.ConnectAll(remoteIP, _interface, _portConnect, _cancelConnecting);
-
-            Elements.Connecting(_portConnect, State, Cancel);
-        }
-
-        private void Cancel_Click(object sender, RoutedEventArgs e)
-        {
-            if (_cancelConnecting.TokenSource is null) return;
-
-            _cancelConnecting.Cancel();
-
-            TCPClient.GetRidOfClients(_tcpClients);
-        }
-
-        private void onInterfaceDown(object? sender, EventArgs e)
-        {
-            Elements.RefreshInterfaces(Interface, _interface?.Name);
-
-            _interface = null;
+            YourIP.Text = $"Your IP address:" + (ip is not null ? $" {ip}" : String.Empty);
         }
 
         private async void onInviteReceived(object? sender, string? invite)
@@ -269,7 +141,7 @@ namespace P2PShare
                     fileInfos = null;
                 }
 
-                if (fileInfos is null) Elements.FileTransferEndDialog(false, _sendReceiveWindow);
+                if (fileInfos is null) FileTransferEndDialog(false);
                 else 
                 {
                     string message;
@@ -287,7 +159,7 @@ namespace P2PShare
                             break;
                     }
 
-                    Elements.ShowDialog(message);
+                    ShowDialog(message);
                 }
             }
 
@@ -303,46 +175,22 @@ namespace P2PShare
         {
             string fileText = File.Text.Trim();
 
-            if (_inviteSent)
-            {
-                Elements.ShowDialog("You cannot send multiple sharing invites at once");
-                
-                return;
-            }
-
             if (fileText.Equals(String.Empty))
             {
-                Elements.ShowDialog("Choose a file to send");
+                ShowDialog("Choose a file to send");
 
                 return;
             }
-            
-            if (_tcpClients[0] is null || !_tcpClients[0]!.Connected)
-            {
-                Elements.ShowDialog("You must be connected to share");
-                return;
-            }
 
-            string[] paths = fileText.Split(FileTransport.FileSeparator);
-            FileInfo[] fileInfos = new FileInfo[paths.Length];
-            for (int i = 0; i < fileInfos.Length; i++)
-            {
-                fileInfos[i] = new FileInfo(paths[i]);
-            }
+            FileInfo[] fileInfos = fileText.Split(FileTransport.FileSeparator).Select(x => new FileInfo(x)).ToArray();
 
             if (!fileInfos.All(fileInfo => fileInfo.Exists))
             {
-                Elements.ShowDialog("Select a valid file(s)");
+                ShowDialog("Select a valid file(s)");
                 return;
             }
 
-            _inviteSent = true;
-
-            Elements.FileTransferEndDialog(await FileTransport.SendFile(_tcpClients!, fileInfos, _encryption), _sendReceiveWindow);
-
-            _inviteSent = false;
-            
-            await FileTransport.ReceiveInvite(_tcpClients);
+            FileTransferEndDialog(await FileTransport.SendFile(_tcpClients!, fileInfos, _encryption), _sendReceiveWindow);
         }
 
         private void Select_Click(object sender, RoutedEventArgs e)
@@ -364,7 +212,7 @@ namespace P2PShare
         {
             _sendReceiveWindow?.Close();
 
-            Elements.ShowDialog("The file transfer failed");
+            ShowDialog("The file transfer failed");
         }
 
         private void onFilesBeingTransported(object? sender, FilesBeingTransportedEventArgs filesBeingTransportedEventArgs)
@@ -373,33 +221,15 @@ namespace P2PShare
             _sendReceiveWindow.Show();
         }
 
-        private void Disconnect_Click(object sender, RoutedEventArgs e)
-        {
-            TCPClient.GetRidOfClients(_tcpClients);
-        }
-
-        private void Encryption_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            Enum.TryParse<EncryptionEnum>(Encryption.SelectedItem.ToString(), out _encryption);
-        }
-
         private void RefreshInterfaces()
         {
-            List<NetworkInterface> interfaces = InterfaceHandling.GetUpInterfaces();
-            string? nic = Interface.SelectedItem.ToString();
+            string? selectedNI = Interface.SelectedItem?.ToString() ?? null;
 
             Interface.Items.Clear();
-            foreach (NetworkInterface ni in interfaces)
-            {
-                Interface.Items.Add(ni.Name);
-            }
+            foreach (NetworkInterface ni in InterfaceHandling.GetUpInterfaces()) Interface.Items.Add(ni.Name);
 
-            if (nic is not null) pickNIC(Interface, nic);
-        }
-
-        private void Disconnected()
-        {
-            RefreshInterfaces();
+            if (Interface.Items.Contains(selectedNI)) Interface.SelectedItem = selectedNI;
+            else Interface.SelectedIndex = 0;
         }
 
         private void ShowDialog(string message)
@@ -411,11 +241,6 @@ namespace P2PShare
             messageBox.ShowDialog();
         }
 
-        private void ResetYourIp()
-        {
-            YourIP.Text = "Your IP address:";
-        }
-
         private NetworkInterface? GetSelectedInterface()
         {
             foreach (NetworkInterface @interface in InterfaceHandling.GetUpInterfaces())
@@ -424,56 +249,6 @@ namespace P2PShare
             }
 
             return null;
-        }
-
-        //public void ChangeFileTransferState(int part, SendReceiveEnum receive_Send)
-        //{
-        //    _sendReceiveWindow.Text.Text = $"{Received_Sent(receive_Send)}: {part}%";
-
-        //    if (part != 100) return;
-
-        //    _sendReceiveWindow.Close();
-        //}
-
-        private static string Received_Sent(SendReceiveEnum receive_Send)
-        {
-            switch (receive_Send)
-            {
-                case SendReceiveEnum.Receive:
-                    return "Received";
-
-                case SendReceiveEnum.Send:
-                    return "Sent";
-            }
-
-            return "";
-        }
-
-        private void FileTransferEndDialog(bool succeeded)
-        {
-            string message;
-
-            switch (succeeded)
-            {
-                case true:
-                    message = "succeeded";
-
-                    break;
-
-                case false:
-                    message = "failed";
-
-                    break;
-            }
-
-            _sendReceiveWindow?.Close();
-
-            ShowDialog($"The file transfer {message}");
-        }
-
-        private void pickNIC(string nic)
-        {
-            if (Interface.Items.Contains(nic)) Interface.SelectedItem = nic;
         }
     }
 }
