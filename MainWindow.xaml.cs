@@ -1,13 +1,10 @@
 ﻿using P2PShare.Libs;
 using P2PShare.Libs.Models;
-using P2PShare.Models;
 using P2PShare.Utils;
 using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Net.Sockets;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace P2PShare
@@ -27,7 +24,6 @@ namespace P2PShare
             RefreshInterfaces();
             Interface.SelectedIndex = 0;
 
-            InterfaceHandling.InterfaceDown += onInterfaceDown;
             FileTransport.InviteReceived += onInviteReceived;
             FileTransport.FilePartTransported += onFilePartTransported;
             FileTransport.FilesBeingTransported += onFilesBeingTransported;
@@ -142,7 +138,7 @@ namespace P2PShare
                 }
 
                 if (fileInfos is null) FileTransferEndDialog(false);
-                else 
+                else
                 {
                     string message;
 
@@ -197,14 +193,14 @@ namespace P2PShare
         {
             string[]? paths = FileDialogs.SelectFiles();
             string pathsString = "";
-            
+
             for (int i = 0; i < paths?.Length; i++)
             {
                 pathsString += paths[i];
-                
+
                 if (paths.Length > 1 && i != paths.Length - 1) pathsString += FileTransport.FileSeparator;
             }
-            
+
             File.Text = pathsString;
         }
 
