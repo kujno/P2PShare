@@ -15,7 +15,7 @@ namespace P2PShare
     public partial class MainWindow : Window
     {
         private Send_ReceiveWindow? _sendReceiveWindow;
-        private TCPConnection _tcpConnection;
+        private ConncectionHandler _tcpConnection;
         private EncryptionEnum _encryption;
 
         public MainWindow()
