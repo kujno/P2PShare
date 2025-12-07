@@ -14,19 +14,11 @@ namespace P2PShare
     /// </summary>
     public partial class MainWindow : Window
     {
-        private Send_ReceiveWindow? _sendReceiveWindow;
-        private ConnectionHandler _tcpConnection;
-        private EncryptionEnum _encryption;
-
         public MainWindow()
         {
             InitializeComponent();
             RefreshInterfaces();
             Interface.SelectedIndex = 0;
-
-            FileTransport.InviteReceived += onInviteReceived;
-            FileTransport.FilePartTransported += onFilePartTransported;
-            FileTransport.FilesBeingTransported += onFilesBeingTransported;
         }
 
         private void Minimize_Click(object sender, RoutedEventArgs e)
