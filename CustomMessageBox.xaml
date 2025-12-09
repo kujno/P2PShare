@@ -22,6 +22,6 @@
             <TextBlock x:Name="Text" FontSize="20px" FontFamily="Arial" Foreground="#c2c2c2" Grid.Row="0" HorizontalAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" TextAlignment="Center"/>
         </ScrollViewer>
 
-        <Button Content="OK" Background="#292929" BorderThickness="0" Foreground="#c2c2c2" Margin="0,0,0,40px" Grid.Row="1" Width="70px" Height="20px" HorizontalAlignment="Center" Click="Button_Click"/>
+        <Button x:Name="Btn" Background="#292929" BorderThickness="0" Foreground="#c2c2c2" Margin="0,0,0,40px" Grid.Row="1" Width="70px" Height="20px" HorizontalAlignment="Center" Click="Btn_Click"/>
     </Grid>
 </Window>

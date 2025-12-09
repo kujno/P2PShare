@@ -14,22 +14,16 @@ namespace P2PShare
     /// </summary>
     public partial class MainWindow : Window
     {
+        private CustomMessageBox? _customMessageBox;
+        
+        private void Close_Click(object sender, RoutedEventArgs e) => Close();
+        private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
         public MainWindow()
         {
             InitializeComponent();
             RefreshInterfaces();
             Interface.SelectedIndex = 0;
-        }
-
-        private void Minimize_Click(object sender, RoutedEventArgs e)
-        {
-            WindowState = WindowState.Minimized;
-        }
-
-        private void Close_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
-            _sendReceiveWindow?.Close();
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
