@@ -1,4 +1,5 @@
 ﻿using P2PShare.Libs;
+using P2PShare.Models;
 using P2PShare.Utils;
 using System.IO;
 using System.Net;
@@ -13,26 +14,19 @@ namespace P2PShare
     /// </summary>
     public partial class MainWindow : Window
     {
-        private CustomMessageBox? _customMessageBox;
         private ConnectionHandler? _connectionHandler;
+        private CustomMessageBox? _messageBox;
 
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
         public MainWindow()
         {
-            IPAddress? localIP;
-            NetworkInterface? @interface;
-            
             InitializeComponent();
             RefreshInterfaces();
             Interface.SelectedIndex = 0;
 
-            @interface = GetSelectedInterface();
-            localIP = @interface is not null ? IPHandling.GetLocalIPv4(@interface) : null;
-            if (localIP is not null) _connectionHandler = new ConnectionReceiverHandler(localIP);
-
-            if (_connectionHandler is not null) ((ConnectionReceiverHandler)_connectionHandler)?.ReceiveInviteAsync(); // get this done
+            CustomMessageBox.CancelClicked += OnCancelClicked;
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -91,7 +85,7 @@ namespace P2PShare
 
         private void Select_Click(object sender, RoutedEventArgs e)
         {
-            string[]? paths = FileDialogs.SelectFiles();
+            string[]? paths = Dialog.SelectFiles();
             string pathsString = "";
 
             for (int i = 0; i < paths?.Length; i++)
@@ -138,6 +132,55 @@ namespace P2PShare
             }
 
             return null;
+        }
+
+        private async Task ReceiveInviteAsync() // do not call recursively. Use a loop instead.
+        {
+            NetworkInterface? @interface = GetSelectedInterface();
+            IPAddress? localIP = @interface is not null ? IPHandling.GetLocalIPv4(@interface) : null;
+            Queue<KeyValuePair<string, long>> files;
+            InviteWindow inviteWindow;
+            ConnectionReceiverHandler connectionReceiverHandler;
+            string invite = String.Empty;
+
+            if (localIP is null)
+            {
+                ShowMessageBox("Select a valid interface.", ButtonContent.OK);
+                return;
+            }
+
+            _connectionHandler = new ConnectionReceiverHandler(localIP);
+            connectionReceiverHandler = (ConnectionReceiverHandler)_connectionHandler;
+            files = await connectionReceiverHandler.ReceiveInviteAsync();
+
+            while (files.Count > 0)
+            {
+                var file = files.Dequeue();
+
+                invite += $"{file.Key} - {file.Value}B\n";
+            }
+
+            inviteWindow = new(invite + "Accept?", this);
+            inviteWindow.ShowDialog();
+
+            if (!inviteWindow.Accepted)
+            {
+                await connectionReceiverHandler.DenyFilesAsync();
+                return;
+            }
+
+            // accept files here
+        }
+
+        private void OnCancelClicked(object? sender, EventArgs e)
+        {
+            _connectionHandler?.Cancel();
+        }
+
+        private void ShowMessageBox(string content, ButtonContent buttonContent)
+        {
+            _messageBox = new(content, buttonContent, this);
+            _messageBox.ShowDialog();
         }
     }
 }
