@@ -1,5 +1,4 @@
 ﻿using P2PShare.Libs;
-using P2PShare.Libs.Models;
 using P2PShare.Utils;
 using System.IO;
 using System.Net;
@@ -15,15 +14,25 @@ namespace P2PShare
     public partial class MainWindow : Window
     {
         private CustomMessageBox? _customMessageBox;
-        
+        private ConnectionHandler? _connectionHandler;
+
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
         public MainWindow()
         {
+            IPAddress? localIP;
+            NetworkInterface? @interface;
+            
             InitializeComponent();
             RefreshInterfaces();
             Interface.SelectedIndex = 0;
+
+            @interface = GetSelectedInterface();
+            localIP = @interface is not null ? IPHandling.GetLocalIPv4(@interface) : null;
+            if (localIP is not null) _connectionHandler = new ConnectionReceiverHandler(localIP);
+
+            if (_connectionHandler is not null) ((ConnectionReceiverHandler)_connectionHandler)?.ReceiveInviteAsync(); // get this done
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -50,102 +59,7 @@ namespace P2PShare
 
         private async void onInviteReceived(object? sender, string? invite)
         {
-            if (!String.IsNullOrEmpty(invite))
-            {
-                bool accepted;
-                InviteWindow inviteWindow;
-                FileInfo[]? fileInfos = null;
-                EncryptionEnum encryption;
-                string[] filesAndEncryption = invite.Split(FileTransport.EncryptionSymbol);
-                string[] files = filesAndEncryption[0].Split(FileTransport.FileSeparator);
 
-                Enum.TryParse<EncryptionEnum>(filesAndEncryption[1], out encryption);
-
-                invite = String.Empty;
-                foreach (string file in files)
-                {
-                    invite += file + "\n";
-                }
-                inviteWindow = new(invite + "Accept?");
-                inviteWindow.ShowDialog();
-                accepted = inviteWindow.Accepted;
-
-                try
-                {
-                    if (_tcpClients[0] is not null || _tcpClients[0]!.Connected)
-                    {
-                        bool? selected = null;
-                        bool receive;
-                        string? path = null;
-
-                        if (accepted)
-                        {
-                            path = FileDialogs.SelectFolder(out selected);
-                        }
-
-                        if (selected is not null && path is not null && selected == true)
-                        {
-                            receive = true;
-
-                            if (encryption == EncryptionEnum.Enabled)
-                            {
-                                _decryptor = new();
-                            }
-                        }
-                        else
-                        {
-                            receive = false;
-                        }
-
-                        await FileTransport.Reply(_tcpClients[0]!, receive);
-
-                        if (path is not null)
-                        {
-                            string[] fileNames = FileTransport.GetNamesFromFiles(files);
-                            string[] paths = new string[files.Length];
-
-                            if (encryption == EncryptionEnum.Enabled)
-                            {
-                                await FileTransport.SendRSAPublicKey(_tcpClients[0]!.GetStream(), _decryptor!.PublicKey);
-                            }
-
-                            for (int i = 0; i < paths.Length; i++)
-                            {
-                                paths[i] = $"{path}\\{fileNames[i]}";
-                            }
-
-                            fileInfos = await FileTransport.ReceiveFile(_tcpClients[0]!, paths, FileTransport.GetLenghtsFromFiles(files), _decryptor, encryption);
-                        }
-                    }
-                }
-                catch
-                {
-                    fileInfos = null;
-                }
-
-                if (fileInfos is null) FileTransferEndDialog(false);
-                else
-                {
-                    string message;
-
-                    switch (fileInfos.Length)
-                    {
-                        case 1:
-                            message = $"The file has been saved as:\n{fileInfos[0].FullName}";
-
-                            break;
-
-                        default:
-                            message = $"The files have been saved to:\n{fileInfos[0].DirectoryName}";
-
-                            break;
-                    }
-
-                    ShowDialog(message);
-                }
-            }
-
-            await FileTransport.ReceiveInvite(_tcpClients);
         }
 
         private void onFilePartTransported(object? sender, int part)
@@ -188,13 +102,6 @@ namespace P2PShare
             }
 
             File.Text = pathsString;
-        }
-
-        private void onTransferFailed(object? sender, EventArgs e)
-        {
-            _sendReceiveWindow?.Close();
-
-            ShowDialog("The file transfer failed");
         }
 
         private void onFilesBeingTransported(object? sender, FilesBeingTransportedEventArgs filesBeingTransportedEventArgs)
