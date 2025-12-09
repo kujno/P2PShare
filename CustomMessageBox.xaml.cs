@@ -9,16 +9,10 @@ namespace P2PShare
     /// </summary>
     public partial class CustomMessageBox : Window
     {
-        private bool _btnPressed = false;
+        private ButtonContent _buttonContent;
 
-        public bool BtnPressed
-        {
-            get
-            {
-                return _btnPressed;
-            }
-        }
-
+        public event EventHandler? CancelClicked;
+        
         public void ChangeContent(string content) => Text.Text = content;
 
         public CustomMessageBox(string content, ButtonContent buttonContent, Window window)
@@ -26,13 +20,14 @@ namespace P2PShare
             InitializeComponent();
 
             Text.Text = content;
+            _buttonContent = buttonContent;
             Btn.Content = buttonContent;
             if (window.Dispatcher.CheckAccess()) Owner = window;
         }
 
         private void Btn_Click(object sender, RoutedEventArgs e)
         {
-            _btnPressed = true;
+            if (_buttonContent == ButtonContent.Cancel) OnCancelClicked();
 
             Close();
         }
@@ -40,6 +35,11 @@ namespace P2PShare
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left) DragMove();
+        }
+
+        private void OnCancelClicked()
+        {
+            CancelClicked?.Invoke(this, EventArgs.Empty);
         }
     }
 }
