@@ -1,4 +1,5 @@
 ﻿using P2PShare.Libs;
+using P2PShare.Libs.Models;
 using P2PShare.Models;
 using System.IO;
 using System.Net;
@@ -15,6 +16,7 @@ namespace P2PShare
     {
         private ConnectionHandler? _connectionHandler;
         private CustomMessageBox? _messageBox;
+        private Dictionary<string, long>? _files;
 
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -24,8 +26,6 @@ namespace P2PShare
             InitializeComponent();
             RefreshInterfaces();
             Interface.SelectedIndex = 0;
-
-            CustomMessageBox.CancelClicked += OnCancelClicked;
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -50,14 +50,19 @@ namespace P2PShare
             YourIP.Text = $"Your IP address:" + (ip is not null ? $" {ip}" : String.Empty);
         }
 
-        private async void onInviteReceived(object? sender, string? invite)
+        private void OnFilePartTransported(object? sender, FilePartTransportedEventArgs e)
         {
+            KeyValuePair<string, long> file;
 
-        }
+            if (e.CurrentFile == e.AmountOfFiles && e.Part == 100)
+            {
+                _messageBox?.Close();
+                return;
+            }
 
-        private void onFilePartTransported(object? sender, int part)
-        {
-            _sendReceiveWindow?.ChangeText(part);
+            file = _files!.ElementAt(e.CurrentFile - 1);
+
+            _messageBox?.ChangeContent($"{file.Key} ({e.CurrentFile}/{e.AmountOfFiles}) {e.Part}% of {file.Value}B");
         }
 
         private async void Send_Click(object sender, RoutedEventArgs e)
@@ -97,12 +102,6 @@ namespace P2PShare
             File.Text = pathsString;
         }
 
-        private void onFilesBeingTransported(object? sender, FilesBeingTransportedEventArgs filesBeingTransportedEventArgs)
-        {
-            _sendReceiveWindow = new(filesBeingTransportedEventArgs.ReceiveSend, filesBeingTransportedEventArgs.FileInfos);
-            _sendReceiveWindow.Show();
-        }
-
         private void RefreshInterfaces()
         {
             string? selectedNI = Interface.SelectedItem?.ToString() ?? null;
@@ -137,7 +136,6 @@ namespace P2PShare
         {
             NetworkInterface? @interface = GetSelectedInterface();
             IPAddress? localIP = @interface is not null ? InterfaceHandling.GetLocalIP(@interface) : null; // maybe refresh UI element if local IP changed
-            Queue<KeyValuePair<string, long>> files;
             InviteWindow inviteWindow;
             ConnectionReceiverHandler connectionReceiverHandler;
             string invite = String.Empty;
@@ -150,15 +148,10 @@ namespace P2PShare
 
             _connectionHandler = new ConnectionReceiverHandler(localIP);
             connectionReceiverHandler = (ConnectionReceiverHandler)_connectionHandler;
-            files = await connectionReceiverHandler.ReceiveInviteAsync();
+            connectionReceiverHandler.FilePartTransported += OnFilePartTransported;
+            _files = await connectionReceiverHandler.ReceiveInviteAsync();
 
-            while (files.Count > 0)
-            {
-                var file = files.Dequeue();
-
-                invite += $"{file.Key} - {file.Value}B\n";
-            }
-
+            foreach (var file in _files) invite += $"{file.Key} - {file.Value}B\n";
             inviteWindow = new(invite + "Accept?", this);
             inviteWindow.ShowDialog();
 
@@ -167,8 +160,6 @@ namespace P2PShare
                 await connectionReceiverHandler.DenyFilesAsync();
                 return;
             }
-
-            // accept files here
         }
 
         private void OnCancelClicked(object? sender, EventArgs e)
