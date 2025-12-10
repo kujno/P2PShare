@@ -43,7 +43,7 @@ namespace P2PShare
             NetworkInterface? ni = GetSelectedInterface();
             IPAddress? ip = null;
 
-            if (ni is not null) ip = IPHandling.GetLocalIPv4(ni);
+            if (ni is not null) ip = InterfaceHandling.GetLocalIP(ni);
 
             // assing the local IP to the connection object
 
@@ -136,7 +136,7 @@ namespace P2PShare
         private async Task ReceiveInviteAsync() // do not call recursively. Use a loop instead.
         {
             NetworkInterface? @interface = GetSelectedInterface();
-            IPAddress? localIP = @interface is not null ? IPHandling.GetLocalIPv4(@interface) : null;
+            IPAddress? localIP = @interface is not null ? InterfaceHandling.GetLocalIP(@interface) : null; // maybe refresh UI element if local IP changed
             Queue<KeyValuePair<string, long>> files;
             InviteWindow inviteWindow;
             ConnectionReceiverHandler connectionReceiverHandler;
