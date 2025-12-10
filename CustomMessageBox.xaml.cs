@@ -11,7 +11,7 @@ namespace P2PShare
     {
         private ButtonContent _buttonContent;
 
-        public static event EventHandler? CancelClicked;
+        public event EventHandler? CancelClicked;
         
         public void ChangeContent(string content) => Text.Text = content;
 
