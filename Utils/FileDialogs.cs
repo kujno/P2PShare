@@ -6,10 +6,11 @@ namespace P2PShare.Utils
     {
         public static string? SelectFolder()
         {
-            OpenFolderDialog dialog = new();
-
-            dialog.Multiselect = false;
-            dialog.Title = "Select a folder";
+            OpenFolderDialog dialog = new()
+            {
+                Multiselect = false,
+                Title = "Select a folder"
+            };
 
             return dialog.ShowDialog() == true ? dialog.FolderName : null;
         }
