@@ -1,6 +1,7 @@
 ﻿using P2PShare.Libs;
 using P2PShare.Libs.Models;
 using P2PShare.Models;
+using P2PShare.Utils;
 using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -139,6 +140,7 @@ namespace P2PShare
             InviteWindow inviteWindow;
             ConnectionReceiverHandler connectionReceiverHandler;
             string invite = String.Empty;
+            string? dictionary;
 
             if (localIP is null)
             {
@@ -160,6 +162,10 @@ namespace P2PShare
                 await connectionReceiverHandler.DenyFilesAsync();
                 return;
             }
+
+            dictionary = FileDialogs.SelectFolder();
+
+            ShowMessageBox((dictionary is not null ? () => "" : "Receiving files was cancelled."), ButtonContent.OK);
         }
 
         private void OnCancelClicked(object? sender, EventArgs e)
