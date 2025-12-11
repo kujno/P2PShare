@@ -127,7 +127,7 @@ namespace P2PShare
             return null;
         }
 
-        private async Task ReceiveInviteAsync() // do not call recursively. Use a loop instead.
+        private async Task ReceiveAsync() // do not call recursively. Use a loop instead.
         {
             NetworkInterface? @interface = GetSelectedInterface();
             IPAddress? localIP = @interface is not null ? InterfaceHandling.GetLocalIP(@interface) : null; // maybe refresh UI element if local IP changed
