@@ -54,6 +54,7 @@ namespace P2PShare
         private void OnFilePartTransported(object? sender, FilePartTransportedEventArgs e)
         {
             KeyValuePair<string, long> file;
+            string content;
 
             if (e.CurrentFile == e.AmountOfFiles && e.Part == 100)
             {
@@ -63,7 +64,9 @@ namespace P2PShare
 
             file = _files!.ElementAt(e.CurrentFile - 1);
 
-            _messageBox?.ChangeContent($"{file.Key} ({e.CurrentFile}/{e.AmountOfFiles}) {e.Part}% of {file.Value}B");
+            content = $"{file.Key} ({e.CurrentFile}/{e.AmountOfFiles}) {e.Part}% of {file.Value}B";
+            if (_messageBox is null) ShowMessageBox(content, ButtonContent.Cancel);
+            else _messageBox?.ChangeContent(content);
         }
 
         private async void Send_Click(object sender, RoutedEventArgs e)
@@ -114,15 +117,6 @@ namespace P2PShare
             else Interface.SelectedIndex = 0;
         }
 
-        private void ShowDialog(string message)
-        {
-            CustomMessageBox messageBox = new CustomMessageBox();
-
-            messageBox.Text.Text = message;
-
-            messageBox.ShowDialog();
-        }
-
         private NetworkInterface? GetSelectedInterface()
         {
             foreach (NetworkInterface @interface in InterfaceHandling.GetUpInterfaces())
@@ -140,7 +134,8 @@ namespace P2PShare
             InviteWindow inviteWindow;
             ConnectionReceiverHandler connectionReceiverHandler;
             string invite = String.Empty;
-            string? dictionary;
+            string? dictionary, messageBoxContent = null;
+            string[] savedFiles;
 
             if (localIP is null)
             {
@@ -151,21 +146,44 @@ namespace P2PShare
             _connectionHandler = new ConnectionReceiverHandler(localIP);
             connectionReceiverHandler = (ConnectionReceiverHandler)_connectionHandler;
             connectionReceiverHandler.FilePartTransported += OnFilePartTransported;
-            _files = await connectionReceiverHandler.ReceiveInviteAsync();
-
-            foreach (var file in _files) invite += $"{file.Key} - {file.Value}B\n";
-            inviteWindow = new(invite + "Accept?", this);
-            inviteWindow.ShowDialog();
-
-            if (!inviteWindow.Accepted)
+            try
             {
-                await connectionReceiverHandler.DenyFilesAsync();
-                return;
+                _files = await connectionReceiverHandler.ReceiveInviteAsync();
+
+                foreach (var file in _files) invite += $"{file.Key} - {file.Value}B\n";
+                inviteWindow = new(invite + "Accept?", this);
+                inviteWindow.ShowDialog();
+
+                if (!inviteWindow.Accepted)
+                {
+                    await connectionReceiverHandler.DenyFilesAsync();
+                    return;
+                }
+
+                dictionary = FileDialogs.SelectFolder();
+
+                if (dictionary is null) messageBoxContent = "Receiving files was cancelled.";
+                else
+                {
+                    savedFiles = await connectionReceiverHandler.AcceptFilesAsync(dictionary);
+
+                    messageBoxContent = $"Files saved to {dictionary} as:";
+                    foreach (string file in savedFiles) messageBoxContent += $"\n{file}";
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                messageBoxContent = ex.Message;
+            }
+            finally
+            {
+                _connectionHandler.Dispose();
             }
 
-            dictionary = FileDialogs.SelectFolder();
-
-            ShowMessageBox((dictionary is not null ? () => "" : "Receiving files was cancelled."), ButtonContent.OK);
+            ShowMessageBox(messageBoxContent!, ButtonContent.OK);
         }
 
         private void OnCancelClicked(object? sender, EventArgs e)
@@ -176,7 +194,17 @@ namespace P2PShare
         private void ShowMessageBox(string content, ButtonContent buttonContent)
         {
             _messageBox = new(content, buttonContent, this);
-            _messageBox.ShowDialog();
+            try
+            {
+                _messageBox.ShowDialog();
+            }
+            catch
+            {
+            }
+            finally
+            {
+                _messageBox = null;
+            }
         }
     }
 }
