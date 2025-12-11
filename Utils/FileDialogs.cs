@@ -4,16 +4,14 @@ namespace P2PShare.Utils
 {
     public class FileDialogs
     {
-        public static string? SelectFolder(out bool selected)
+        public static string? SelectFolder()
         {
             OpenFolderDialog dialog = new();
 
             dialog.Multiselect = false;
             dialog.Title = "Select a folder";
 
-            selected = dialog.ShowDialog() ?? false;
-
-            return selected == true ? dialog.FolderName : null;
+            return dialog.ShowDialog() == true ? dialog.FolderName : null;
         }
 
         public static string[]? SelectFiles()
