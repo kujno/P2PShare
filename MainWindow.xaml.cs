@@ -18,6 +18,7 @@ namespace P2PShare
         private ConnectionHandler? _connectionHandler;
         private CustomMessageBox? _messageBox;
         private Dictionary<string, long>? _files;
+        private Task _receiveLoop;
 
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -27,6 +28,8 @@ namespace P2PShare
             InitializeComponent();
             RefreshInterfaces();
             Interface.SelectedIndex = 0;
+
+            _receiveLoop = ReceiveLoopAsync();
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -127,7 +130,7 @@ namespace P2PShare
             return null;
         }
 
-        private async Task ReceiveAsync() // do not call recursively. Use a loop instead.
+        private async Task ReceiveAsync()
         {
             NetworkInterface? @interface = GetSelectedInterface();
             IPAddress? localIP = @interface is not null ? InterfaceHandling.GetLocalIP(@interface) : null; // maybe refresh UI element if local IP changed
@@ -173,6 +176,7 @@ namespace P2PShare
             }
             catch (OperationCanceledException)
             {
+                throw new OperationCanceledException();
             }
             catch (Exception ex)
             {
@@ -184,6 +188,24 @@ namespace P2PShare
             }
 
             ShowMessageBox(messageBoxContent!, ButtonContent.OK);
+        }
+
+        private async Task ReceiveLoopAsync()
+        {
+            OperationCanceledException? ex = null;
+            
+            do
+            {
+                try
+                {
+                    await ReceiveAsync();
+                }
+                catch (OperationCanceledException exc)
+                {
+                    ex = exc;
+                }
+            }
+            while (ex is null);
         }
 
         private void OnCancelClicked(object? sender, EventArgs e)
