@@ -19,6 +19,7 @@ namespace P2PShare
         private CustomMessageBox? _messageBox;
         private Dictionary<string, long>? _files;
         private Task _receiveLoop;
+        private CancellationTokenSource? _cancellationTokenSource;
 
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -42,16 +43,22 @@ namespace P2PShare
             RefreshInterfaces();
         }
 
-        private void Interface_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private async void Interface_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             NetworkInterface? ni = GetSelectedInterface();
-            IPAddress? ip = null;
-
-            if (ni is not null) ip = InterfaceHandling.GetLocalIP(ni);
-
-            // assing the local IP to the connection object
+            IPAddress? ip = ni is not null ? InterfaceHandling.GetLocalIP(ni) : null;
 
             YourIP.Text = $"Your IP address:" + (ip is not null ? $" {ip}" : String.Empty);
+
+            await RestartReceiveLoopAsync();
+        }
+
+        private async Task RestartReceiveLoopAsync()
+        {
+            _connectionHandler?.Cancel();
+            _cancellationTokenSource?.Cancel();
+            await _receiveLoop;
+            _receiveLoop = ReceiveLoopAsync();
         }
 
         private void OnFilePartTransported(object? sender, FilePartTransportedEventArgs e)
@@ -130,7 +137,7 @@ namespace P2PShare
             return null;
         }
 
-        private async Task ReceiveAsync()
+        private async Task ReceiveAsync(CancellationToken cancellationToken)
         {
             NetworkInterface? @interface = GetSelectedInterface();
             IPAddress? localIP = @interface is not null ? InterfaceHandling.GetLocalIP(@interface) : null; // maybe refresh UI element if local IP changed
@@ -143,12 +150,18 @@ namespace P2PShare
             if (localIP is null)
             {
                 ShowMessageBox("Select a valid interface.", ButtonContent.OK);
-                return;
+                throw new OperationCanceledException();
             }
 
             _connectionHandler = new ConnectionReceiverHandler(localIP);
             connectionReceiverHandler = (ConnectionReceiverHandler)_connectionHandler;
             connectionReceiverHandler.FilePartTransported += OnFilePartTransported;
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                throw new OperationCanceledException();
+            }
+
             try
             {
                 _files = await connectionReceiverHandler.ReceiveInviteAsync();
@@ -188,17 +201,20 @@ namespace P2PShare
             }
 
             ShowMessageBox(messageBoxContent!, ButtonContent.OK);
+
+            RefreshInterfaces();
         }
 
         private async Task ReceiveLoopAsync()
         {
             OperationCanceledException? ex = null;
-            
+            _cancellationTokenSource = new();
+
             do
             {
                 try
                 {
-                    await ReceiveAsync();
+                    await ReceiveAsync(_cancellationTokenSource.Token);
                 }
                 catch (OperationCanceledException exc)
                 {
@@ -208,14 +224,15 @@ namespace P2PShare
             while (ex is null);
         }
 
-        private void OnCancelClicked(object? sender, EventArgs e)
+        private async void OnCancelClicked(object? sender, EventArgs e)
         {
-            _connectionHandler?.Cancel();
+            await RestartReceiveLoopAsync();
         }
 
         private void ShowMessageBox(string content, ButtonContent buttonContent)
         {
             _messageBox = new(content, buttonContent, this);
+            _messageBox.CancelClicked += OnCancelClicked;
             try
             {
                 _messageBox.ShowDialog();
