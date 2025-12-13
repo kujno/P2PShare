@@ -17,8 +17,10 @@ namespace P2PShare.Utils
 
         public static string[]? SelectFiles()
         {
-            OpenFileDialog dialog = new();
-            dialog.Multiselect = true;
+            OpenFileDialog dialog = new()
+            {
+                Multiselect = true
+            };
             bool? selected = dialog.ShowDialog();
 
             return selected == true ? dialog.FileNames : null;
