@@ -78,7 +78,7 @@
                 </GroupBox>
                 
                 <Button x:Name="Refresh" Grid.Column="0" Height="24px" Width="80px" Margin="0, 4px" Click="Refresh_Click">Refresh</Button>
-                <CheckBox Content="Encryption" Foreground="#c2c2c2" Margin="6px, 8px, 0, 0"/>
+                <CheckBox x:Name="CheckBoxEncryption" Content="Encryption" Foreground="#c2c2c2" Margin="6px, 8px, 0, 0"/>
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Vertical">

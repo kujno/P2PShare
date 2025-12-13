@@ -18,7 +18,7 @@ namespace P2PShare
         private ConnectionHandler? _connectionHandler;
         private CustomMessageBox? _messageBox;
         private Dictionary<string, long>? _files;
-        private Task _receiveLoop;
+        private Task? _receiveLoop;
         private CancellationTokenSource? _cancellationTokenSource;
 
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
@@ -30,6 +30,9 @@ namespace P2PShare
             RefreshInterfaces();
             Interface.SelectedIndex = 0;
 
+            ConnectionHandler.FilePartTransported += OnFilePartTransported;
+            ConnectionTranscieverHandler.Contacted += OnContacted;
+            
             _receiveLoop = ReceiveLoopAsync();
         }
 
@@ -55,10 +58,16 @@ namespace P2PShare
 
         private async Task RestartReceiveLoopAsync()
         {
+            await StopReceiveLoopAsync();
+            _receiveLoop = ReceiveLoopAsync();
+        }
+
+        private async Task StopReceiveLoopAsync()
+        {
             _connectionHandler?.Cancel();
             _cancellationTokenSource?.Cancel();
-            await _receiveLoop;
-            _receiveLoop = ReceiveLoopAsync();
+            if (_receiveLoop is not null) await _receiveLoop;
+            _receiveLoop = null;
         }
 
         private void OnFilePartTransported(object? sender, FilePartTransportedEventArgs e)
@@ -74,31 +83,56 @@ namespace P2PShare
 
             file = _files!.ElementAt(e.CurrentFile - 1);
 
-            content = $"{file.Key} ({e.CurrentFile}/{e.AmountOfFiles}) {e.Part}% of {file.Value}B";
+            content = $"{(e.SendReceive == SendReceive.Send ? "Sending" : "Receiving")}: {file.Key} ({e.CurrentFile}/{e.AmountOfFiles}) {e.Part}% of {file.Value}B";
             if (_messageBox is null) ShowMessageBox(content, ButtonContent.Cancel);
             else _messageBox?.ChangeContent(content);
         }
 
+        private void OnContacted(object? sender, IPAddress ip)
+        {
+            ShowMessageBox($"Contacting {ip}...", ButtonContent.Cancel);
+        }
+
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
-            string fileText = File.Text.Trim();
+            FileInfo[] files;
+            NetworkInterface? @interface = GetSelectedInterface();
+            IPAddress? ipRemote, ipLocal = @interface is not null ? InterfaceHandling.GetLocalIP(@interface) : null;
+            string fileText = File.Text.Trim(), messageBoxContent = String.Empty;
+            bool? encryption = CheckBoxEncryption.IsChecked;
 
-            if (fileText.Equals(String.Empty))
+            await StopReceiveLoopAsync();
+
+            try
             {
-                ShowDialog("Choose a file to send");
+                if (encryption is null) throw new Exception("An error occurred with the encryption option.");
+                if (ipLocal is null) throw new Exception("Select a valid interface!");
+                if (!IPAddress.TryParse(RemoteIP.Text.Trim(), out ipRemote)) throw new Exception("Enter a valid IP address!");
+                if (fileText == String.Empty) throw new Exception("Choose a file to send!");
 
-                return;
+                files = fileText.Split(ConnectionHandler.FileSeparator).Select(x => new FileInfo(x)).ToArray();
+
+                _connectionHandler = new ConnectionTranscieverHandler();
+
+                await ((ConnectionTranscieverHandler)_connectionHandler).SendAsync(ipRemote, ipLocal, files, (bool)encryption);
+
+                messageBoxContent = "File(s) transmission succeeded.";
+            }
+            catch (OperationCanceledException)
+            {
+
+            }
+            catch (Exception ex)
+            {
+                messageBoxContent = ex.Message;
             }
 
-            FileInfo[] fileInfos = fileText.Split(FileTransport.FileSeparator).Select(x => new FileInfo(x)).ToArray();
+            _connectionHandler?.Dispose();
 
-            if (!fileInfos.All(fileInfo => fileInfo.Exists))
-            {
-                ShowDialog("Select a valid file(s)");
-                return;
-            }
+            _messageBox?.Close();
+            ShowMessageBox(messageBoxContent, ButtonContent.OK);
 
-            FileTransferEndDialog(await FileTransport.SendFile(_tcpClients!, fileInfos, _encryption), _sendReceiveWindow);
+            await RestartReceiveLoopAsync();
         }
 
         private void Select_Click(object sender, RoutedEventArgs e)
@@ -158,7 +192,6 @@ namespace P2PShare
 
             _connectionHandler = new ConnectionReceiverHandler(localIP);
             connectionReceiverHandler = (ConnectionReceiverHandler)_connectionHandler;
-            connectionReceiverHandler.FilePartTransported += OnFilePartTransported;
 
             if (cancellationToken.IsCancellationRequested)
             {
@@ -198,11 +231,10 @@ namespace P2PShare
             {
                 messageBoxContent = ex.Message;
             }
-            finally
-            {
-                _connectionHandler.Dispose();
-            }
 
+            _connectionHandler.Dispose();
+
+            _messageBox?.Close();
             ShowMessageBox(messageBoxContent!, ButtonContent.OK);
 
             RefreshInterfaces();
@@ -229,7 +261,7 @@ namespace P2PShare
 
         private async void OnCancelClicked(object? sender, EventArgs e)
         {
-            await RestartReceiveLoopAsync();
+            _connectionHandler?.Cancel();
         }
 
         private void ShowMessageBox(string content, ButtonContent buttonContent)
