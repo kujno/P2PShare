@@ -103,14 +103,17 @@ namespace P2PShare
 
         private void Select_Click(object sender, RoutedEventArgs e)
         {
-            string[]? paths = Dialog.SelectFiles();
-            string pathsString = "";
+            string[]? paths = FileDialogs.SelectFiles();
 
-            for (int i = 0; i < paths?.Length; i++)
+            if (paths is null) return;
+
+            string pathsString = String.Empty;
+
+            for (int i = 0; i < paths.Length; i++)
             {
                 pathsString += paths[i];
 
-                if (paths.Length > 1 && i != paths.Length - 1) pathsString += FileTransport.FileSeparator;
+                if (i != paths.Length - 1) pathsString += ConnectionHandler.FileSeparator;
             }
 
             File.Text = pathsString;
