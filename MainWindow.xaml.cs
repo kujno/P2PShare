@@ -26,7 +26,6 @@ namespace P2PShare
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
-        private async void OnCancelClicked(object? sender, EventArgs e) => await RestartReceiveLoopAsync();
         private void OnContacted(object? sender, IPAddress ip) => ShowMessageBox($"Contacting {ip}...", ButtonContent.Cancel);
 
         public MainWindow()
@@ -39,6 +38,13 @@ namespace P2PShare
             ConnectionTranscieverHandler.Contacted += OnContacted;
             
             if (_receiveLoop is null) _receiveLoop = ReceiveLoopAsync();
+        }
+
+        private async void OnWindowClosed(object? sender, bool cancelled)
+        {
+            _messageBox = null;
+
+            if (cancelled) await RestartReceiveLoopAsync();
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -274,17 +280,13 @@ namespace P2PShare
         private void ShowMessageBox(string content, ButtonContent buttonContent)
         {
             _messageBox = new(content, buttonContent, this);
-            _messageBox.CancelClicked += OnCancelClicked;
+            _messageBox.WindowClosed += OnWindowClosed;
             try
             {
-                _messageBox.ShowDialog();
+                _messageBox.Show();
             }
             catch
             {
-            }
-            finally
-            {
-                _messageBox = null;
             }
         }
 
