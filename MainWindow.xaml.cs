@@ -50,7 +50,7 @@ namespace P2PShare
         {
             NetworkInterface? ni = GetSelectedInterface();
 
-            if (ni == _interface) return;
+            if (ni == _interface || ni is null) return;
 
             _interface = ni;
 
@@ -165,7 +165,7 @@ namespace P2PShare
             
             Interface.Items.Clear();
 
-            foreach (NetworkInterface ni in InterfaceHandling.GetUpInterfaces()) Interface.Items.Add(ni.Name);
+            foreach (var @interface in interfaces) Interface.Items.Add(@interface);
 
             if (Interface.Items.Contains(selectedNI)) Interface.SelectedItem = selectedNI;
             else Interface.SelectedIndex = 0;
@@ -173,9 +173,18 @@ namespace P2PShare
 
         private NetworkInterface? GetSelectedInterface()
         {
-            foreach (NetworkInterface @interface in InterfaceHandling.GetUpInterfaces()) if (@interface.Name == Interface.SelectedItem?.ToString()) return @interface;
+            NetworkInterface? @interface = null;
+            
+            try
+            {
+                @interface = InterfaceHandling.GetUpInterfaces().FirstOrDefault(x => x.Name == Interface.SelectedItem?.ToString()?.Trim());
+            }
+            catch (Exception ex)
+            {
+                ShowMessageBox(ex.Message, ButtonContent.OK);
+            }
 
-            return null;
+            return @interface;
         }
 
         private async Task ReceiveAsync(CancellationToken cancellationToken)
