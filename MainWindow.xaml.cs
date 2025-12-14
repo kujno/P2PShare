@@ -23,6 +23,7 @@ namespace P2PShare
 
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+        private void OnContacted(object? sender, IPAddress ip) => ShowMessageBox($"Contacting {ip}...", ButtonContent.Cancel);
 
         public MainWindow()
         {
@@ -58,11 +59,11 @@ namespace P2PShare
 
         private async Task RestartReceiveLoopAsync()
         {
-            await StopReceiveLoopAsync();
+            await StopTransportAsync();
             _receiveLoop = ReceiveLoopAsync();
         }
 
-        private async Task StopReceiveLoopAsync()
+        private async Task StopTransportAsync()
         {
             _connectionHandler?.Cancel();
             _cancellationTokenSource?.Cancel();
@@ -88,11 +89,6 @@ namespace P2PShare
             else _messageBox?.ChangeContent(content);
         }
 
-        private void OnContacted(object? sender, IPAddress ip)
-        {
-            ShowMessageBox($"Contacting {ip}...", ButtonContent.Cancel);
-        }
-
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
             FileInfo[] files;
@@ -101,7 +97,7 @@ namespace P2PShare
             string fileText = File.Text.Trim(), messageBoxContent = String.Empty;
             bool? encryption = CheckBoxEncryption.IsChecked;
 
-            await StopReceiveLoopAsync();
+            await StopTransportAsync();
 
             try
             {
@@ -261,7 +257,7 @@ namespace P2PShare
 
         private async void OnCancelClicked(object? sender, EventArgs e)
         {
-            _connectionHandler?.Cancel();
+            await RestartReceiveLoopAsync();
         }
 
         private void ShowMessageBox(string content, ButtonContent buttonContent)
