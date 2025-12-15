@@ -22,7 +22,6 @@ namespace P2PShare
         private CancellationTokenSource? _cancellationTokenSource;
         private NetworkInterface? _interface;
 
-        private void Close_Click(object sender, RoutedEventArgs e) => Close();
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
         private void OnContacted(object? sender, IPAddress ip) => ShowMessageBox($"Contacting {ip}...", ButtonContent.Cancel, false);
@@ -37,6 +36,13 @@ namespace P2PShare
             ConnectionTranscieverHandler.Contacted += OnContacted;
 
             if (_receiveLoop is null) _receiveLoop = ReceiveLoopAsync();
+        }
+
+        private void Close_Click(object sender, RoutedEventArgs e)
+        {
+            _cancellationTokenSource?.Dispose();
+
+            Close();
         }
 
         private void OnWindowClosed(object? sender, bool cancelled)
@@ -93,6 +99,7 @@ namespace P2PShare
             bool? encryption = CheckBoxEncryption.IsChecked;
 
             _cancellationTokenSource?.Cancel();
+            await _receiveLoop!;
 
             try
             {
@@ -241,20 +248,23 @@ namespace P2PShare
 
         private async Task ReceiveLoopAsync()
         {
-            using (_cancellationTokenSource = new())
+            NetworkInterface? @interface;
+
+            do
             {
-                do
+                _cancellationTokenSource?.Dispose();
+                _cancellationTokenSource = new();
+                @interface = _interface;
+
+                try
                 {
-                    try
-                    {
-                        await ReceiveAsync();
-                    }
-                    catch
-                    {
-                    }
+                    await ReceiveAsync();
                 }
-                while (!_cancellationTokenSource.IsCancellationRequested);
+                catch
+                {
+                }
             }
+            while (!_cancellationTokenSource.IsCancellationRequested || @interface != _interface);
         }
 
         private void ShowMessageBox(string content, ButtonContent buttonContent, bool modal)
