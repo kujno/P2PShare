@@ -16,7 +16,6 @@ namespace P2PShare
     /// </summary>
     public partial class MainWindow : Window
     {
-        private ConnectionHandler? _connectionHandler;
         private CustomMessageBox? _messageBox;
         private Dictionary<string, long>? _files;
         private Task? _receiveLoop;
@@ -26,7 +25,7 @@ namespace P2PShare
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
-        private void OnContacted(object? sender, IPAddress ip) => ShowMessageBox($"Contacting {ip}...", ButtonContent.Cancel);
+        private void OnContacted(object? sender, IPAddress ip) => ShowMessageBox($"Contacting {ip}...", ButtonContent.Cancel, false);
 
         public MainWindow()
         {
@@ -36,15 +35,15 @@ namespace P2PShare
 
             ConnectionHandler.FilePartTransported += OnFilePartTransported;
             ConnectionTranscieverHandler.Contacted += OnContacted;
-            
+
             if (_receiveLoop is null) _receiveLoop = ReceiveLoopAsync();
         }
 
-        private async void OnWindowClosed(object? sender, bool cancelled)
+        private void OnWindowClosed(object? sender, bool cancelled)
         {
             _messageBox = null;
 
-            if (cancelled) await RestartReceiveLoopAsync();
+            _cancellationTokenSource?.Cancel();
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -52,7 +51,7 @@ namespace P2PShare
             if (e.ChangedButton == MouseButton.Left) DragMove();
         }
 
-        private async void Interface_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void Interface_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             NetworkInterface? ni = GetSelectedInterface();
 
@@ -64,20 +63,7 @@ namespace P2PShare
 
             YourIP.Text = $"Your IP address:" + (ip is not null ? $" {ip}" : String.Empty);
 
-            await RestartReceiveLoopAsync();
-        }
-
-        private async Task RestartReceiveLoopAsync()
-        {
-            await StopTransportAsync();
-            _receiveLoop = ReceiveLoopAsync();
-        }
-
-        private async Task StopTransportAsync()
-        {
             _cancellationTokenSource?.Cancel();
-            if (_receiveLoop is not null) await _receiveLoop;
-            _receiveLoop = null;
         }
 
         private void OnFilePartTransported(object? sender, FilePartTransportedEventArgs e)
@@ -88,13 +74,14 @@ namespace P2PShare
             if (e.CurrentFile == e.AmountOfFiles && e.Part == 100)
             {
                 _messageBox?.Close();
+                _messageBox = null;
                 return;
             }
 
             file = _files!.ElementAt(e.CurrentFile - 1);
 
             content = $"{(e.SendReceive == SendReceive.Send ? "Sending" : "Receiving")}: {file.Key} ({e.CurrentFile}/{e.AmountOfFiles}) {e.Part}% of {file.Value}B";
-            if (_messageBox is null) ShowMessageBox(content, ButtonContent.Cancel);
+            if (_messageBox is null) ShowMessageBox(content, ButtonContent.Cancel, false);
             else _messageBox?.ChangeContent(content);
         }
 
@@ -105,7 +92,7 @@ namespace P2PShare
             string fileText = File.Text.Trim(), messageBoxContent = String.Empty;
             bool? encryption = CheckBoxEncryption.IsChecked;
 
-            await StopTransportAsync();
+            _cancellationTokenSource?.Cancel();
 
             try
             {
@@ -116,10 +103,7 @@ namespace P2PShare
 
                 files = fileText.Split(ConnectionHandler.FileSeparator).Select(x => new FileInfo(x)).ToArray();
 
-                _cancellationTokenSource = new();
-                _connectionHandler = new ConnectionTranscieverHandler(_cancellationTokenSource.Token);
-
-                await ((ConnectionTranscieverHandler)_connectionHandler).SendAsync(ipRemote, ipLocal, files, (bool)encryption);
+                using (_cancellationTokenSource = new()) using (ConnectionTranscieverHandler connectionHandler = new(_cancellationTokenSource.Token)) await (connectionHandler).SendAsync(ipRemote, ipLocal, files, (bool)encryption);
 
                 messageBoxContent = "File(s) transmission succeeded.";
             }
@@ -133,15 +117,13 @@ namespace P2PShare
             }
             finally
             {
-                _connectionHandler?.Dispose();
-                GetRidOfCancellationTokenSource();
-                
                 _messageBox?.Close();
-                
-                await RestartReceiveLoopAsync();
+                _messageBox = null;
+
+                _receiveLoop = ReceiveLoopAsync();
             }
-            
-            ShowMessageBox(messageBoxContent, ButtonContent.OK);
+
+            ShowMessageBox(messageBoxContent, ButtonContent.OK, true);
         }
 
         private void Select_Click(object sender, RoutedEventArgs e)
@@ -168,7 +150,7 @@ namespace P2PShare
             var interfaces = InterfaceHandling.GetUpInterfaces().Select(x => x.Name);
 
             if (interfaces.All(Interface.Items.Contains) && interfaces.Count() == Interface.Items.Count) return;
-            
+
             Interface.Items.Clear();
 
             foreach (var @interface in interfaces) Interface.Items.Add(@interface);
@@ -180,62 +162,61 @@ namespace P2PShare
         private NetworkInterface? GetSelectedInterface()
         {
             NetworkInterface? @interface = null;
-            
+
             try
             {
                 @interface = InterfaceHandling.GetUpInterfaces().FirstOrDefault(x => x.Name == Interface.SelectedItem?.ToString()?.Trim());
             }
             catch (Exception ex)
             {
-                ShowMessageBox(ex.Message, ButtonContent.OK);
+                ShowMessageBox(ex.Message, ButtonContent.OK, true);
             }
 
             return @interface;
         }
 
-        private async Task ReceiveAsync(CancellationToken cancellationToken)
+        private async Task ReceiveAsync()
         {
             IPAddress? localIP = _interface is not null ? InterfaceHandling.GetLocalIP(_interface) : null; // maybe refresh UI element if local IP changed
             InviteWindow inviteWindow;
-            ConnectionReceiverHandler connectionReceiverHandler;
             string invite = String.Empty;
             string? dictionary, messageBoxContent = null;
             string[] savedFiles;
 
             if (localIP is null)
             {
-                ShowMessageBox("Select a valid interface.", ButtonContent.OK);
+                ShowMessageBox("Select a valid interface.", ButtonContent.OK, true);
                 throw new OperationCanceledException();
             }
 
-            _connectionHandler = new ConnectionReceiverHandler(localIP, _cancellationTokenSource!.Token);
-            connectionReceiverHandler = (ConnectionReceiverHandler)_connectionHandler;
-
-            if (cancellationToken.IsCancellationRequested) throw new OperationCanceledException();
+            if (_cancellationTokenSource!.Token.IsCancellationRequested) throw new OperationCanceledException();
 
             try
             {
-                _files = await connectionReceiverHandler.ReceiveInviteAsync();
-
-                foreach (var file in _files) invite += $"{file.Key} - {file.Value}B\n";
-                inviteWindow = new(invite + "Accept?", this);
-                inviteWindow.ShowDialog();
-
-                if (!inviteWindow.Accepted)
+                using (ConnectionReceiverHandler connectionHandler = new(localIP, _cancellationTokenSource!.Token))
                 {
-                    await connectionReceiverHandler.DenyFilesAsync();
-                    return;
-                }
+                    _files = await connectionHandler.ReceiveInviteAsync();
 
-                dictionary = FileDialogs.SelectFolder();
+                    foreach (var file in _files) invite += $"{file.Key} - {file.Value}B\n";
+                    inviteWindow = new(invite + "Accept?", this);
+                    inviteWindow.ShowDialog();
 
-                if (dictionary is null) messageBoxContent = "Receiving files was cancelled.";
-                else
-                {
-                    savedFiles = await connectionReceiverHandler.AcceptFilesAsync(dictionary);
+                    if (!inviteWindow.Accepted)
+                    {
+                        await connectionHandler.DenyFilesAsync();
+                        return;
+                    }
 
-                    messageBoxContent = $"Files saved to {dictionary} as:";
-                    foreach (string file in savedFiles) messageBoxContent += $"\n{file}";
+                    dictionary = FileDialogs.SelectFolder();
+
+                    if (dictionary is null) messageBoxContent = "Receiving files was cancelled.";
+                    else
+                    {
+                        savedFiles = await connectionHandler.AcceptFilesAsync(dictionary);
+
+                        messageBoxContent = $"Files saved to {dictionary} as:";
+                        foreach (string file in savedFiles) messageBoxContent += $"\n{file}";
+                    }
                 }
             }
             catch (OperationCanceledException)
@@ -249,51 +230,47 @@ namespace P2PShare
             }
             finally
             {
-                _connectionHandler.Dispose();
                 _messageBox?.Close();
+                _messageBox = null;
 
                 RefreshInterfaces();
             }
 
-            ShowMessageBox(messageBoxContent!, ButtonContent.OK);
+            ShowMessageBox(messageBoxContent!, ButtonContent.OK, true);
         }
 
         private async Task ReceiveLoopAsync()
         {
-            _cancellationTokenSource = new();
-
-            do
+            using (_cancellationTokenSource = new())
             {
-                try
+                do
                 {
-                    await ReceiveAsync(_cancellationTokenSource.Token);
+                    try
+                    {
+                        await ReceiveAsync();
+                    }
+                    catch
+                    {
+                    }
                 }
-                catch
-                {
-                }
+                while (!_cancellationTokenSource.IsCancellationRequested);
             }
-            while (!_cancellationTokenSource.IsCancellationRequested);
-
-            GetRidOfCancellationTokenSource();
         }
 
-        private void ShowMessageBox(string content, ButtonContent buttonContent)
+        private void ShowMessageBox(string content, ButtonContent buttonContent, bool modal)
         {
             _messageBox = new(content, buttonContent, this);
             _messageBox.WindowClosed += OnWindowClosed;
             try
             {
-                _messageBox.Show();
+                if (modal) _messageBox.ShowDialog();
+                else _messageBox.Show();
             }
             catch
             {
             }
-        }
 
-        private void GetRidOfCancellationTokenSource()
-        {
-            _cancellationTokenSource?.Dispose();
-            _cancellationTokenSource = null;
+            if (modal) _messageBox = null;
         }
     }
 }
