@@ -23,13 +23,13 @@ namespace P2PShare
             _buttonContent = buttonContent;
             Btn.Content = buttonContent;
             if (window.Dispatcher.CheckAccess()) Owner = window;
-            Owner.IsEnabled = false;
+            Owner.Visibility = Visibility.Hidden;
         }
 
         private void Btn_Click(object sender, RoutedEventArgs e)
         {
             OnWindowClosed();
-            Owner.IsEnabled = true;
+            Owner.Visibility = Visibility.Visible;
             Close();
         }
 
