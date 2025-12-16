@@ -108,7 +108,14 @@ namespace P2PShare
                 if (!IPAddress.TryParse(RemoteIP.Text.Trim(), out ipRemote)) throw new Exception("Enter a valid IP address!");
                 if (fileText == String.Empty) throw new Exception("Choose a file to send!");
 
-                files = fileText.Split(ConnectionHandler.FileSeparator).Select(x => new FileInfo(x)).ToArray();
+                files = fileText
+                    .Split(ConnectionHandler.FileSeparator)
+                    .Select(x => new FileInfo(x))
+                    .ToArray();
+                
+                _files = files
+                    .Select(x => new KeyValuePair<string, long>(x.Name, x.Length))
+                    .ToDictionary();
 
                 using (_cancellationTokenSource = new()) using (ConnectionTranscieverHandler connectionHandler = new(_cancellationTokenSource.Token)) await (connectionHandler).SendAsync(ipRemote, ipLocal, files, (bool)encryption);
 
