@@ -18,10 +18,11 @@ namespace P2PShare
             }
         }
 
-        public InviteWindow(string text)
+        public InviteWindow(string text, Window window)
         {
             InitializeComponent();
             Text.Text = text;
+            if (window.Dispatcher.CheckAccess()) Owner = window;
         }
 
         private void No_Click(object sender, RoutedEventArgs e)

@@ -1,30 +1,26 @@
-﻿namespace P2PShare.Utils
+﻿using Microsoft.Win32;
+
+namespace P2PShare.Utils
 {
     public class FileDialogs
     {
-        public static string? SelectFolder(out bool? selected)
+        public static string? SelectFolder()
         {
-            Microsoft.Win32.OpenFolderDialog dialog = new();
+            OpenFolderDialog dialog = new()
+            {
+                Multiselect = false,
+                Title = "Select a folder"
+            };
 
-            setSelectFolderDialog(dialog);
-
-            selected = dialog.ShowDialog();
-
-            return selected == true ? dialog.FolderName : null;
-        }
-
-        private static Microsoft.Win32.OpenFolderDialog setSelectFolderDialog(Microsoft.Win32.OpenFolderDialog dialog)
-        {
-            dialog.Multiselect = false;
-            dialog.Title = "Select a folder";
-
-            return dialog;
+            return dialog.ShowDialog() == true ? dialog.FolderName : null;
         }
 
         public static string[]? SelectFiles()
         {
-            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
-            dialog.Multiselect = true;
+            OpenFileDialog dialog = new()
+            {
+                Multiselect = true
+            };
             bool? selected = dialog.ShowDialog();
 
             return selected == true ? dialog.FileNames : null;

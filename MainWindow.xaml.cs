@@ -1,12 +1,13 @@
-﻿using System.IO;
+﻿using P2PShare.Libs;
+using P2PShare.Libs.Models;
+using P2PShare.Models;
+using P2PShare.Utils;
+using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Net.Sockets;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
-using P2PShare.Utils;
-using P2PShare.Libs;
-using P2PShare.Libs.Models;
 
 namespace P2PShare
 {
@@ -15,56 +16,40 @@ namespace P2PShare
     /// </summary>
     public partial class MainWindow : Window
     {
+        private CustomMessageBox? _messageBox;
+        private Dictionary<string, long>? _files;
+        private Task? _receiveLoop;
+        private CancellationTokenSource? _cancellationTokenSource;
         private NetworkInterface? _interface;
-        private IPAddress? _localIP;
-        private Task?[] _listening;
-        private Task?[] _monitorConnections;
-        private Task? _monitorInterface;
-        private Task?[] _connecting;
-        private int _portListen;
-        private int _portConnect;
-        private Send_ReceiveWindow? _sendReceiveWindow;
-        private TcpClient?[] _tcpClients;
-        private Cancellation _cancelConnecting;
-        private Cancellation _cancelMonitoring;
-        private DecryptorAsymmetrical? _decryptor;
-        private bool _inviteSent;
-        private Task? _timeOut;
-        private EncryptionEnum _encryption;
+
+        private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+        private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
+        private void OnContacted(object? sender, IPAddress ip) => ShowMessageBox($"Contacting {ip}...", ButtonContent.Cancel, false);
 
         public MainWindow()
         {
             InitializeComponent();
-            Elements.RefreshInterfaces(Interface, null);
+            RefreshInterfaces();
             Interface.SelectedIndex = 0;
-            Elements.InitializeEncryptionComboBox(Encryption);
-            Encryption.SelectedIndex = 0;
 
-            TCPConnectionClient.Connected += OnConnected;
-            TCPConnectionClient.Disconnected += OnDisconnected;
-            InterfaceHandling.InterfaceDown += onInterfaceDown;
-            FileTransport.InviteReceived += onInviteReceived;
-            FileTransport.FilePartTransported += onFilePartTransported;
-            FileTransport.FilesBeingTransported += onFilesBeingTransported;
+            ConnectionHandler.FilePartTransported += OnFilePartTransported;
+            ConnectionTranscieverHandler.Contacted += OnContacted;
 
-            _listening = new Task?[2];
-            _monitorConnections = new Task?[2];
-            _connecting = new Task?[2];
-            _tcpClients = new TcpClient?[2];
-            _inviteSent = false;
-            _cancelConnecting = new();
-            _cancelMonitoring = new();
-        }
-
-        private void Minimize_Click(object sender, RoutedEventArgs e)
-        {
-            WindowState = WindowState.Minimized;
+            if (_receiveLoop is null) _receiveLoop = ReceiveLoopAsync();
         }
 
         private void Close_Click(object sender, RoutedEventArgs e)
         {
+            _cancellationTokenSource?.Dispose();
+
             Close();
-            _sendReceiveWindow?.Close();
+        }
+
+        private void OnWindowClosed(object? sender, bool cancelled)
+        {
+            _messageBox = null;
+
+            if (cancelled) _cancellationTokenSource?.Cancel();
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -72,339 +57,237 @@ namespace P2PShare
             if (e.ChangedButton == MouseButton.Left) DragMove();
         }
 
-        private void Refresh_Click(object sender, RoutedEventArgs e)
+        private void Interface_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Elements.RefreshInterfaces(Interface, _interface?.Name);
+            NetworkInterface? ni = GetSelectedInterface();
+
+            if (ni == _interface || ni is null) return;
+
+            _interface = ni;
+
+            IPAddress? ip = ni is not null ? InterfaceHandling.GetLocalIP(ni) : null;
+
+            YourIP.Text = $"Your IP address:" + (ip is not null ? $" {ip}" : String.Empty);
+
+            _cancellationTokenSource?.Cancel();
         }
 
-        private void Interface_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void OnFilePartTransported(object? sender, FilePartTransportedEventArgs e)
         {
-            _cancelMonitoring?.Cancel();
-            _monitorInterface = null;
+            KeyValuePair<string, long> file;
+            string content;
 
-            if (Interface.SelectedItem is null)
+            if (e.CurrentFile == e.AmountOfFiles && e.Part == 100)
             {
-                Elements.ResetYourIp(YourIP);
-
+                _messageBox?.Close();
+                _messageBox = null;
                 return;
             }
 
-            _interface = Elements.GetSelectedInterface(Interface);
+            file = _files!.ElementAt(e.CurrentFile - 1);
 
-            if (_interface is null) return;
-
-            _localIP = IPHandling.GetLocalIPv4(_interface);
-
-            if (_localIP is null) return;
-
-            YourIP.Text = $"Your IP address: {_localIP}";
-
-            _cancelMonitoring?.NewTokenSource();
-
-            if (_cancelMonitoring is null) return;
-
-            _monitorInterface = InterfaceHandling.MonitorInterface(_interface, _cancelMonitoring);
-        }
-
-        private void Listen_Click(object sender, RoutedEventArgs e)
-        {
-            _cancelConnecting.NewTokenSource();
-
-            if (_localIP is null || !int.TryParse(Port.Text.Trim(), out _portListen) || _interface is null || !PortHandling.IsPortAvailable(_localIP, _portListen))
-            {
-                Elements.ShowDialog("Select an interface & enter a valid port number");
-
-                return;
-            }
-
-            _timeOut = _cancelConnecting.TimeOut();
-            
-            for (int i = 0; i < 2; i++)
-            {
-                _listening[i] = TCPConnectionListener.ListenLoop(_portListen + i, _interface, _cancelConnecting);
-            }
-
-            Elements.Listening(_portListen, State, Cancel);
-        }
-
-        private async void OnConnected(object? sender, TcpClient client2)
-        {
-            IPAddress? ipRemote;
-            int i = 0;
-
-            for (; i < _tcpClients.Length; i++)
-            {
-                if (_tcpClients[i] is not null) continue;
-
-                _tcpClients[i] = client2;
-
-                break;
-            }
-
-            if (_tcpClients[i] is null) return;
-
-            ipRemote = IPHandling.GetRemoteIPAddress(_tcpClients[i]!);
-
-            if (ipRemote is null)
-            {
-                _tcpClients[i]!.Dispose();
-                _tcpClients[i] = null;
-
-                return;
-            }
-
-            _monitorConnections[i] = GUIConnection.MonitorClientConnection(_tcpClients[i]!, State, Interface, Cancel);
-
-            if (!TCPConnectionClient.AreClientsConnected(_tcpClients)) return;
-
-            Elements.Connected(State, Cancel, Disconnect, ipRemote);
-
-            await FileTransport.ReceiveInvite(_tcpClients);
-        }
-
-        private void OnDisconnected(object? sender, EventArgs e)
-        {
-            Elements.Disconnected(State, Cancel, Disconnect, Interface, _interface?.Name);
-
-            TCPConnectionClient.GetRidOfClients(_tcpClients);
-
-            if (Interface.Items.Contains(_interface?.Name)) Interface.SelectedItem = _interface?.Name;
-        }
-
-        private void Connect_Click(object sender, RoutedEventArgs e)
-        {
-            IPAddress? remoteIP;
-
-            if (TCPConnectionClient.AreClientsConnected(_tcpClients))
-            {
-                Elements.ShowDialog("You must first disconnect to connect to another device");
-
-                return;
-            }
-
-            if (_cancelConnecting.TokenSource is not null) _cancelConnecting.Cancel();
-
-            if (_interface is null || _localIP is null || !IPAddress.TryParse(RemoteIP.Text.Trim(), out remoteIP))
-            {
-                Elements.ShowDialog("Select an interface & enter a valid IP address");
-
-                return;
-            }
-            
-            _portConnect = PortHandling.FindPort(_localIP);
-
-            _cancelConnecting!.NewTokenSource();
-
-            _timeOut = _cancelConnecting.TimeOut();
-
-            _connecting = TCPConnectionClient.ConnectAll(remoteIP, _interface, _portConnect, _cancelConnecting);
-
-            Elements.Connecting(_portConnect, State, Cancel);
-        }
-
-        private void Cancel_Click(object sender, RoutedEventArgs e)
-        {
-            if (_cancelConnecting.TokenSource is null) return;
-
-            _cancelConnecting.Cancel();
-
-            TCPConnectionClient.GetRidOfClients(_tcpClients);
-        }
-
-        private void onInterfaceDown(object? sender, EventArgs e)
-        {
-            Elements.RefreshInterfaces(Interface, _interface?.Name);
-
-            _interface = null;
-        }
-
-        private async void onInviteReceived(object? sender, string? invite)
-        {
-            if (!String.IsNullOrEmpty(invite))
-            {
-                bool accepted;
-                InviteWindow inviteWindow;
-                FileInfo[]? fileInfos = null;
-                EncryptionEnum encryption;
-                string[] filesAndEncryption = invite.Split(FileTransport.EncryptionSymbol);
-                string[] files = filesAndEncryption[0].Split(FileTransport.FileSeparator);
-
-                Enum.TryParse<EncryptionEnum>(filesAndEncryption[1], out encryption);
-
-                invite = String.Empty;
-                foreach (string file in files)
-                {
-                    invite += file + "\n";
-                }
-                inviteWindow = new(invite + "Accept?");
-                inviteWindow.ShowDialog();
-                accepted = inviteWindow.Accepted;
-
-                try
-                {
-                    if (_tcpClients[0] is not null || _tcpClients[0]!.Connected)
-                    {
-                        bool? selected = null;
-                        bool receive;
-                        string? path = null;
-
-                        if (accepted)
-                        {
-                            path = FileDialogs.SelectFolder(out selected);
-                        }
-
-                        if (selected is not null && path is not null && selected == true)
-                        {
-                            receive = true;
-
-                            if (encryption == EncryptionEnum.Enabled)
-                            {
-                                _decryptor = new();
-                            }
-                        }
-                        else
-                        {
-                            receive = false;
-                        }
-
-                        await FileTransport.Reply(_tcpClients[0]!, receive);
-
-                        if (path is not null)
-                        {
-                            string[] fileNames = FileTransport.GetNamesFromFiles(files);
-                            string[] paths = new string[files.Length];
-
-                            if (encryption == EncryptionEnum.Enabled)
-                            {
-                                await FileTransport.SendRSAPublicKey(_tcpClients[0]!.GetStream(), _decryptor!.PublicKey);
-                            }
-
-                            for (int i = 0; i < paths.Length; i++)
-                            {
-                                paths[i] = $"{path}\\{fileNames[i]}";
-                            }
-
-                            fileInfos = await FileTransport.ReceiveFile(_tcpClients[0]!, paths, FileTransport.GetLenghtsFromFiles(files), _decryptor, encryption);
-                        }
-                    }
-                }
-                catch
-                {
-                    fileInfos = null;
-                }
-
-                if (fileInfos is null) Elements.FileTransferEndDialog(false, _sendReceiveWindow);
-                else 
-                {
-                    string message;
-
-                    switch (fileInfos.Length)
-                    {
-                        case 1:
-                            message = $"The file has been saved as:\n{fileInfos[0].FullName}";
-
-                            break;
-
-                        default:
-                            message = $"The files have been saved to:\n{fileInfos[0].DirectoryName}";
-
-                            break;
-                    }
-
-                    Elements.ShowDialog(message);
-                }
-            }
-
-            await FileTransport.ReceiveInvite(_tcpClients);
-        }
-
-        private void onFilePartTransported(object? sender, int part)
-        {
-            _sendReceiveWindow?.ChangeText(part);
+            content = $"{(e.SendReceive == SendReceive.Send ? "Sending" : "Receiving")}: {file.Key} ({e.CurrentFile}/{e.AmountOfFiles}) {e.Part}% of {file.Value}B";
+            if (_messageBox is null) ShowMessageBox(content, ButtonContent.Cancel, false);
+            else _messageBox?.ChangeContent(content);
         }
 
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
-            string fileText = File.Text.Trim();
+            FileInfo[] files;
+            IPAddress? ipRemote, ipLocal = _interface is not null ? InterfaceHandling.GetLocalIP(_interface) : null;
+            string fileText = File.Text.Trim(), messageBoxContent = String.Empty;
+            bool? encryption = CheckBoxEncryption.IsChecked;
 
-            if (_inviteSent)
+            _cancellationTokenSource?.Cancel();
+            await _receiveLoop!;
+
+            try
             {
-                Elements.ShowDialog("You cannot send multiple sharing invites at once");
+                if (encryption is null) throw new Exception("An error occurred with the encryption option.");
+                if (ipLocal is null) throw new Exception("Select a valid interface!");
+                if (!IPAddress.TryParse(RemoteIP.Text.Trim(), out ipRemote)) throw new Exception("Enter a valid IP address!");
+                if (fileText == String.Empty) throw new Exception("Choose a file to send!");
+
+                files = fileText
+                    .Split(ConnectionHandler.FileSeparator)
+                    .Select(x => new FileInfo(x))
+                    .ToArray();
                 
+                _files = files
+                    .Select(x => new KeyValuePair<string, long>(x.Name, x.Length))
+                    .ToDictionary();
+
+                using (_cancellationTokenSource = new()) using (ConnectionTranscieverHandler connectionHandler = new(_cancellationTokenSource.Token)) await (connectionHandler).SendAsync(ipRemote, ipLocal, files, (bool)encryption);
+
+                messageBoxContent = "File(s) transmission succeeded.";
+            }
+            catch (OperationCanceledException)
+            {
                 return;
             }
-
-            if (fileText.Equals(String.Empty))
+            catch (Exception ex)
             {
-                Elements.ShowDialog("Choose a file to send");
-
-                return;
+                messageBoxContent = ex.Message;
             }
-            
-            if (_tcpClients[0] is null || !_tcpClients[0]!.Connected)
+            finally
             {
-                Elements.ShowDialog("You must be connected to share");
-                return;
+                _messageBox?.Close();
+                _messageBox = null;
+
+                _receiveLoop = ReceiveLoopAsync();
             }
 
-            string[] paths = fileText.Split(FileTransport.FileSeparator);
-            FileInfo[] fileInfos = new FileInfo[paths.Length];
-            for (int i = 0; i < fileInfos.Length; i++)
-            {
-                fileInfos[i] = new FileInfo(paths[i]);
-            }
-
-            if (!fileInfos.All(fileInfo => fileInfo.Exists))
-            {
-                Elements.ShowDialog("Select a valid file(s)");
-                return;
-            }
-
-            _inviteSent = true;
-
-            Elements.FileTransferEndDialog(await FileTransport.SendFile(_tcpClients!, fileInfos, _encryption), _sendReceiveWindow);
-
-            _inviteSent = false;
-            
-            await FileTransport.ReceiveInvite(_tcpClients);
+            ShowMessageBox(messageBoxContent, ButtonContent.OK, true);
         }
 
         private void Select_Click(object sender, RoutedEventArgs e)
         {
             string[]? paths = FileDialogs.SelectFiles();
-            string pathsString = "";
-            
-            for (int i = 0; i < paths?.Length; i++)
+
+            if (paths is null) return;
+
+            string pathsString = String.Empty;
+
+            for (int i = 0; i < paths.Length; i++)
             {
                 pathsString += paths[i];
-                
-                if (paths.Length > 1 && i != paths.Length - 1) pathsString += FileTransport.FileSeparator;
+
+                if (i != paths.Length - 1) pathsString += ConnectionHandler.FileSeparator;
             }
-            
+
             File.Text = pathsString;
         }
 
-        private void onTransferFailed(object? sender, EventArgs e)
+        private void RefreshInterfaces()
         {
-            _sendReceiveWindow?.Close();
+            string? selectedNI = Interface.SelectedItem?.ToString() ?? null;
+            var interfaces = InterfaceHandling.GetUpInterfaces().Select(x => x.Name);
 
-            Elements.ShowDialog("The file transfer failed");
+            if (interfaces.All(Interface.Items.Contains) && interfaces.Count() == Interface.Items.Count) return;
+
+            Interface.Items.Clear();
+
+            foreach (var @interface in interfaces) Interface.Items.Add(@interface);
+
+            if (Interface.Items.Contains(selectedNI)) Interface.SelectedItem = selectedNI;
+            else Interface.SelectedIndex = 0;
         }
 
-        private void onFilesBeingTransported(object? sender, FilesBeingTransportedEventArgs filesBeingTransportedEventArgs)
+        private NetworkInterface? GetSelectedInterface()
         {
-            _sendReceiveWindow = new(filesBeingTransportedEventArgs.ReceiveSend, filesBeingTransportedEventArgs.FileInfos);
-            _sendReceiveWindow.Show();
+            NetworkInterface? @interface = null;
+
+            try
+            {
+                @interface = InterfaceHandling.GetUpInterfaces().FirstOrDefault(x => x.Name == Interface.SelectedItem?.ToString()?.Trim());
+            }
+            catch (Exception ex)
+            {
+                ShowMessageBox(ex.Message, ButtonContent.OK, true);
+            }
+
+            return @interface;
         }
 
-        private void Disconnect_Click(object sender, RoutedEventArgs e)
+        private async Task ReceiveAsync()
         {
-            TCPConnectionClient.GetRidOfClients(_tcpClients);
+            IPAddress? localIP = _interface is not null ? InterfaceHandling.GetLocalIP(_interface) : null; // maybe refresh UI element if local IP changed
+            InviteWindow inviteWindow;
+            string invite = String.Empty;
+            string? dictionary, messageBoxContent = null;
+            string[] savedFiles;
+
+            if (localIP is null)
+            {
+                ShowMessageBox("Select a valid interface.", ButtonContent.OK, true);
+                throw new OperationCanceledException();
+            }
+
+            if (_cancellationTokenSource!.Token.IsCancellationRequested) throw new OperationCanceledException();
+
+            try
+            {
+                using (ConnectionReceiverHandler connectionHandler = new(localIP, _cancellationTokenSource!.Token))
+                {
+                    _files = await connectionHandler.ReceiveInviteAsync();
+
+                    foreach (var file in _files) invite += $"{file.Key} - {file.Value}B\n";
+                    inviteWindow = new(invite + "Accept?", this);
+                    inviteWindow.ShowDialog();
+
+                    if (!inviteWindow.Accepted)
+                    {
+                        await connectionHandler.DenyFilesAsync();
+                        return;
+                    }
+
+                    dictionary = FileDialogs.SelectFolder();
+
+                    if (dictionary is null) messageBoxContent = "Receiving files was cancelled.";
+                    else
+                    {
+                        savedFiles = await connectionHandler.AcceptFilesAsync(dictionary);
+
+                        messageBoxContent = $"Files saved to {dictionary} as:";
+                        foreach (string file in savedFiles) messageBoxContent += $"\n{file}";
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                if (_messageBox is not null && ex.Message != ConnectionReceiverHandler.InviteErrorMessage) messageBoxContent = ex.Message;
+                else return;
+            }
+            finally
+            {
+                _messageBox?.Close();
+                _messageBox = null;
+
+                RefreshInterfaces();
+            }
+
+            ShowMessageBox(messageBoxContent!, ButtonContent.OK, true);
         }
 
-        private void Encryption_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private async Task ReceiveLoopAsync()
         {
-            Enum.TryParse<EncryptionEnum>(Encryption.SelectedItem.ToString(), out _encryption);
+            NetworkInterface? @interface;
+
+            do
+            {
+                _cancellationTokenSource?.Dispose();
+                _cancellationTokenSource = new();
+                @interface = _interface;
+
+                try
+                {
+                    await ReceiveAsync();
+                }
+                catch
+                {
+                }
+            }
+            while (!_cancellationTokenSource.IsCancellationRequested || @interface != _interface);
+        }
+
+        private void ShowMessageBox(string content, ButtonContent buttonContent, bool modal)
+        {
+            _messageBox = new(content, buttonContent, this);
+            _messageBox.WindowClosed += OnWindowClosed;
+            try
+            {
+                if (modal) _messageBox.ShowDialog();
+                else _messageBox.Show();
+            }
+            catch
+            {
+            }
+
+            if (modal) _messageBox = null;
         }
     }
 }
