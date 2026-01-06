@@ -239,7 +239,7 @@ namespace P2PShare
             }
             catch (Exception ex)
             {
-                if (_messageBox is not null) messageBoxContent = ex.Message;
+                if (_messageBox is not null && ex.Message != ConnectionReceiverHandler.InviteErrorMessage) messageBoxContent = ex.Message;
                 else return;
             }
             finally
