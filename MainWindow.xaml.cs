@@ -49,7 +49,7 @@ namespace P2PShare
         {
             _messageBox = null;
 
-            _cancellationTokenSource?.Cancel();
+            if (cancelled) _cancellationTokenSource?.Cancel();
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
