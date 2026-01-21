@@ -1,4 +1,5 @@
-﻿using P2PShare.Libs;
+﻿using P2PShare.Connection;
+using P2PShare.Libs;
 using P2PShare.Libs.Models;
 using P2PShare.Models;
 using P2PShare.Utils;
@@ -33,7 +34,7 @@ namespace P2PShare
             Interface.SelectedIndex = 0;
 
             ConnectionHandler.FilePartTransported += OnFilePartTransported;
-            ConnectionTranscieverHandler.Contacted += OnContacted;
+            ConnectionClientHandler.Contacted += OnContacted;
 
             if (_receiveLoop is null) _receiveLoop = ReceiveLoopAsync();
         }
@@ -96,7 +97,7 @@ namespace P2PShare
             FileInfo[] files;
             IPAddress? ipRemote, ipLocal = _interface is not null ? InterfaceHandling.GetLocalIP(_interface) : null;
             string fileText = File.Text.Trim(), messageBoxContent = String.Empty;
-            bool? encryption = CheckBoxEncryption.IsChecked;
+            var encryption = CheckBoxEncryption.IsChecked;
 
             _cancellationTokenSource?.Cancel();
             await _receiveLoop!;
@@ -117,7 +118,7 @@ namespace P2PShare
                     .Select(x => new KeyValuePair<string, long>(x.Name, x.Length))
                     .ToDictionary();
 
-                using (_cancellationTokenSource = new()) using (ConnectionTranscieverHandler connectionHandler = new(_cancellationTokenSource.Token)) await (connectionHandler).SendAsync(ipRemote, ipLocal, files, (bool)encryption);
+                using (_cancellationTokenSource = new()) await new ConnectionClientHandler(ipRemote, ipLocal, _cancellationTokenSource.Token).SendAsync(files, (bool)encryption);
 
                 messageBoxContent = "File(s) transmission succeeded.";
             }
@@ -207,7 +208,7 @@ namespace P2PShare
 
             try
             {
-                using (ConnectionReceiverHandler connectionHandler = new(localIP, _cancellationTokenSource!.Token))
+                using (ConnectionClientHandler connectionHandler = new(localIP, _cancellationTokenSource!.Token))
                 {
                     _files = await connectionHandler.ReceiveInviteAsync();
 
