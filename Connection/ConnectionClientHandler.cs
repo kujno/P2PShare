@@ -10,7 +10,7 @@ namespace P2PShare.Connection
         public static event EventHandler<IPAddress>? Contacted;
 
         private Dictionary<string, long>? _filesAndSizes;
-        private bool? _encrypted;
+        private bool _encrypted;
 
         private void OnContacted(IPAddress ip) => Contacted?.Invoke(this, ip);
 
@@ -19,7 +19,7 @@ namespace P2PShare.Connection
             try
             {
                 int port;
-                
+
                 if (!files.All(x => x.Exists)) throw new FileNotFoundException("One or more files to send were not found.");
 
                 OnContacted(_ipRemote);
@@ -44,6 +44,37 @@ namespace P2PShare.Connection
                     ex is FileNotFoundException ||
                     ex is FileTransportDeniedException ||
                     ex is ConnectionFailedException) ? ex : new Exception("Sending file(s) failed.", ex);
+            }
+        }
+
+        public async Task<Dictionary<string, long>> ReceiveInviteAsync()
+        {
+            try
+            {
+                Client = await ReceiveTcpClientAsync(_ipLocal, _initialPort);
+
+                _encrypted = await YNReceiveAsync(false);
+
+                if (_encrypted) await SendEncryptionKeyAsync();
+
+                _filesAndSizes = await ReceiveInviteAsync<Dictionary<string, long>>(_encrypted);
+            }
+            catch (Exception ex)
+            {
+                throw (ex is OperationCanceledException) ? ex : new Exception(InviteErrorMessage, ex);
+            }
+
+            return _filesAndSizes;
+        }
+
+        public async Task<string[]> ReceiveFilesAsync(string dictionaryPath)
+        {
+            var port = await ReceivePortAsync(_encrypted);
+
+            Client.Dispose();
+            using (Client = await ReceiveTcpClientAsync(_ipLocal, port))
+            {
+                return await ReceiveFilesAsync(_filesAndSizes!, dictionaryPath, _encrypted);
             }
         }
     }
