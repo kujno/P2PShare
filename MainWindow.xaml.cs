@@ -34,7 +34,7 @@ namespace P2PShare
             Interface.SelectedIndex = 0;
 
             ConnectionHandler.FilePartTransported += OnFilePartTransported;
-            ConnectionClientHandler.Contacted += OnContacted;
+            ConnectionTranscieverHandler.Contacted += OnContacted;
 
             if (_receiveLoop is null) _receiveLoop = ReceiveLoopAsync();
         }
@@ -113,12 +113,12 @@ namespace P2PShare
                     .Split(ConnectionHandler.FileSeparator)
                     .Select(x => new FileInfo(x))
                     .ToArray();
-                
+
                 _files = files
                     .Select(x => new KeyValuePair<string, long>(x.Name, x.Length))
                     .ToDictionary();
 
-                using (_cancellationTokenSource = new()) await new ConnectionClientHandler(ipRemote, ipLocal, _cancellationTokenSource.Token).SendAsync(files, (bool)encryption);
+                using (_cancellationTokenSource = new()) await new ConnectionTranscieverHandler(ipRemote, ipLocal, _cancellationTokenSource.Token).SendAsync(files, (bool)encryption);
 
                 messageBoxContent = "File(s) transmission succeeded.";
             }
@@ -194,6 +194,7 @@ namespace P2PShare
         {
             IPAddress? localIP = _interface is not null ? InterfaceHandling.GetLocalIP(_interface) : null; // maybe refresh UI element if local IP changed
             InviteWindow inviteWindow;
+            ConnectionReceiverHandler connectionHandler;
             string invite = String.Empty;
             string? dictionary, messageBoxContent = null;
             string[] savedFiles;
@@ -206,42 +207,44 @@ namespace P2PShare
 
             if (_cancellationTokenSource!.Token.IsCancellationRequested) throw new OperationCanceledException();
 
+            connectionHandler = new(localIP, _cancellationTokenSource!.Token);
             try
             {
-                using (ConnectionClientHandler connectionHandler = new(localIP, _cancellationTokenSource!.Token))
+                _files = await connectionHandler.ReceiveInviteAsync();
+
+                foreach (var file in _files) invite += $"{file.Key} - {file.Value}B\n";
+                inviteWindow = new(invite + "Accept?", this);
+                inviteWindow.ShowDialog();
+
+                if (!inviteWindow.Accepted)
                 {
-                    _files = await connectionHandler.ReceiveInviteAsync();
-
-                    foreach (var file in _files) invite += $"{file.Key} - {file.Value}B\n";
-                    inviteWindow = new(invite + "Accept?", this);
-                    inviteWindow.ShowDialog();
-
-                    if (!inviteWindow.Accepted)
-                    {
-                        await connectionHandler.DenyFilesAsync();
-                        return;
-                    }
-
-                    dictionary = FileDialogs.SelectFolder();
-
-                    if (dictionary is null) messageBoxContent = "Receiving files was cancelled.";
-                    else
-                    {
-                        savedFiles = await connectionHandler.AcceptFilesAsync(dictionary);
-
-                        messageBoxContent = $"Files saved to {dictionary} as:";
-                        foreach (string file in savedFiles) messageBoxContent += $"\n{file}";
-                    }
+                    await connectionHandler.RejectFilesAsync();
+                    return;
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                return;
+
+                dictionary = FileDialogs.SelectFolder();
+
+                if (dictionary is null) messageBoxContent = "Receiving files was cancelled.";
+                else
+                {
+                    savedFiles = await connectionHandler.ReceiveFilesAsync(dictionary);
+
+                    messageBoxContent = $"Files saved to {dictionary} as:";
+                    foreach (string file in savedFiles) messageBoxContent += $"\n{file}";
+                }
+
+                try
+                {
+                    connectionHandler.Dispose();
+                }
+                catch
+                {
+                }
             }
             catch (Exception ex)
             {
-                if (_messageBox is not null && ex.Message != ConnectionReceiverHandler.InviteErrorMessage) messageBoxContent = ex.Message;
-                else return;
+                if (_messageBox is null || ex.Message == ConnectionReceiverHandler.InviteErrorMessage || ex is OperationCanceledException) return;
+                else messageBoxContent = ex.Message;
             }
             finally
             {

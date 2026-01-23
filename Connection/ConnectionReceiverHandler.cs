@@ -1,34 +1,19 @@
 ﻿using P2PShare.Libs;
-using P2PShare.Libs.Models;
-using System.IO;
 using System.Net;
+using System.Windows.Media.Animation;
 
 namespace P2PShare.Connection
 {
-    public abstract class ConnectionClientHandler : ConnectionHandler
+    public class ConnectionReceiverHandler(IPAddress ipLocal, CancellationToken cancellationToken) : ConnectionHandler(ipLocal, cancellationToken)
     {
-        
-
         private Dictionary<string, long>? _filesAndSizes;
         private bool _encrypted;
-
-        
-
-        protected ConnectionClientHandler(IPAddress ipLocal, IPAddress ipRemote, CancellationToken cancellationToken) : base(ipLocal, ipRemote, cancellationToken)
-        {
-        }
-
-        protected ConnectionClientHandler(IPAddress ipLocal, CancellationToken cancellationToken) : base(ipLocal, cancellationToken)
-        {
-        }
-
-        
 
         public async Task<Dictionary<string, long>> ReceiveInviteAsync()
         {
             try
             {
-                Client = await ReceiveTcpClientAsync(_ipLocal, _initialPort);
+                Client = await ReceiveTcpClientAsync(_ipLocal!, _initialPort);
 
                 _encrypted = await YNReceiveAsync(false);
 
@@ -46,13 +31,19 @@ namespace P2PShare.Connection
 
         public async Task<string[]> ReceiveFilesAsync(string dictionaryPath)
         {
-            var port = await ReceivePortAsync(_encrypted);
+            int port;
+
+            await YNSendAsync(_encrypted);
+
+            port = await ReceivePortAsync(_encrypted);
 
             Client.Dispose();
-            using (Client = await ReceiveTcpClientAsync(_ipLocal, port))
-            {
-                return await ReceiveFilesAsync(_filesAndSizes!, dictionaryPath, _encrypted);
-            }
+            using (Client = await ReceiveTcpClientAsync(_ipLocal!, port)) return await ReceiveFilesAsync(_filesAndSizes!, dictionaryPath, _encrypted);
+        }
+
+        public async Task RejectFilesAsync()
+        {
+            using (Client) await YNSendAsync(_encrypted, false);
         }
     }
 }
