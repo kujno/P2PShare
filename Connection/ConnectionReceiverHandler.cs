@@ -6,7 +6,8 @@ namespace P2PShare.Connection
     public class ConnectionReceiverHandler(IPAddress ipLocal, CancellationToken cancellationToken) : ConnectionHandler(ipLocal, cancellationToken)
     {
         private Dictionary<string, long>? _filesAndSizes;
-        private bool _encrypted;
+
+        public bool Encrypted { get; private set; }
 
         public async Task<Dictionary<string, long>> ReceiveInviteAsync()
         {
@@ -14,11 +15,11 @@ namespace P2PShare.Connection
             {
                 Client = await ReceiveTcpClientAsync(_ipLocal!, _initialPort);
 
-                _encrypted = await YNReceiveAsync(false);
+                Encrypted = await YNReceiveAsync(false);
 
-                if (_encrypted) await SendEncryptionKeyAsync();
+                if (Encrypted) await SendEncryptionKeyAsync();
 
-                _filesAndSizes = await ReceiveInviteAsync<Dictionary<string, long>>(_encrypted);
+                _filesAndSizes = await ReceiveInviteAsync<Dictionary<string, long>>(Encrypted);
             }
             catch (Exception ex)
             {
@@ -32,17 +33,17 @@ namespace P2PShare.Connection
         {
             int port;
 
-            await YNSendAsync(_encrypted);
+            await YNSendAsync(Encrypted);
 
-            port = await ReceivePortAsync(_encrypted);
+            port = await ReceivePortAsync(Encrypted);
 
             Client.Dispose();
-            using (Client = await ReceiveTcpClientAsync(_ipLocal!, port)) return await ReceiveFilesAsync(_filesAndSizes!, dictionaryPath, _encrypted);
+            using (Client = await ReceiveTcpClientAsync(_ipLocal!, port)) return await ReceiveFilesAsync(_filesAndSizes!, dictionaryPath, Encrypted);
         }
 
         public async Task RejectFilesAsync()
         {
-            using (Client) await YNSendAsync(_encrypted, false);
+            using (Client) await YNSendAsync(Encrypted, false);
         }
     }
 }
