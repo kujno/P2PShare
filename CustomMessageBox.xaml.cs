@@ -22,8 +22,11 @@ namespace P2PShare
             Text.Text = content;
             _buttonContent = buttonContent;
             Btn.Content = buttonContent;
-            if (window.Dispatcher.CheckAccess()) Owner = window;
-            Owner.Visibility = Visibility.Hidden;
+            if (window.Dispatcher.CheckAccess())
+            {
+                Owner = window;
+                Owner.Visibility = Visibility.Hidden;
+            }
         }
 
         private void Btn_Click(object sender, RoutedEventArgs e)
