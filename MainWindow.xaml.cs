@@ -118,7 +118,7 @@ namespace P2PShare
                     .Select(x => new KeyValuePair<string, long>(x.Name, x.Length))
                     .ToDictionary();
 
-                using (_cancellationTokenSource = new()) await new ConnectionTranscieverHandler(ipRemote, ipLocal, _cancellationTokenSource.Token).SendAsync(files, (bool)encryption);
+                using (_cancellationTokenSource = new()) await new ConnectionTranscieverHandler(ipLocal, ipRemote, _cancellationTokenSource.Token).SendAsync(files, (bool)encryption);
 
                 messageBoxContent = "File(s) transmission succeeded.";
             }
