@@ -30,10 +30,7 @@ namespace P2PShare.Connection
                     port = await SendPortAsync(encrypted);
                 }
 
-                using (Client = await ConnectAsync(port, false))
-                {
-                    await SendFilesAsync(files, encrypted);
-                }
+                using (Client = await ConnectAsync(port, false)) await SendFilesAsync(files, encrypted);
             }
             catch (Exception ex)
             {
