@@ -213,7 +213,7 @@ namespace P2PShare
                 _files = await connectionHandler.ReceiveInviteAsync();
 
                 foreach (var file in _files) invite += $"{file.Key} - {file.Value}B\n";
-                inviteWindow = new(invite + "Accept?", this);
+                inviteWindow = new($"{invite}({(connectionHandler.Encrypted ? "Encrypted" : "Unencrypted")})\nAccept?", this);
                 inviteWindow.ShowDialog();
 
                 if (!inviteWindow.Accepted)
