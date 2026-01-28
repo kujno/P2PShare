@@ -18,9 +18,26 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Grid.Row="0" Margin="0" MaxHeight="125px" VerticalAlignment="Center">
-            <TextBlock x:Name="Text" FontSize="20px" FontFamily="Arial" Foreground="#c2c2c2" Grid.Row="0" HorizontalAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" TextAlignment="Center"/>
-        </ScrollViewer>
+        <Grid Grid.Row="0" Margin="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"  MaxHeight="125px" VerticalAlignment="Center">
+                <TextBlock x:Name="TextBlock_File" FontSize="20px" FontFamily="Arial" Foreground="#c2c2c2" Grid.Row="0" HorizontalAlignment="Center" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" TextAlignment="Center"/>
+            </ScrollViewer>
+
+            <Grid x:Name="Grid_Progress" Height="22px" Grid.Row="1" VerticalAlignment="Bottom" Margin="0, 0, 0, 20px" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="68"/>
+                </Grid.ColumnDefinitions>
+
+                <ProgressBar x:Name="ProgressBar" Margin="68px, 0, 0, 0" Width="260px" Grid.Column="0"/>
+                <TextBlock x:Name="TextBlock_Percentage" FontSize="20px" FontFamily="Arial" Foreground="#c2c2c2" Margin="5px, 0" Grid.Column="1" Width="60px" HorizontalAlignment="Center" TextAlignment="Center"/>
+            </Grid>
+        </Grid>
 
         <Button x:Name="Btn" Background="#292929" BorderThickness="0" Foreground="#c2c2c2" Margin="0,0,0,40px" Grid.Row="1" Width="70px" Height="20px" HorizontalAlignment="Center" Click="Btn_Click"/>
     </Grid>
