@@ -22,10 +22,11 @@ namespace P2PShare
         private Task? _receiveLoop;
         private CancellationTokenSource? _cancellationTokenSource;
         private NetworkInterface? _interface;
+        private int _lastPercentage = -1;
 
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
-        private void OnContacted(object? sender, IPAddress ip) => ShowMessageBox($"Contacting {ip}...", ButtonContent.Cancel, false);
+        private void OnContacted(object? sender, IPAddress ip) => NewMessageBox($"Contacting {ip}...", ButtonContent.Cancel, false);
 
         public MainWindow()
         {
@@ -46,11 +47,16 @@ namespace P2PShare
             Close();
         }
 
-        private void OnWindowClosed(object? sender, bool cancelled)
+        private async void OnWindowClosed(object? sender, bool cancelled)
         {
             _messageBox = null;
 
-            if (cancelled) _cancellationTokenSource?.Cancel();
+            if (cancelled)
+            {
+                _cancellationTokenSource?.Cancel();
+                await _receiveLoop!;
+                _receiveLoop = ReceiveLoopAsync();
+            }
         }
 
         private void ToolBar_MouseDown(object sender, MouseButtonEventArgs e)
@@ -76,7 +82,6 @@ namespace P2PShare
         private void OnFilePartTransported(object? sender, FilePartTransportedEventArgs e)
         {
             KeyValuePair<string, long> file;
-            string content;
 
             if (e.CurrentFile == e.AmountOfFiles && e.Part == 100)
             {
@@ -87,9 +92,13 @@ namespace P2PShare
 
             file = _files!.ElementAt(e.CurrentFile - 1);
 
-            content = $"{(e.SendReceive == SendReceive.Send ? "Sending" : "Receiving")}: {file.Key} ({e.CurrentFile}/{e.AmountOfFiles}) {e.Part}% of {file.Value}B";
-            if (_messageBox is null) ShowMessageBox(content, ButtonContent.Cancel, false);
-            else _messageBox?.ChangeContent(content);
+            if (_messageBox is null) NewMessageBox(e, file, false);
+            else
+            {
+                if (_lastPercentage != e.Part) _messageBox.ChangeContent(e, file);
+            }
+
+            _lastPercentage = e.Part;
         }
 
         private async void Send_Click(object sender, RoutedEventArgs e)
@@ -135,10 +144,12 @@ namespace P2PShare
                 _messageBox?.Close();
                 _messageBox = null;
 
+                _lastPercentage = -1;
+
                 _receiveLoop = ReceiveLoopAsync();
             }
 
-            ShowMessageBox(messageBoxContent, ButtonContent.OK, true);
+            NewMessageBox(messageBoxContent, ButtonContent.OK, true);
         }
 
         private void Select_Click(object sender, RoutedEventArgs e)
@@ -184,7 +195,7 @@ namespace P2PShare
             }
             catch (Exception ex)
             {
-                ShowMessageBox(ex.Message, ButtonContent.OK, true);
+                NewMessageBox(ex.Message, ButtonContent.OK, true);
             }
 
             return @interface;
@@ -201,7 +212,7 @@ namespace P2PShare
 
             if (localIP is null)
             {
-                ShowMessageBox("Select a valid interface.", ButtonContent.OK, true);
+                NewMessageBox("Select a valid interface.", ButtonContent.OK, true);
                 throw new OperationCanceledException();
             }
 
@@ -254,7 +265,7 @@ namespace P2PShare
                 RefreshInterfaces();
             }
 
-            ShowMessageBox(messageBoxContent!, ButtonContent.OK, true);
+            NewMessageBox(messageBoxContent!, ButtonContent.OK, true);
         }
 
         private async Task ReceiveLoopAsync()
@@ -278,14 +289,26 @@ namespace P2PShare
             while (!_cancellationTokenSource.IsCancellationRequested || @interface != _interface);
         }
 
-        private void ShowMessageBox(string content, ButtonContent buttonContent, bool modal)
+        private void NewMessageBox(string content, ButtonContent buttonContent, bool modal)
         {
             _messageBox = new(content, buttonContent, this);
             _messageBox.WindowClosed += OnWindowClosed;
+            ShowMessageBox(modal);
+        }
+
+        private void NewMessageBox(FilePartTransportedEventArgs transportInfo, KeyValuePair<string, long> file, bool modal)
+        {
+            _messageBox = new(transportInfo, file, this);
+            _messageBox.WindowClosed += OnWindowClosed;
+            ShowMessageBox(modal);
+        }
+
+        private void ShowMessageBox(bool modal)
+        {
             try
             {
-                if (modal) _messageBox.ShowDialog();
-                else _messageBox.Show();
+                if (modal) _messageBox?.ShowDialog();
+                else _messageBox?.Show();
             }
             catch
             {
