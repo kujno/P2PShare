@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:P2PShare"
         mc:Ignorable="d"
-        Title="P2PShare" Height="450" Width="800"
+        Title="P2PShare" Height="450px" Width="770px" MinHeight="250px" MinWidth="600px"
         Background="#333333"
         WindowStyle="None"
-        ResizeMode="CanMinimize"
+        ResizeMode="CanResize"
         BorderThickness="1px">
 
     <Window.Resources>
@@ -73,7 +73,7 @@
 
             <StackPanel Orientation="Vertical" Grid.Column="0">
                 
-                <GroupBox Header="Interface:" Foreground="#c2c2c2" BorderThickness="0px" VerticalAlignment="Top" FontFamily="Arial">
+                <GroupBox Header="Connection type:" Foreground="#c2c2c2" BorderThickness="0px" VerticalAlignment="Top" FontFamily="Arial">
                     <ComboBox x:Name="Interface" SelectionChanged="Interface_SelectionChanged"/>
                 </GroupBox>
                 
@@ -81,22 +81,23 @@
                 <CheckBox x:Name="CheckBoxEncryption" Content="Encryption" Foreground="#c2c2c2" Margin="6px, 8px, 0, 0"/>
             </StackPanel>
 
-            <StackPanel Grid.Column="1" Orientation="Vertical">
+            <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch" Margin="10px, 2px">
                 <TextBlock x:Name="YourIP" Text="Your IP address:" HorizontalAlignment="Center" FontSize="20" FontWeight="Medium"/>
-                <StackPanel Orientation="Horizontal" Margin="0, 20px, 0, 0" HorizontalAlignment="Center">
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Column="1">
-                    <GroupBox Header="Remote IP address:" Width="160px">
-                        <TextBox x:Name="RemoteIP" Width="160" Margin="0, 5px, 0, 0"/>
-                    </GroupBox>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Column="1" Margin="0, 20, 0, 0">
-                    <GroupBox Header="File to send:" Width="500px">
-                        <TextBox x:Name="File" Width="500px" Margin="0, 5px, 0, 0"/>
-                    </GroupBox>
-                    <Button x:Name="Send" Content="Send" Height="22px" Width="60px" VerticalAlignment="Center" Margin="0, 0, 0, -13" Click="Send_Click"/>
-                </StackPanel>
-                <Button x:Name="Select" Content="Select" Height="22px" Width="60px" Click="Select_Click" HorizontalAlignment="Left" Margin="49, 0"/>
+                <GroupBox Header="Remote IP address:" Width="160px" Margin="0, 10px, 0, 0">
+                    <TextBox x:Name="RemoteIP" Width="160" Margin="0, 5px, 0, 0"/>
+                </GroupBox>
+                <GroupBox Header="File to send:" HorizontalAlignment="Stretch" Margin="0, 10px, 0, 0" Padding="0, 5px, 0, 0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBox x:Name="File" Grid.Column="0"/>
+                        <Button x:Name="Send" Content="Send" Height="22px" Width="60px" HorizontalAlignment="Right" Click="Send_Click" Margin="20px, 0, 0, 0" Grid.Column="1"/>
+                    </Grid>
+                </GroupBox>
+                <Button x:Name="Select" Content="Select" Height="22px" Width="60px" Click="Select_Click" HorizontalAlignment="Left" Margin="5px"/>
             </StackPanel>
         </Grid>
     </Grid>
