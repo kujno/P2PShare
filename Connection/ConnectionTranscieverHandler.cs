@@ -37,7 +37,8 @@ namespace P2PShare.Connection
                 throw (ex is OperationCanceledException ||
                     ex is FileNotFoundException ||
                     ex is FileTransportDeniedException ||
-                    ex is ConnectionFailedException) ? ex : new Exception("Sending file(s) failed.", ex);
+                    ex is ConnectionFailedException ||
+                    ex is CouldNotOpenFileException) ? ex : new Exception("Sending file(s) failed.", ex);
             }
         }
     }
