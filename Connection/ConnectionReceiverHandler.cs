@@ -1,9 +1,8 @@
 ﻿using P2PShare.Libs;
-using System.Net;
 
 namespace P2PShare.Connection
 {
-    public class ConnectionReceiverHandler(IPAddress ipLocal, CancellationToken cancellationToken) : ConnectionHandler(ipLocal, cancellationToken)
+    public class ConnectionReceiverHandler : ConnectionHandler
     {
         private Dictionary<string, long>? _filesAndSizes;
 
@@ -13,7 +12,7 @@ namespace P2PShare.Connection
         {
             try
             {
-                Client = await ReceiveTcpClientAsync(_ipLocal!, _initialPort);
+                Client = await ReceiveTcpClientAsync(_initialPort);
 
                 Encrypted = await YNReceiveAsync(false);
 
@@ -38,7 +37,7 @@ namespace P2PShare.Connection
             port = await ReceivePortAsync(Encrypted);
 
             Client.Dispose();
-            using (Client = await ReceiveTcpClientAsync(_ipLocal!, port)) return await ReceiveFilesAsync(_filesAndSizes!, dictionaryPath, Encrypted);
+            using (Client = await ReceiveTcpClientAsync(port)) return await ReceiveFilesAsync(_filesAndSizes!, dictionaryPath, Encrypted);
         }
 
         public async Task RejectFilesAsync()

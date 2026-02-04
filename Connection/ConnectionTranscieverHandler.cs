@@ -5,9 +5,15 @@ using System.Net;
 
 namespace P2PShare.Connection
 {
-    public class ConnectionTranscieverHandler(IPAddress ipLocal, IPAddress ipRemote, CancellationToken cancellationToken) : ConnectionHandler(ipLocal, ipRemote, cancellationToken)
+    public class ConnectionTranscieverHandler : ConnectionHandler
     {
         public static event EventHandler<IPAddress>? Contacted;
+
+        public required IPAddress IPRemote
+        {
+            get => _ipRemote!;
+            init => _ipRemote = value;
+        }
 
         private void OnContacted(IPAddress ip) => Contacted?.Invoke(this, ip);
 
