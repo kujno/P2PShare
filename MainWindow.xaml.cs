@@ -127,7 +127,15 @@ namespace P2PShare
                     .Select(x => new KeyValuePair<string, long>(x.Name, x.Length))
                     .ToDictionary();
 
-                using (_cancellationTokenSource = new()) await new ConnectionTranscieverHandler(ipLocal, ipRemote, _cancellationTokenSource.Token).SendAsync(files, (bool)encryption);
+                using (_cancellationTokenSource = new())
+                {
+                    await new ConnectionTranscieverHandler()
+                    {
+                        IPLocal = ipLocal,
+                        IPRemote = ipRemote,
+                        CancellationToken = _cancellationTokenSource.Token
+                    }.SendAsync(files, (bool)encryption);
+                }
 
                 messageBoxContent = "File(s) transmission succeeded.";
             }
@@ -218,7 +226,11 @@ namespace P2PShare
 
             if (_cancellationTokenSource!.Token.IsCancellationRequested) throw new OperationCanceledException();
 
-            connectionHandler = new(localIP, _cancellationTokenSource!.Token);
+            connectionHandler = new() 
+            {
+                IPLocal = localIP,
+                CancellationToken = _cancellationTokenSource.Token
+            };
             try
             {
                 _files = await connectionHandler.ReceiveInviteAsync();
