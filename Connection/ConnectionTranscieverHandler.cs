@@ -17,7 +17,7 @@ namespace P2PShare.Connection
 
         private void OnContacted(IPAddress ip) => Contacted?.Invoke(this, ip);
 
-        public async Task SendAsync(FileInfo[] files, bool encrypted)
+        public async override Task SendFilesAsync(FileInfo[] files, bool encrypted)
         {
             try
             {
@@ -36,7 +36,7 @@ namespace P2PShare.Connection
                     port = await SendPortAsync(encrypted);
                 }
 
-                using (Client = await ConnectAsync(port, false)) await SendFilesAsync(files, encrypted);
+                using (Client = await ConnectAsync(port, false)) await base.SendFilesAsync(files, encrypted);
             }
             catch (Exception ex)
             {
