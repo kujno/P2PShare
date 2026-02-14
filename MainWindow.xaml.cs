@@ -134,7 +134,7 @@ namespace P2PShare
                         IPLocal = ipLocal,
                         IPRemote = ipRemote,
                         CancellationToken = _cancellationTokenSource.Token
-                    }.SendFilesAsync(files, (bool)encryption);
+                    }.SendAsync(files, (bool)encryption);
                 }
 
                 messageBoxContent = "File(s) transmission succeeded.";

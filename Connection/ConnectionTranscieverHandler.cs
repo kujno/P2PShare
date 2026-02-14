@@ -17,7 +17,7 @@ namespace P2PShare.Connection
 
         private void OnContacted(IPAddress ip) => Contacted?.Invoke(this, ip);
 
-        public async override Task SendFilesAsync(FileInfo[] files, bool encrypted)
+        public async Task SendAsync(FileInfo[] files, bool encrypted)
         {
             try
             {
