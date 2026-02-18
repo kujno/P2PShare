@@ -1,0 +1,83 @@
+﻿<Window x:Class="P2PShare.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:P2PShare"
+        mc:Ignorable="d"
+        Title="Login" Height="225" Width="400"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Background="#333333"
+        BorderThickness="1px"
+        MouseDown="Window_MouseDown">
+
+    <Window.Resources>
+        <Style TargetType="TextBox">
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="FontSize" Value="14px"/>
+            <Setter Property="Foreground" Value="#c2c2c2"/>
+            <Setter Property="Height" Value="25px"/>
+            <Setter Property="Width" Value="200px"/>
+        </Style>
+
+        <Style TargetType="PasswordBox">
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="FontSize" Value="14px"/>
+            <Setter Property="Foreground" Value="#c2c2c2"/>
+            <Setter Property="Height" Value="25px"/>
+            <Setter Property="Width" Value="200px"/>
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#292929"/>
+            <Setter Property="Foreground" Value="#c2c2c2"/>
+            <Setter Property="Height" Value="20px"/>
+            <Setter Property="Width" Value="70px"/>
+        </Style>
+
+        <Style TargetType="GroupBox">
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="Foreground" Value="#c2c2c2"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <TabControl Background="#333333" Grid.Row="0">
+            <TabItem Header="Login">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <GroupBox Header="Username:">
+                        <TextBox x:Name="TextBoxUsernameLogIn" Margin="0, 0, 0, 10px"/>
+                    </GroupBox>
+                    <GroupBox Header="Password:">
+                        <PasswordBox x:Name="PasswordBoxLogIn" Margin="0, 0, 0, 20px"/>
+                    </GroupBox>
+                    <Button Click="Login_Click">
+                        Login
+                    </Button>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Register">
+                <Grid>
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBox x:Name="TextBoxUsernameRegistration" Margin="0, 0, 0, 10px"/>
+                        <PasswordBox x:Name="PasswordBoxRegistration" Margin="0, 0, 0, 20px"/>
+                        <Button Click="Register_Click">
+                            Register
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <TextBlock Grid.Row="1" HorizontalAlignment="Right" Margin="0, 0, 10px, 7px" Foreground="#c2c2c2" TextDecorations="Underline" MouseLeftButtonDown="TextBlock_MouseLeftButtonDown">
+            Continue without login
+        </TextBlock>
+    </Grid>
+</Window>
