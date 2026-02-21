@@ -93,7 +93,7 @@
                             <ColumnDefinition Width="auto"/>
                         </Grid.ColumnDefinitions>
                         
-                        <TextBox x:Name="File" Grid.Column="0" Foreground="#C2C2C2"/>
+                        <TextBox x:Name="File" Grid.Column="0"/>
                         <Button x:Name="Send" Content="Send" Height="22px" Width="60px" HorizontalAlignment="Right" Click="Send_Click" Margin="20px, 0, 0, 0" Grid.Column="1"/>
                     </Grid>
                 </GroupBox>
