@@ -6,7 +6,9 @@ namespace P2PShare.Connection
 {
     public class ConnectionToServerHandler : ConnectionHandler
     {
-        public event EventHandler? Disconnected;
+        public static event EventHandler? Disconnected;
+
+        private Task? _monitoring;
 
         public required IPAddress IPServer
         {
@@ -19,7 +21,21 @@ namespace P2PShare.Connection
             set => _ipRemote = value;
         }
 
-        public async Task ConnectAsync() => Client = await ConnectAsync(_initialServerPort, true);
+        public async Task ConnectAsync()
+        {
+            int port;
+            
+            using (Client = await ConnectAsync(_initialServerPort, true))
+            {
+                await SendEncryptionKeyAsync();
+                
+                port = await ReceivePortAsync(true);
+            }
+
+            Client = await ConnectAsync(port, true);
+
+            _monitoring = MonitorConnection();
+        }
 
         public async Task MonitorConnection()
         {

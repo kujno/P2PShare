@@ -18,7 +18,6 @@ namespace P2PShare
         {
             InitializeComponent();
 
-            connectionHandler.Disconnected += OnDisconnected;
             _connectionHandler = connectionHandler;
         }
 
