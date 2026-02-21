@@ -12,14 +12,13 @@ namespace P2PShare
     {
         public bool IsLoggedIn { get; private set; } = false;
 
-        private ConnectionToServerHandler _connectionHandler;
+        public required ConnectionToServerHandler ConnectionHandler { get; init; }
 
-        private LoginWindow(ConnectionToServerHandler connectionHandler)
+        private LoginWindow()
         {
             InitializeComponent();
 
             ConnectionToServerHandler.Disconnected += OnDisconnected;
-            _connectionHandler = connectionHandler;
         }
 
         private void OnDisconnected(object? sender, EventArgs e) => AppHelper.CloseAppForServer(this);
@@ -27,14 +26,14 @@ namespace P2PShare
         private void TextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             ConnectionToServerHandler.Disconnected -= OnDisconnected;
-            _connectionHandler.Dispose();
+            ConnectionHandler.Dispose();
 
             Close();
         }
 
         private void Login_Click(object sender, RoutedEventArgs e)
         {
-
+            ConnectionHandler.SendRequestYNAsync();
         }
 
         private void Register_Click(object sender, RoutedEventArgs e)
