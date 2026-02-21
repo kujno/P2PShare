@@ -7,9 +7,9 @@ namespace P2PShare
     {
         private static readonly string filePath = "ServerIP.txt";
 
-        public static async Task Set(IPAddress ip) => await File.WriteAllTextAsync(filePath, ip.ToString());
+        public static async Task SetAsync(IPAddress ip) => await File.WriteAllTextAsync(filePath, ip.ToString());
 
-        public static async Task<IPAddress?> Get()
+        public static async Task<IPAddress?> GetAsync()
         {
             IPAddress? ip;
 
