@@ -23,6 +23,7 @@ namespace P2PShare
         private CancellationTokenSource? _cancellationTokenSource;
         private NetworkInterface? _interface;
         private int _lastPercentage = -1;
+        private bool loggedIn;
 
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
@@ -30,7 +31,12 @@ namespace P2PShare
 
         public MainWindow()
         {
+            LoginWindow loginWindow = new();
+
             InitializeComponent();
+            Visibility = Visibility.Hidden;
+            loginWindow.ShowDialog();
+
             RefreshInterfaces();
             Interface.SelectedIndex = 0;
 
