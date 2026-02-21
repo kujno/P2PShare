@@ -24,11 +24,11 @@ namespace P2PShare.Connection
         public async Task ConnectAsync()
         {
             int port;
-            
+
             using (Client = await ConnectAsync(_initialServerPort, true))
             {
                 await SendEncryptionKeyAsync();
-                
+
                 port = await ReceivePortAsync(true);
             }
 

@@ -18,6 +18,7 @@ namespace P2PShare
         {
             InitializeComponent();
 
+            ConnectionToServerHandler.Disconnected += OnDisconnected;
             _connectionHandler = connectionHandler;
         }
 
@@ -25,7 +26,10 @@ namespace P2PShare
 
         private void TextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            ConnectionToServerHandler.Disconnected -= OnDisconnected;
+            _connectionHandler.Dispose();
 
+            Close();
         }
 
         private void Login_Click(object sender, RoutedEventArgs e)
@@ -41,11 +45,6 @@ namespace P2PShare
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left) DragMove();
-        }
-
-        private void ChangeIP_Click(object sender, RoutedEventArgs e)
-        {
-
         }
     }
 }
