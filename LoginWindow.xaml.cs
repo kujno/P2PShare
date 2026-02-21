@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using P2PShare.Connection;
+using P2PShare.Utils;
+using System.Windows;
 using System.Windows.Input;
 
 namespace P2PShare
@@ -8,10 +10,19 @@ namespace P2PShare
     /// </summary>
     public partial class LoginWindow : Window
     {
-        public LoginWindow()
+        public bool IsLoggedIn { get; private set; } = false;
+
+        private ConnectionToServerHandler _connectionHandler;
+
+        private LoginWindow(ConnectionToServerHandler connectionHandler)
         {
             InitializeComponent();
+
+            connectionHandler.Disconnected += OnDisconnected;
+            _connectionHandler = connectionHandler;
         }
+
+        private void OnDisconnected(object? sender, EventArgs e) => AppHelper.CloseAppForServer(this);
 
         private void TextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -24,6 +35,16 @@ namespace P2PShare
         }
 
         private void Register_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Window_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left) DragMove();
+        }
+
+        private void ChangeIP_Click(object sender, RoutedEventArgs e)
         {
 
         }
