@@ -16,11 +16,9 @@ namespace P2PShare
         private CancellationTokenSource? _cts;
         private IPAddress _serverIP;
 
-        public ConnectionToServerWindow(IPAddress serverIP, Window window)
+        public ConnectionToServerWindow(IPAddress serverIP)
         {
             InitializeComponent();
-            if (window.Dispatcher.CheckAccess())
-                Owner = window;
             _serverIP = serverIP;
             _connecting = ConnectAsync();
         }
