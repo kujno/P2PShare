@@ -13,8 +13,6 @@ namespace P2PShare
     /// </summary>
     public partial class LoginWindow : Window
     {
-        public bool IsLoggedIn { get; private set; } = false;
-
         public required ConnectionToServerHandler ConnectionHandler { get; init; }
 
         public LoginWindow()
@@ -45,15 +43,8 @@ namespace P2PShare
             }
             else
             {
-                if (await ConnectionHandler.SendRequestYNAsync(new Request()
+                if (await ConnectionHandler.LogInAsync(username, password))
                 {
-                    Tag = Libs.Models.Requests.Tag.Login,
-                    Username = username,
-                    Password = password
-                }.ToJSON()))
-                {
-                    IsLoggedIn = true;
-
                     Close();
                 }
                 else
