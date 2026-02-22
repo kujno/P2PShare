@@ -1,6 +1,7 @@
 ﻿using P2PShare.Connection;
 using P2PShare.Libs;
 using P2PShare.Libs.Models;
+using P2PShare.Libs.Models.FileSytem;
 using P2PShare.Models;
 using P2PShare.Utils;
 using System.IO;
@@ -20,30 +21,80 @@ namespace P2PShare
         private CustomMessageBox? _messageBox;
         private Dictionary<string, long>? _files;
         private Task? _receiveLoop;
+        private Task _auth;
         private CancellationTokenSource? _cancellationTokenSource;
         private NetworkInterface? _interface;
         private int _lastPercentage = -1;
-        private bool loggedIn;
+        private bool _loggedIn = false;
+        private ConnectionToServerHandler? _serverConnection;
 
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
         private void OnContacted(object? sender, IPAddress ip) => NewMessageBox($"Contacting {ip}...", ButtonContent.Cancel, false);
+        private void OnServerDisconnected(object? sender, EventArgs e) => AppHelper.CloseAppForServer(this);
 
         public MainWindow()
         {
-            LoginWindow loginWindow = new();
-
             InitializeComponent();
             Visibility = Visibility.Hidden;
-            loginWindow.ShowDialog();
-
             RefreshInterfaces();
             Interface.SelectedIndex = 0;
 
             ConnectionHandler.FilePartTransported += OnFilePartTransported;
             ConnectionTranscieverHandler.Contacted += OnContacted;
 
-            if (_receiveLoop is null) _receiveLoop = ReceiveLoopAsync();
+            _auth = AuthAsync();
+        }
+
+        private async Task AuthAsync()
+        {
+            try
+            {
+                IPAddress? serverIP;
+
+                if (await ServerIP.GetAsync() is null)
+                    new ServerIPWindow("Skip").ShowDialog();
+
+                serverIP = await ServerIP.GetAsync();
+
+                if (serverIP is not null)
+                {
+                    ConnectionToServerWindow connectionWindow = new(serverIP);
+
+                    connectionWindow.ShowDialog();
+
+                    _serverConnection = connectionWindow.ConnectionHandler;
+                    if (_serverConnection is not null)
+                    {
+                        LoginWindow loginWindow = new()
+                        {
+                            ConnectionHandler = _serverConnection
+                        };
+
+                        ConnectionToServerHandler.Disconnected += OnServerDisconnected;
+
+                        loginWindow.ShowDialog();
+
+                        _loggedIn = _serverConnection.UserInfo is not null;
+                    }
+                }
+            }
+            catch
+            {
+                NewMessageBox("Couldn't connect to the server.", ButtonContent.OK, true);
+            }
+
+            if (_loggedIn)
+            {
+                TextBlockUser.Text = $"{_serverConnection!.UserInfo!.User.Name} {_serverConnection.UserInfo.User.Surename} ({_serverConnection.UserInfo.User.Username})";
+                TabItemServer.Visibility = Visibility.Visible;
+                RefreshFiles(_serverConnection.UserInfo);
+            }
+
+            Visibility = Visibility.Visible;
+
+            if (_receiveLoop is null)
+                _receiveLoop = ReceiveLoopAsync();
         }
 
         private void Close_Click(object sender, RoutedEventArgs e)
@@ -232,7 +283,7 @@ namespace P2PShare
 
             if (_cancellationTokenSource!.Token.IsCancellationRequested) throw new OperationCanceledException();
 
-            connectionHandler = new() 
+            connectionHandler = new()
             {
                 IPLocal = localIP,
                 CancellationToken = _cancellationTokenSource.Token
@@ -310,19 +361,19 @@ namespace P2PShare
         private void NewMessageBox(string content, ButtonContent buttonContent, bool modal)
         {
             _messageBox = new(content, buttonContent, this);
-            _messageBox.WindowClosed += OnWindowClosed;
             ShowMessageBox(modal);
         }
 
         private void NewMessageBox(FilePartTransportedEventArgs transportInfo, KeyValuePair<string, long> file, bool modal)
         {
             _messageBox = new(transportInfo, file, this);
-            _messageBox.WindowClosed += OnWindowClosed;
             ShowMessageBox(modal);
         }
 
         private void ShowMessageBox(bool modal)
         {
+            _messageBox?.WindowClosed += OnWindowClosed;
+
             try
             {
                 if (modal) _messageBox?.ShowDialog();
@@ -333,6 +384,77 @@ namespace P2PShare
             }
 
             if (modal) _messageBox = null;
+        }
+
+        private async void RefreshServer_Click(object sender, RoutedEventArgs e)
+        {
+            await _serverConnection!.GetAsync();
+        }
+
+        private void RefreshFiles(AllUserInfo userInfo)
+        {
+            TreeViewFiles.Items.Clear();
+
+            TreeViewFiles.Items.Add(CreateFromDir(userInfo.MyDir));
+            TreeViewFiles.Items.Add(CreateFromSharedDirsAndFiles(userInfo.SharedDirs ?? [], userInfo.SharedFils ?? []));
+        }
+
+        private TreeViewItem CreateFromDir(Dir dir)
+        {
+            TreeViewItem item = new()
+            {
+                Header = dir.Name,
+                Tag = dir.Owner
+            };
+
+            if (dir.Dirs is not null)
+            {
+                foreach (var subDir in dir.Dirs)
+                    item.Items.Add(CreateFromDir(subDir));
+            }
+
+            if (dir.Fils is not null)
+            {
+                foreach (var fil in dir.Fils)
+                    item.Items.Add(new TreeViewItem()
+                    {
+                        Header = fil.Name,
+                        Tag = fil.Owner
+                    });
+            }
+
+            return item;
+        }
+
+        private TreeViewItem[] CreateFromSharedDirsAndFiles(Dir[] sharedDirs, Fil[] sharedFils)
+        {
+            List<TreeViewItem> items = [];
+
+            foreach (var dir in sharedDirs)
+            {
+                CreateTreeViewItemIfOwnerNotThere(ref items, dir.Owner);
+
+                items.First(x => x.Tag.ToString() == dir.Owner).Items.Add(CreateFromDir(dir));
+            }
+
+            foreach (var fil in sharedFils)
+            {
+                CreateTreeViewItemIfOwnerNotThere(ref items, fil.Owner);
+
+                items.First(x => x.Tag.ToString() == fil.Owner).Items.Add(new TreeViewItem()
+                {
+                    Header = fil.Name,
+                    Tag = fil.Owner
+                });
+            }
+
+            return items.ToArray();
+        }
+
+        private void CreateTreeViewItemIfOwnerNotThere(ref List<TreeViewItem> items, string owner)
+        {
+            if (items.All(x => x.Tag.ToString() != owner))
+                items.Add(new() { Header = owner });
         }
     }
 }
