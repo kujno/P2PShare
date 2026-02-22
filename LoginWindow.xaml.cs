@@ -17,7 +17,7 @@ namespace P2PShare
 
         public required ConnectionToServerHandler ConnectionHandler { get; init; }
 
-        private LoginWindow()
+        public LoginWindow()
         {
             InitializeComponent();
 
