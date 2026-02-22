@@ -53,52 +53,77 @@
 
         <Grid Grid.Row="0" MouseDown="ToolBar_MouseDown" Background="#333333">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200px"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="200px"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Column="0" Text="P2PShare" HorizontalAlignment="Center" Margin="70px, 0, 0, 0" FontSize="20px" FontFamily="Arial Black"/>
+            <TextBlock x:Name="TextBlockUser" Grid.Column="0" VerticalAlignment="Center" Margin="10px, 0, 0, 0">
+                Not logged in
+            </TextBlock>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0px, 3px, 3px, 3px">
+            <TextBlock Grid.Column="1" Text="P2PShare" HorizontalAlignment="Center" FontSize="20px" FontFamily="Arial Black"/>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0px, 3px, 3px, 3px">
                 <Button x:Name="Minimize" Content="_" Width="32px" Height="Auto" Click="Minimize_Click" FontSize="12px" FontWeight="UltraBlack"/>
                 <Button x:Name="Close" Content="X" Width="32px" Height="Auto" Click="Close_Click" Margin="3px, 0px, 0px, 0px" FontSize="12px" FontWeight="Black"/>
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="1" Margin="10px">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <TabControl Grid.Row="1" Margin="10px" Background="#333333">
+            <TabItem Header="P2P">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-            <StackPanel Orientation="Vertical" Grid.Column="0">
-                
-                <GroupBox Header="Connection type:" Foreground="#c2c2c2" BorderThickness="0px" VerticalAlignment="Top" FontFamily="Arial">
-                    <ComboBox x:Name="Interface" SelectionChanged="Interface_SelectionChanged"/>
-                </GroupBox>
-                
-                <Button x:Name="Refresh" Grid.Column="0" Height="24px" Width="80px" Margin="0, 4px" Click="Refresh_Click">Refresh</Button>
-                <CheckBox x:Name="CheckBoxEncryption" Content="Encryption" Foreground="#c2c2c2" Margin="6px, 8px, 0, 0"/>
-            </StackPanel>
+                    <StackPanel Orientation="Vertical" Grid.Column="0">
 
-            <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch" Margin="10px, 2px">
-                <TextBlock x:Name="YourIP" Text="Your IP address:" HorizontalAlignment="Center" FontSize="20" FontWeight="Medium"/>
-                <GroupBox Header="Remote IP address:" Width="160px" Margin="0, 10px, 0, 0">
-                    <TextBox x:Name="RemoteIP" Width="160" Margin="0, 5px, 0, 0"/>
-                </GroupBox>
-                <GroupBox Header="File to send:" HorizontalAlignment="Stretch" Margin="0, 10px, 0, 0" Padding="0, 5px, 0, 0">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <TextBox x:Name="File" Grid.Column="0"/>
-                        <Button x:Name="Send" Content="Send" Height="22px" Width="60px" HorizontalAlignment="Right" Click="Send_Click" Margin="20px, 0, 0, 0" Grid.Column="1"/>
-                    </Grid>
-                </GroupBox>
-                <Button x:Name="Select" Content="Select" Height="22px" Width="60px" Click="Select_Click" HorizontalAlignment="Left" Margin="5px"/>
-            </StackPanel>
-        </Grid>
+                        <GroupBox Header="Connection type:" Foreground="#c2c2c2" BorderThickness="0px" VerticalAlignment="Top" FontFamily="Arial">
+                            <ComboBox x:Name="Interface" SelectionChanged="Interface_SelectionChanged"/>
+                        </GroupBox>
+
+                        <Button x:Name="Refresh" Grid.Column="0" Height="24px" Width="80px" Margin="0, 4px" Click="Refresh_Click">Refresh</Button>
+                        <CheckBox x:Name="CheckBoxEncryption" Content="Encryption" Foreground="#c2c2c2" Margin="6px, 8px, 0, 0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch" Margin="10px, 2px">
+                        <TextBlock x:Name="YourIP" Text="Your IP address:" HorizontalAlignment="Center" FontSize="20" FontWeight="Medium"/>
+                        <GroupBox Header="Remote IP address:" Width="160px" Margin="0, 10px, 0, 0">
+                            <TextBox x:Name="RemoteIP" Width="160" Margin="0, 5px, 0, 0"/>
+                        </GroupBox>
+                        <GroupBox Header="File to send:" HorizontalAlignment="Stretch" Margin="0, 10px, 0, 0" Padding="0, 5px, 0, 0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox x:Name="File" Grid.Column="0"/>
+                                <Button x:Name="Send" Content="Send" Height="22px" Width="60px" HorizontalAlignment="Right" Click="Send_Click" Margin="20px, 0, 0, 0" Grid.Column="1"/>
+                            </Grid>
+                        </GroupBox>
+                        <Button x:Name="Select" Content="Select" Height="22px" Width="60px" Click="Select_Click" HorizontalAlignment="Left" Margin="5px"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="TabItemServer" Visibility="Hidden" Header="Server">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Button Grid.Row="0" Click="RefreshServer_Click">
+                        Refresh
+                    </Button>
+
+                    <StackPanel x:Name="StackPanelServer" Grid.Row="1" Orientation="Vertical"/>
+
+                    <TreeView x:Name="TreeViewFiles" Grid.Row="1"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
