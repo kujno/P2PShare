@@ -303,7 +303,7 @@ namespace P2PShare
 
                 dictionary = FileDialogs.SelectFolder();
 
-                if (dictionary is null) messageBoxContent = "Receiving files was cancelled.";
+                if (dictionary is null) messageBoxContent = "Receiving files was cancelled due to folder not chosen.";
                 else
                 {
                     savedFiles = await connectionHandler.ReceiveFilesAsync(dictionary);
@@ -314,8 +314,11 @@ namespace P2PShare
             }
             catch (Exception ex)
             {
-                if (_messageBox is null || ex.Message == ConnectionReceiverHandler.InviteErrorMessage || ex is OperationCanceledException) return;
-                else messageBoxContent = ex.Message;
+                if (ex.Message == ConnectionReceiverHandler.InviteErrorMessage || ex is OperationCanceledException) return;
+                else
+                {
+                    messageBoxContent = ex.Message == ConnectionHandler.CouldNotOpenFileErrorMessage ? ex.Message : "Receiving file(s) failed.";
+                }
             }
             finally
             {
