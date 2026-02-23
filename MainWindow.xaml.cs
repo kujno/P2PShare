@@ -398,7 +398,7 @@ namespace P2PShare
             TreeViewFiles.Items.Clear();
 
             TreeViewFiles.Items.Add(CreateFromDir(userInfo.MyDir));
-            TreeViewFiles.Items.Add(CreateFromSharedDirsAndFiles(userInfo.SharedDirs ?? [], userInfo.SharedFils ?? []));
+            Array.ForEach(CreateFromSharedDirsAndFiles(userInfo.SharedDirs ?? [], userInfo.SharedFils ?? []), x => TreeViewFiles.Items.Add(x));
         }
 
         private TreeViewItem CreateFromDir(Dir dir)
