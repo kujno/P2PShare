@@ -44,14 +44,18 @@ namespace P2PShare.Connection
 
         public async Task MonitorConnection()
         {
-            while (!(Client.Client.Poll(0, SelectMode.SelectRead) && Client.Client.Available == 0) && !CancellationToken.IsCancellationRequested)
+            try
             {
-                try
+                while (!(Client.Client.Poll(0, SelectMode.SelectRead) && Client.Client.Available == 0) && !CancellationToken.IsCancellationRequested)
                 {
-                    await Task.Delay(1000, CancellationToken);
+                    try
+                    {
+                        await Task.Delay(1000, CancellationToken);
+                    }
+                    catch (OperationCanceledException) { }
                 }
-                catch (OperationCanceledException) { }
             }
+            catch { }
 
             Disconnected?.Invoke(this, EventArgs.Empty);
         }
