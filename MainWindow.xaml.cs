@@ -10,6 +10,7 @@ using System.Net.NetworkInformation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace P2PShare
 {
@@ -27,6 +28,7 @@ namespace P2PShare
         private int _lastPercentage = -1;
         private bool _loggedIn = false;
         private ConnectionToServerHandler? _serverConnection;
+        private SolidColorBrush _textColor = new(Color.FromRgb(194, 194, 194));
 
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
@@ -405,7 +407,8 @@ namespace P2PShare
             TreeViewItem item = new()
             {
                 Header = dir.Name,
-                Tag = dir.Owner
+                Tag = dir.Owner,
+                Foreground = _textColor,
             };
 
             if (dir.Dirs is not null)
@@ -419,8 +422,9 @@ namespace P2PShare
                 foreach (var fil in dir.Fils)
                     item.Items.Add(new TreeViewItem()
                     {
-                        Header = fil.Name,
-                        Tag = fil.Owner
+                        Header = $"{fil.Name} <{fil.Size}B>",
+                        Tag = fil.Owner,
+                        Foreground = _textColor
                     });
             }
 
@@ -444,8 +448,9 @@ namespace P2PShare
 
                 items.First(x => x.Tag.ToString() == fil.Owner).Items.Add(new TreeViewItem()
                 {
-                    Header = fil.Name,
-                    Tag = fil.Owner
+                    Header = $"{fil.Name} <{fil.Size}B>",
+                    Tag = fil.Owner,
+                    Foreground = _textColor
                 });
             }
 
