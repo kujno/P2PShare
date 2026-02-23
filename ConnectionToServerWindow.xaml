@@ -39,8 +39,8 @@
                 </Style>
             </StackPanel.Resources>
 
-            <Button Visibility="Hidden" Content="Change server IP" Margin="0" Click="ChangeIP_Click"/>
-            <Button Visibility="Hidden" Content="Try again" Margin="70px, 0, 0, 0" Click="TryAgain_Click"/>
+            <Button Visibility="Hidden" x:Name="ButtonChangeIP" Content="Change server IP" Margin="0" Click="ChangeIP_Click"/>
+            <Button Visibility="Hidden" x:Name="ButtonTryAgain" Content="Try again" Margin="70px, 0, 0, 0" Click="TryAgain_Click"/>
         </StackPanel>
 
         <TextBlock Grid.Row="2" HorizontalAlignment="Center" Margin="5px" TextDecorations="Underline" MouseLeftButtonDown="TextBlock_MouseLeftButtonDown">

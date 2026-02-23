@@ -31,9 +31,11 @@ namespace P2PShare
 
             ServerIPWindow ipWindow = new("Cancel");
             ipWindow.ShowDialog();
-            if (_serverIP != (newIP = await ServerIP.GetAsync()))
+            newIP = await ServerIP.GetAsync();
+
+            if (newIP is not null && _serverIP != newIP)
             {
-                _serverIP = newIP!;
+                _serverIP = newIP;
                 _connecting = ConnectAsync();
             }
         }
@@ -48,6 +50,8 @@ namespace P2PShare
             _cts?.Cancel();
             _cts?.Dispose();
             ConnectionHandler?.Dispose();
+            ButtonChangeIP.Visibility = Visibility.Hidden;
+            ButtonTryAgain.Visibility = Visibility.Hidden;
 
             _cts = new();
             ConnectionHandler = new()
@@ -62,15 +66,15 @@ namespace P2PShare
             try
             {
                 await ConnectionHandler.ConnectAsync();
+
+                Close();
             }
             catch
             {
                 Text.Text = $"Failed to connect.";
-
-                return;
+                ButtonChangeIP.Visibility = Visibility.Visible;
+                ButtonTryAgain.Visibility = Visibility.Visible;
             }
-
-            Close();
         }
 
         private void TextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -78,7 +82,6 @@ namespace P2PShare
             _cts?.Cancel();
             _cts?.Dispose();
             ConnectionHandler?.Dispose();
-            ConnectionHandler = null;
 
             Close();
         }
