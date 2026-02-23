@@ -21,7 +21,7 @@
         <GroupBox Header="Server IP:" Width="250px" Foreground="#c2c2c2" BorderThickness="0"  Grid.Row="0" VerticalAlignment="Bottom" Margin="0, 30px">
             <TextBox x:Name="TextBoxServerIP" FontSize="18px" FontFamily="Arial"/>
         </GroupBox>
-        <StackPanel VerticalAlignment="Bottom" Orientation="Vertical" HorizontalAlignment="Center" Grid.Row="1" Margin="0, 0, 0, 45px">
+        <StackPanel VerticalAlignment="Bottom" Orientation="Vertical" HorizontalAlignment="Center" Grid.Row="1" Margin="0, 0, 0, 25px">
             <StackPanel.Resources>
                 <Style TargetType="Button">
                     <Setter Property="Background" Value="#292929"/>
@@ -38,9 +38,9 @@
 
             <TextBlock x:Name="TextBlockValid" Foreground="Red" Visibility="Collapsed"/>
 
-            <Button Content="OK" Margin="0" Click="Button_Click"/>
+            <Button Content="OK" Margin="0, 0, 0, 20px" Click="Button_Click"/>
 
-            <TextBlock x:Name="TextBlockExit" Foreground="#c2c2c2" TextDecorations="Underline" MouseLeftButtonDown="TextBlockExit_MouseLeftButtonDown"/>
+            <TextBlock x:Name="TextBlockExit" Foreground="#c2c2c2" Cursor="Hand" TextAlignment="Center" TextDecorations="Underline" MouseLeftButtonDown="TextBlockExit_MouseLeftButtonDown"/>
         </StackPanel>
     </Grid>
 </Window>
