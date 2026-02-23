@@ -64,7 +64,7 @@ namespace P2PShare
                     connectionWindow.ShowDialog();
 
                     _serverConnection = connectionWindow.ConnectionHandler;
-                    if (_serverConnection is not null)
+                    if (_serverConnection?.UserInfo is not null)
                     {
                         LoginWindow loginWindow = new()
                         {
@@ -111,8 +111,6 @@ namespace P2PShare
             if (cancelled)
             {
                 _cancellationTokenSource?.Cancel();
-                await _receiveLoop!;
-                _receiveLoop = ReceiveLoopAsync();
             }
         }
 
@@ -186,12 +184,13 @@ namespace P2PShare
 
                 using (_cancellationTokenSource = new())
                 {
-                    await new ConnectionTranscieverHandler()
+                    using (ConnectionTranscieverHandler connectionHandler = new()
                     {
                         IPLocal = ipLocal,
                         IPRemote = ipRemote,
                         CancellationToken = _cancellationTokenSource.Token
-                    }.SendAsync(files, (bool)encryption);
+                    })
+                        await connectionHandler.SendAsync(files, (bool)encryption);
                 }
 
                 messageBoxContent = "File(s) transmission succeeded.";
@@ -312,14 +311,6 @@ namespace P2PShare
                     messageBoxContent = $"Files saved to {dictionary} as:";
                     foreach (string file in savedFiles) messageBoxContent += $"\n{file}";
                 }
-
-                try
-                {
-                    connectionHandler.Dispose();
-                }
-                catch
-                {
-                }
             }
             catch (Exception ex)
             {
@@ -328,6 +319,14 @@ namespace P2PShare
             }
             finally
             {
+                try
+                {
+                    connectionHandler.Dispose();
+                }
+                catch
+                {
+                }
+
                 _messageBox?.Close();
                 _messageBox = null;
 
