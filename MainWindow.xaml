@@ -121,7 +121,7 @@
 
                     <StackPanel x:Name="StackPanelServer" Grid.Row="1" Orientation="Vertical"/>
 
-                    <TreeView x:Name="TreeViewFiles" Grid.Row="1"/>
+                    <TreeView x:Name="TreeViewFiles" Background="#333333" Grid.Row="1"/>
                 </Grid>
             </TabItem>
         </TabControl>
