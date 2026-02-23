@@ -71,8 +71,6 @@ namespace P2PShare
                             ConnectionHandler = _serverConnection
                         };
 
-                        ConnectionToServerHandler.Disconnected += OnServerDisconnected;
-
                         loginWindow.ShowDialog();
 
                         _loggedIn = _serverConnection.UserInfo is not null;
@@ -86,6 +84,7 @@ namespace P2PShare
 
             if (_loggedIn)
             {
+                ConnectionToServerHandler.Disconnected += OnServerDisconnected;
                 TextBlockUser.Text = $"{_serverConnection!.UserInfo!.User.Name} {_serverConnection.UserInfo.User.Surename} ({_serverConnection.UserInfo.User.Username})";
                 TabItemServer.Visibility = Visibility.Visible;
                 RefreshFiles(_serverConnection.UserInfo);
