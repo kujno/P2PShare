@@ -64,7 +64,7 @@ namespace P2PShare
                     connectionWindow.ShowDialog();
 
                     _serverConnection = connectionWindow.ConnectionHandler;
-                    if (_serverConnection?.UserInfo is not null)
+                    if (_serverConnection!.IsConnected)
                     {
                         LoginWindow loginWindow = new()
                         {
@@ -362,7 +362,7 @@ namespace P2PShare
 
         private void NewMessageBox(string content, ButtonContent buttonContent, bool modal)
         {
-            _messageBox = new(content, buttonContent, this);
+            _messageBox = new(content, buttonContent, this, modal);
             ShowMessageBox(modal);
         }
 

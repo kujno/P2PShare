@@ -14,9 +14,9 @@ namespace P2PShare
 
         public event EventHandler<bool>? WindowClosed;
 
-        public CustomMessageBox(FilePartTransportedEventArgs transportInfo, KeyValuePair<string, long> file, Window window) : this(String.Empty, ButtonContent.Cancel, window) => ChangeContent(transportInfo, file);
+        public CustomMessageBox(FilePartTransportedEventArgs transportInfo, KeyValuePair<string, long> file, Window window) : this(String.Empty, ButtonContent.Cancel, window, true) => ChangeContent(transportInfo, file);
 
-        public CustomMessageBox(string content, ButtonContent buttonContent, Window window)
+        public CustomMessageBox(string content, ButtonContent buttonContent, Window window, bool modal)
         {
             InitializeComponent();
 
@@ -26,7 +26,10 @@ namespace P2PShare
             if (window.Dispatcher.CheckAccess())
             {
                 Owner = window;
-                Owner.Visibility = Visibility.Hidden;
+                if (modal)
+                {
+                    Owner.Visibility = Visibility.Hidden;
+                }
             }
         }
 

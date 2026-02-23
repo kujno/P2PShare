@@ -11,8 +11,7 @@ namespace P2PShare.Connection
         public static event EventHandler? Disconnected;
 
         public AllUserInfo? UserInfo { get; private set; } = null;
-
-        private Task? _monitoring;
+        public bool IsConnected { get => Client is not null; }
 
         public required IPAddress IPServer
         {
@@ -22,8 +21,10 @@ namespace P2PShare.Connection
                     ?? throw new ArgumentNullException();
             }
 
-            set => _ipRemote = value;
+            init => _ipRemote = value;
         }
+
+        private Task? _monitoring;
 
         public async Task ConnectAsync()
         {

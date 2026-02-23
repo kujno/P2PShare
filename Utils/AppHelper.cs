@@ -6,7 +6,7 @@ namespace P2PShare.Utils
     {
         public static void CloseAppForServer(Window window)
         {
-            new CustomMessageBox("Disconnected from server.\nRestart the application.", Models.ButtonContent.OK, window).ShowDialog();
+            new CustomMessageBox("Disconnected from server.\nRestart the application.", Models.ButtonContent.OK, window, true).ShowDialog();
 
             Application.Current.Shutdown();
         }

@@ -38,7 +38,7 @@ namespace P2PShare
 
             if (String.IsNullOrEmpty(username) || String.IsNullOrEmpty(password))
             {
-                new CustomMessageBox("Fill in all fields!", ButtonContent.OK, this)
+                new CustomMessageBox("Fill in all fields!", ButtonContent.OK, this, false)
                     .ShowDialog();
             }
             else
@@ -49,7 +49,7 @@ namespace P2PShare
                 }
                 else
                 {
-                    new CustomMessageBox("Wrong credentials.", ButtonContent.OK, this)
+                    new CustomMessageBox("Wrong credentials or account not verified.", ButtonContent.OK, this, false)
                     .ShowDialog();
                 }
             }
@@ -61,12 +61,12 @@ namespace P2PShare
 
             if (String.IsNullOrEmpty(username) || String.IsNullOrEmpty(password) || String.IsNullOrEmpty(passwordRepeat) || String.IsNullOrEmpty(name) || String.IsNullOrEmpty(surename))
             {
-                new CustomMessageBox("Fill in all fields!", ButtonContent.OK, this)
+                new CustomMessageBox("Fill in all fields!", ButtonContent.OK, this, false)
                     .ShowDialog();
             }
             else if (password != passwordRepeat)
             {
-                new CustomMessageBox("Passwords do not match.", ButtonContent.OK, this)
+                new CustomMessageBox("Passwords do not match.", ButtonContent.OK, this, false)
                     .ShowDialog();
             }
             else
@@ -80,12 +80,12 @@ namespace P2PShare
                     Surename = surename
                 }.ToJSON()))
                 {
-                    new CustomMessageBox("Registration successful. You can log in to this account after admin's verification.", ButtonContent.OK, this)
+                    new CustomMessageBox("Registration successful. You can log in to this account after admin's verification.", ButtonContent.OK, this, false)
                         .ShowDialog();
                 }
                 else
                 {
-                    new CustomMessageBox("Username already exists.", ButtonContent.OK, this)
+                    new CustomMessageBox("Username already exists.", ButtonContent.OK, this, false)
                     .ShowDialog();
                 }
             }
