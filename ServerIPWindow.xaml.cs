@@ -16,7 +16,7 @@ namespace P2PShare
             TextBlockExit.Text = exitText;
         }
 
-        private void TextBlockExit_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e) => Close();
+        private void TextBlockExit_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => Close();
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
