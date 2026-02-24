@@ -27,7 +27,6 @@ namespace P2PShare
         private CancellationTokenSource? _cancellationTokenSource;
         private NetworkInterface? _interface;
         private int _lastPercentage = -1;
-        private bool _loggedIn = false;
         private ConnectionToServerHandler? _serverConnection;
         private SolidColorBrush _textColor = new(Color.FromRgb(194, 194, 194));
         private BitmapImage _fileIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/file.png"), UriKind.Absolute)), _folderIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/folder.png"), UriKind.Absolute));
@@ -35,7 +34,8 @@ namespace P2PShare
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
         private void OnContacted(object? sender, IPAddress ip) => NewMessageBox($"Contacting {ip}...", ButtonContent.Cancel, false);
-        private void OnServerDisconnected(object? sender, EventArgs e) => AppHelper.CloseAppForServer(this);
+        // del this
+        private void OnServerDisconnected(object? sender, EventArgs e) => Dispatcher.Invoke(() => AppHelper.CloseAppForServer(this));
 
         public MainWindow()
         {
@@ -77,21 +77,19 @@ namespace P2PShare
 
                         loginWindow.ShowDialog();
 
-                        _loggedIn = _serverConnection.UserInfo is not null;
+                        if (_serverConnection.UserInfo is not null)
+                        {
+                            ConnectionToServerHandler.Disconnected += OnServerDisconnected;
+                            TextBlockUser.Text = $"{_serverConnection!.UserInfo!.User.Name} {_serverConnection.UserInfo.User.Surename} ({_serverConnection.UserInfo.User.Username})";
+                            TabItemServer.Visibility = Visibility.Visible;
+                            await RefreshFilesAsync();
+                        }
                     }
                 }
             }
             catch
             {
                 NewMessageBox("Couldn't connect to the server.", ButtonContent.OK, true);
-            }
-
-            if (_loggedIn)
-            {
-                ConnectionToServerHandler.Disconnected += OnServerDisconnected;
-                TextBlockUser.Text = $"{_serverConnection!.UserInfo!.User.Name} {_serverConnection.UserInfo.User.Surename} ({_serverConnection.UserInfo.User.Username})";
-                TabItemServer.Visibility = Visibility.Visible;
-                RefreshFiles(_serverConnection.UserInfo);
             }
 
             Visibility = Visibility.Visible;
@@ -391,19 +389,26 @@ namespace P2PShare
             if (modal) _messageBox = null;
         }
 
-        private async void RefreshServer_Click(object sender, RoutedEventArgs e)
+        private async void RefreshServer_Click(object sender, RoutedEventArgs e) => await RefreshFilesAsync();
+
+        private async Task RefreshFilesAsync()
         {
-            await _serverConnection!.GetAsync();
+            try
+            {
+                await _serverConnection!.GetAsync();
 
-            RefreshFiles(_serverConnection.UserInfo!);
-        }
+                TreeViewFiles.Items.Clear();
 
-        private void RefreshFiles(AllUserInfo userInfo)
-        {
-            TreeViewFiles.Items.Clear();
+                TreeViewFiles.Items.Add(CreateFromDir(_serverConnection.UserInfo!.MyDir));
+                Array.ForEach(CreateFromSharedDirsAndFiles(_serverConnection.UserInfo.SharedDirs ?? [], _serverConnection.UserInfo.SharedFils ?? []), x => TreeViewFiles.Items.Add(x));
+            }
+            catch
+            {
+                NewMessageBox("An error occured.", ButtonContent.OK, true);
 
-            TreeViewFiles.Items.Add(CreateFromDir(userInfo.MyDir));
-            Array.ForEach(CreateFromSharedDirsAndFiles(userInfo.SharedDirs ?? [], userInfo.SharedFils ?? []), x => TreeViewFiles.Items.Add(x));
+                if (!_serverConnection!.IsConnected)
+                    AppHelper.CloseAppForServer(this);
+            }
         }
 
         private sealed record TreeNodeTag(string Owner, string Path);
@@ -473,9 +478,32 @@ namespace P2PShare
                 items.Add(new() { Header = CreateTreeViewItemHeader(true, owner) });
         }
 
-        private void NewFolder_Click(object sender, RoutedEventArgs e)
+        private async void NewFolder_Click(object sender, RoutedEventArgs e)
         {
+            NewFolderWindow newFolderWindow = new();
 
+            try
+            {
+                newFolderWindow.ShowDialog();
+                if (newFolderWindow.FolderName is null)
+                    return;
+
+                var selected = ((TreeNodeTag)((TreeViewItem)TreeViewFiles.SelectedItem).Tag).Path;
+                var indexOfSeparator = selected.IndexOf('\\');
+                bool containsSeparator = selected.Contains('\\'), my = (containsSeparator ? selected.Substring(0, indexOfSeparator) : selected) == _serverConnection?.UserInfo?.User.Username;
+
+                if (await _serverConnection!.NewFolderAsync($"{(my ? (containsSeparator ? $"{selected.Substring(indexOfSeparator + 1)}\\" : String.Empty) : $"{selected}\\")}{newFolderWindow.FolderName}", my))
+                    await RefreshFilesAsync();
+                else
+                    NewMessageBox("Couldn't create the folder.", ButtonContent.OK, true);
+            }
+            catch
+            {
+                NewMessageBox("An error occured.", ButtonContent.OK, true);
+
+                if (!_serverConnection!.IsConnected)
+                    AppHelper.CloseAppForServer(this);
+            }
         }
 
         private UIElement CreateTreeViewItemHeader(bool folder, string name, long? fileSize = null)
