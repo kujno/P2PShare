@@ -57,6 +57,9 @@ namespace P2PShare.Connection
             }
             catch { }
 
+            Dispose();
+            _client = null;
+
             Disconnected?.Invoke(this, EventArgs.Empty);
         }
 
@@ -85,6 +88,17 @@ namespace P2PShare.Connection
             }.ToJSON());
 
             await GetUserInfoAsync();
+        }
+
+        public async Task<bool> NewFolderAsync(string folderName, bool my)
+        {
+            return await SendRequestYNAsync(new Request()
+            {
+                Tag = Tag.AddFolder,
+                FileName = folderName,
+                My = my,
+                Unit = Unit.Directory
+            }.ToJSON());
         }
     }
 }
