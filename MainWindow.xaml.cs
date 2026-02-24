@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace P2PShare
 {
@@ -29,6 +30,7 @@ namespace P2PShare
         private bool _loggedIn = false;
         private ConnectionToServerHandler? _serverConnection;
         private SolidColorBrush _textColor = new(Color.FromRgb(194, 194, 194));
+        private BitmapImage _fileIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/file.png"), UriKind.Absolute)), _folderIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/folder.png"), UriKind.Absolute));
 
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
@@ -392,6 +394,8 @@ namespace P2PShare
         private async void RefreshServer_Click(object sender, RoutedEventArgs e)
         {
             await _serverConnection!.GetAsync();
+
+            RefreshFiles(_serverConnection.UserInfo!);
         }
 
         private void RefreshFiles(AllUserInfo userInfo)
@@ -402,19 +406,23 @@ namespace P2PShare
             Array.ForEach(CreateFromSharedDirsAndFiles(userInfo.SharedDirs ?? [], userInfo.SharedFils ?? []), x => TreeViewFiles.Items.Add(x));
         }
 
-        private TreeViewItem CreateFromDir(Dir dir)
+        private sealed record TreeNodeTag(string Owner, string Path);
+
+        private TreeViewItem CreateFromDir(Dir dir, string? previousName = null)
         {
+            var curDirName = previousName is null ? dir.Name : $"{previousName}\\{dir.Name}";
+
             TreeViewItem item = new()
             {
-                Header = dir.Name,
-                Tag = dir.Owner,
-                Foreground = _textColor,
+                Header = CreateTreeViewItemHeader(true, dir.Name),
+                Tag = new TreeNodeTag(dir.Owner, curDirName),
+                Foreground = _textColor
             };
 
             if (dir.Dirs is not null)
             {
                 foreach (var subDir in dir.Dirs)
-                    item.Items.Add(CreateFromDir(subDir));
+                    item.Items.Add(CreateFromDir(subDir, curDirName));
             }
 
             if (dir.Fils is not null)
@@ -422,8 +430,8 @@ namespace P2PShare
                 foreach (var fil in dir.Fils)
                     item.Items.Add(new TreeViewItem()
                     {
-                        Header = $"{fil.Name} <{fil.Size}B>",
-                        Tag = fil.Owner,
+                        Header = CreateTreeViewItemHeader(false, fil.Name, fil.Size),
+                        Tag = new TreeNodeTag(fil.Owner, $"{curDirName}\\{fil.Name}"),
                         Foreground = _textColor
                     });
             }
@@ -439,18 +447,20 @@ namespace P2PShare
             {
                 CreateTreeViewItemIfOwnerNotThere(ref items, dir.Owner);
 
-                items.First(x => x.Tag.ToString() == dir.Owner).Items.Add(CreateFromDir(dir));
+                items.First(x => ((TreeNodeTag)x.Tag).Owner == dir.Owner).Items.Add(CreateFromDir(dir));
             }
 
             foreach (var fil in sharedFils)
             {
                 CreateTreeViewItemIfOwnerNotThere(ref items, fil.Owner);
 
-                items.First(x => x.Tag.ToString() == fil.Owner).Items.Add(new TreeViewItem()
+                var item = items.First(x => ((TreeNodeTag)x.Tag).Owner == fil.Owner);
+
+                item.Items.Add(new TreeViewItem()
                 {
-                    Header = $"{fil.Name} <{fil.Size}B>",
-                    Tag = fil.Owner,
-                    Foreground = _textColor
+                    Header = CreateTreeViewItemHeader(false, fil.Name, fil.Size),
+                    Tag = new TreeNodeTag(fil.Owner, $"{item.Name}\\{fil.Name}"),
+                    Foreground = _textColor,
                 });
             }
 
@@ -459,8 +469,63 @@ namespace P2PShare
 
         private void CreateTreeViewItemIfOwnerNotThere(ref List<TreeViewItem> items, string owner)
         {
-            if (items.All(x => x.Tag.ToString() != owner))
-                items.Add(new() { Header = owner });
+            if (items.All(x => ((TreeNodeTag)x.Tag).Owner == owner))
+                items.Add(new() { Header = CreateTreeViewItemHeader(true, owner) });
+        }
+
+        private void NewFolder_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private UIElement CreateTreeViewItemHeader(bool folder, string name, long? fileSize = null)
+        {
+            var fileSizeNotNull = fileSize is not null;
+
+            return new Grid()
+            {
+                Height = 19,
+
+                ColumnDefinitions =
+                {
+                    new ColumnDefinition() { Width = GridLength.Auto },
+                    new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) },
+                    new ColumnDefinition() { Width = GridLength.Auto },
+                    new ColumnDefinition() { Width = GridLength.Auto },
+                },
+
+                Children =
+                {
+                    SetColumnAndReturnTheSameElement(new Image()
+                    {
+                        Source = folder ? _folderIcon : _fileIcon,
+                    }, 0),
+
+                    SetColumnAndReturnTheSameElement(new TextBlock()
+                    {
+                        Text = name,
+                        Margin = new Thickness(10, 0, 0, 0),
+                    }, 1),
+
+                    SetColumnAndReturnTheSameElement(new TextBlock()
+                    {
+                        Text = fileSizeNotNull ? $"{fileSize} Bytes" : String.Empty,
+                        Margin = new Thickness(fileSizeNotNull ? 20 : 0, 0, 0, 0),
+                    }, 2),
+
+                    SetColumnAndReturnTheSameElement(new CheckBox()
+                    {
+                        Margin = new Thickness(20, 0, 0, 0),
+                    }, 3)
+                }
+            };
+        }
+
+        private T SetColumnAndReturnTheSameElement<T>(T element, int column) where T : UIElement
+        {
+            Grid.SetColumn(element, column);
+
+            return element;
         }
     }
 }

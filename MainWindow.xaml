@@ -17,6 +17,8 @@
             <Setter Property="Foreground" Value="#c2c2c2"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="Height" Value="22px"/>
+            <Setter Property="Width" Value="60px"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#c2c2c2"/>
@@ -101,10 +103,10 @@
                                 </Grid.ColumnDefinitions>
 
                                 <TextBox x:Name="File" Grid.Column="0"/>
-                                <Button x:Name="Send" Content="Send" Height="22px" Width="60px" HorizontalAlignment="Right" Click="Send_Click" Margin="20px, 0, 0, 0" Grid.Column="1"/>
+                                <Button x:Name="Send" Content="Send" HorizontalAlignment="Right" Click="Send_Click" Margin="20px, 0, 0, 0" Grid.Column="1"/>
                             </Grid>
                         </GroupBox>
-                        <Button x:Name="Select" Content="Select" Height="22px" Width="60px" Click="Select_Click" HorizontalAlignment="Left" Margin="5px"/>
+                        <Button x:Name="Select" Content="Select" Click="Select_Click" HorizontalAlignment="Left" Margin="5px"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -115,11 +117,28 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Button Grid.Row="0" Click="RefreshServer_Click">
-                        Refresh
-                    </Button>
+                    <Grid.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="White"/>
+                        </Style>
+                    </Grid.Resources>
 
-                    <StackPanel x:Name="StackPanelServer" Grid.Row="1" Orientation="Vertical"/>
+                    
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <StackPanel.Resources>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="Margin" Value="5px"/>
+                            </Style>
+                        </StackPanel.Resources>
+                        
+                        <Button Click="RefreshServer_Click">
+                            Refresh
+                        </Button>
+
+                        <Button Click="NewFolder_Click">
+                            New folder
+                        </Button>
+                    </StackPanel>
 
                     <TreeView x:Name="TreeViewFiles" Background="#333333" Grid.Row="1"/>
                 </Grid>
