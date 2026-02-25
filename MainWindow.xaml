@@ -135,8 +135,16 @@
                             Refresh
                         </Button>
 
-                        <Button Click="NewFolder_Click">
+                        <Button Click="NewFolder_Click" Width="65px">
                             New folder
+                        </Button>
+
+                        <Button Click="Upload_Click">
+                            Upload
+                        </Button>
+
+                        <Button Click="Delete_Click">
+                            Delete
                         </Button>
                     </StackPanel>
 

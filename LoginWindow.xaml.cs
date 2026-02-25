@@ -18,15 +18,12 @@ namespace P2PShare
         public LoginWindow()
         {
             InitializeComponent();
-
-            ConnectionToServerHandler.Disconnected += OnDisconnected;
         }
 
         private void OnDisconnected(object? sender, EventArgs e) => AppHelper.CloseAppForServer(this);
 
         private void TextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            ConnectionToServerHandler.Disconnected -= OnDisconnected;
             ConnectionHandler.Dispose();
 
             Close();
@@ -34,60 +31,74 @@ namespace P2PShare
 
         private async void Login_Click(object sender, RoutedEventArgs e)
         {
-            string username = GetTextFromControl(TextBoxUsernameLogIn), password = GetTextFromControl(PasswordBoxLogIn);
+            try
+            {
+                string username = GetTextFromControl(TextBoxUsernameLogIn), password = GetTextFromControl(PasswordBoxLogIn);
 
-            if (String.IsNullOrEmpty(username) || String.IsNullOrEmpty(password))
-            {
-                new CustomMessageBox("Fill in all fields!", ButtonContent.OK, this, false)
-                    .ShowDialog();
-            }
-            else
-            {
-                if (await ConnectionHandler.LogInAsync(username, password))
+                if (String.IsNullOrEmpty(username) || String.IsNullOrEmpty(password))
                 {
-                    Close();
+                    new CustomMessageBox("Fill in all fields!", ButtonContent.OK, this, false)
+                        .ShowDialog();
                 }
                 else
                 {
-                    new CustomMessageBox("Wrong credentials or account not verified.", ButtonContent.OK, this, false)
-                    .ShowDialog();
+                    if (await ConnectionHandler.LogInAsync(username, password))
+                    {
+                        Close();
+                    }
+                    else
+                    {
+                        new CustomMessageBox("Wrong credentials or account not verified.", ButtonContent.OK, this, false)
+                        .ShowDialog();
+                    }
                 }
+            }
+            catch
+            {
+                HandleError();
             }
         }
 
         private async void Register_Click(object sender, RoutedEventArgs e)
         {
-            string username = GetTextFromControl(TextBoxUsernameRegistration), password = GetTextFromControl(PasswordBoxRegistration), passwordRepeat = GetTextFromControl(PasswordBoxRepeatRegistration), name = GetTextFromControl(TextBoxNameRegistration), surename = GetTextFromControl(TextBoxSurenameRegistration);
+            try
+            {
+                string username = GetTextFromControl(TextBoxUsernameRegistration), password = GetTextFromControl(PasswordBoxRegistration), passwordRepeat = GetTextFromControl(PasswordBoxRepeatRegistration), name = GetTextFromControl(TextBoxNameRegistration), surename = GetTextFromControl(TextBoxSurenameRegistration);
 
-            if (String.IsNullOrEmpty(username) || String.IsNullOrEmpty(password) || String.IsNullOrEmpty(passwordRepeat) || String.IsNullOrEmpty(name) || String.IsNullOrEmpty(surename))
-            {
-                new CustomMessageBox("Fill in all fields!", ButtonContent.OK, this, false)
-                    .ShowDialog();
-            }
-            else if (password != passwordRepeat)
-            {
-                new CustomMessageBox("Passwords do not match.", ButtonContent.OK, this, false)
-                    .ShowDialog();
-            }
-            else
-            {
-                if (await ConnectionHandler.SendRequestYNAsync(new Request()
+                if (String.IsNullOrEmpty(username) || String.IsNullOrEmpty(password) || String.IsNullOrEmpty(passwordRepeat) || String.IsNullOrEmpty(name) || String.IsNullOrEmpty(surename))
                 {
-                    Tag = Libs.Models.Requests.Tag.Register,
-                    Username = username,
-                    Password = password,
-                    Name = name,
-                    Surename = surename
-                }.ToJSON()))
+                    new CustomMessageBox("Fill in all fields!", ButtonContent.OK, this, false)
+                        .ShowDialog();
+                }
+                else if (password != passwordRepeat)
                 {
-                    new CustomMessageBox("Registration successful. You can log in to this account after admin's verification.", ButtonContent.OK, this, false)
+                    new CustomMessageBox("Passwords do not match.", ButtonContent.OK, this, false)
                         .ShowDialog();
                 }
                 else
                 {
-                    new CustomMessageBox("Username already exists.", ButtonContent.OK, this, false)
-                    .ShowDialog();
+                    if (await ConnectionHandler.SendRequestYNAsync(new Request()
+                    {
+                        Tag = Libs.Models.Requests.Tag.Register,
+                        Username = username,
+                        Password = password,
+                        Name = name,
+                        Surename = surename
+                    }.ToJSON()))
+                    {
+                        new CustomMessageBox("Registration successful. You can log in to this account after admin's verification.", ButtonContent.OK, this, false)
+                            .ShowDialog();
+                    }
+                    else
+                    {
+                        new CustomMessageBox("Username already exists.", ButtonContent.OK, this, false)
+                        .ShowDialog();
+                    }
                 }
+            }
+            catch
+            {
+                HandleError();
             }
         }
 
@@ -112,6 +123,16 @@ namespace P2PShare
                 throw new NotImplementedException();
 
             return text.Trim();
+        }
+
+        private void HandleError()
+        {
+            ConnectionHandler.UserInfo = null;
+
+            new CustomMessageBox("Couldn't authenticate.", ButtonContent.OK, this, true)
+                .ShowDialog();
+
+            Close();
         }
     }
 }

@@ -34,8 +34,6 @@ namespace P2PShare
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
         private void OnContacted(object? sender, IPAddress ip) => NewMessageBox($"Contacting {ip}...", ButtonContent.Cancel, false);
-        // del this
-        private void OnServerDisconnected(object? sender, EventArgs e) => Dispatcher.Invoke(() => AppHelper.CloseAppForServer(this));
 
         public MainWindow()
         {
@@ -79,7 +77,6 @@ namespace P2PShare
 
                         if (_serverConnection.UserInfo is not null)
                         {
-                            ConnectionToServerHandler.Disconnected += OnServerDisconnected;
                             TextBlockUser.Text = $"{_serverConnection!.UserInfo!.User.Name} {_serverConnection.UserInfo.User.Surename} ({_serverConnection.UserInfo.User.Username})";
                             TabItemServer.Visibility = Visibility.Visible;
                             await RefreshFilesAsync();
@@ -90,6 +87,8 @@ namespace P2PShare
             catch
             {
                 NewMessageBox("Couldn't connect to the server.", ButtonContent.OK, true);
+
+                TabItemServer.Visibility = Visibility.Hidden;
             }
 
             Visibility = Visibility.Visible;
@@ -404,10 +403,7 @@ namespace P2PShare
             }
             catch
             {
-                NewMessageBox("An error occured.", ButtonContent.OK, true);
-
-                if (!_serverConnection!.IsConnected)
-                    AppHelper.CloseAppForServer(this);
+                CloseIfServerDisconnected();
             }
         }
 
@@ -481,6 +477,7 @@ namespace P2PShare
         private async void NewFolder_Click(object sender, RoutedEventArgs e)
         {
             NewFolderWindow newFolderWindow = new();
+            bool my;
 
             try
             {
@@ -488,27 +485,29 @@ namespace P2PShare
                 if (newFolderWindow.FolderName is null)
                     return;
 
-                var selected = ((TreeNodeTag)((TreeViewItem)TreeViewFiles.SelectedItem).Tag).Path;
-                var indexOfSeparator = selected.IndexOf('\\');
-                bool containsSeparator = selected.Contains('\\'), my = (containsSeparator ? selected.Substring(0, indexOfSeparator) : selected) == _serverConnection?.UserInfo?.User.Username;
+                var path = GetPath((TreeViewItem)TreeViewFiles.SelectedItem, out my);
 
-                if (await _serverConnection!.NewFolderAsync($"{(my ? (containsSeparator ? $"{selected.Substring(indexOfSeparator + 1)}\\" : String.Empty) : $"{selected}\\")}{newFolderWindow.FolderName}", my))
+                if (await _serverConnection!.NewFolderAsync($"{(path != String.Empty ? $"{path}\\" : String.Empty)}{newFolderWindow.FolderName}", my))
                     await RefreshFilesAsync();
                 else
                     NewMessageBox("Couldn't create the folder.", ButtonContent.OK, true);
             }
             catch
             {
-                NewMessageBox("An error occured.", ButtonContent.OK, true);
-
-                if (!_serverConnection!.IsConnected)
-                    AppHelper.CloseAppForServer(this);
+                CloseIfServerDisconnected();
             }
         }
 
         private UIElement CreateTreeViewItemHeader(bool folder, string name, long? fileSize = null)
         {
             var fileSizeNotNull = fileSize is not null;
+            CheckBox checkBox = new()
+            {
+                Margin = new Thickness(20, 0, 0, 0),
+            };
+
+            checkBox.Checked += CheckBoxChanged;
+            checkBox.Unchecked += CheckBoxChanged;
 
             return new Grid()
             {
@@ -541,12 +540,36 @@ namespace P2PShare
                         Margin = new Thickness(fileSizeNotNull ? 20 : 0, 0, 0, 0),
                     }, 2),
 
-                    SetColumnAndReturnTheSameElement(new CheckBox()
-                    {
-                        Margin = new Thickness(20, 0, 0, 0),
-                    }, 3)
+                    SetColumnAndReturnTheSameElement(checkBox, 3)
                 }
             };
+        }
+
+        private async void Delete_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var items = TreeViewFiles.Items
+                .Cast<TreeViewItem>()
+                .ToArray();
+                var units = GetAllUnits(items);
+                bool check = true;
+
+                foreach (var unit in units)
+                {
+                    if (!await _serverConnection!.DeleteAsync(unit))
+                        check = false;
+                }
+
+                if (check)
+                    await RefreshFilesAsync();
+                else
+                    NewMessageBox("Couldn't delete all of the selected items.", ButtonContent.OK, true);
+            }
+            catch
+            {
+                CloseIfServerDisconnected();
+            }
         }
 
         private T SetColumnAndReturnTheSameElement<T>(T element, int column) where T : UIElement
@@ -554,6 +577,82 @@ namespace P2PShare
             Grid.SetColumn(element, column);
 
             return element;
+        }
+
+        private void CloseIfServerDisconnected()
+        {
+            if (!(_serverConnection?.IsConnected ?? false))
+                AppHelper.CloseAppForServer(this);
+            else
+                NewMessageBox("An error occured.", ButtonContent.OK, true);
+        }
+
+        private void CheckBoxChanged(object sender, RoutedEventArgs e)
+        {
+            var checkBox = (CheckBox)sender;
+            var isChecked = checkBox.IsChecked;
+            var items = ((TreeViewItem)((Grid)checkBox.Parent).Parent).Items
+                .Cast<TreeViewItem>()
+                .ToArray();
+
+            foreach (var item in items)
+                ((Grid)item.Header).Children
+                    .OfType<CheckBox>()
+                    .First().IsChecked = isChecked;
+        }
+
+        private string GetPath(TreeViewItem item, out bool my)
+        {
+            var path = ((TreeNodeTag)item.Tag).Path;
+            var indexOfSeparator = path.IndexOf('\\');
+            bool containsSeparator = indexOfSeparator != -1;
+
+            my = (containsSeparator ? path.Substring(0, indexOfSeparator) : path) == _serverConnection?.UserInfo?.User.Username;
+
+            return my ? (containsSeparator ? path.Substring(indexOfSeparator + 1) : String.Empty) : path;
+        }
+
+        private void Upload_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private FileUnit[] GetAllUnits(TreeViewItem[] items)
+        {
+            List<FileUnit> output = [];
+
+            foreach (var item in items)
+                output.AddRange(GetUnits(item));
+
+            return output.ToArray();
+        }
+
+        private FileUnit[] GetUnits(TreeViewItem item)
+        {
+            List<FileUnit> output = [];
+            var header = (Grid)item.Header;
+
+
+            if (header.Children.OfType<CheckBox>().First().IsChecked ?? false)
+            {
+                var path = GetPath(item, out bool my);
+
+                output.Add(new()
+                {
+                    Path = path,
+                    My = my,
+                    Unit = header.Children
+                                .OfType<Image>()
+                                .First().Source == _fileIcon ? Unit.File : Unit.Directory
+                });
+
+                return output.ToArray();
+            }
+
+            foreach (var subItem in item.Items.Cast<TreeViewItem>())
+                output.AddRange(GetUnits(subItem));
+
+            return output.ToArray();
         }
     }
 }

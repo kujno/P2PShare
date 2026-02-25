@@ -1,6 +1,7 @@
 ﻿using P2PShare.Libs;
 using P2PShare.Libs.Models.FileSytem;
 using P2PShare.Libs.Models.Requests;
+using P2PShare.Models;
 using System.Net;
 using System.Net.Sockets;
 
@@ -8,9 +9,7 @@ namespace P2PShare.Connection
 {
     public class ConnectionToServerHandler : ConnectionHandler
     {
-        public static event EventHandler? Disconnected;
-
-        public AllUserInfo? UserInfo { get; private set; } = null;
+        public AllUserInfo? UserInfo { get; set; } = null;
         public bool IsConnected { get => Client is not null; }
 
         public required IPAddress IPServer
@@ -59,8 +58,6 @@ namespace P2PShare.Connection
 
             Dispose();
             _client = null;
-
-            Disconnected?.Invoke(this, EventArgs.Empty);
         }
 
         public async Task<bool> LogInAsync(string username, string password)
@@ -98,6 +95,17 @@ namespace P2PShare.Connection
                 FileName = folderName,
                 My = my,
                 Unit = Unit.Directory
+            }.ToJSON());
+        }
+
+        public async Task<bool> DeleteAsync(FileUnit unit)
+        {
+            return await SendRequestYNAsync(new Request()
+            {
+                Tag = Tag.DeleteFile,
+                FileName = unit.Path,
+                My = unit.My,
+                Unit = unit.Unit
             }.ToJSON());
         }
     }
