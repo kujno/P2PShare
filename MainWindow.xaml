@@ -68,7 +68,7 @@
 
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0px, 3px, 3px, 3px">
                 <Button x:Name="Minimize" Content="_" Width="32px" Height="Auto" Click="Minimize_Click" FontSize="12px" FontWeight="UltraBlack"/>
-                <Button x:Name="Close" Content="X" Width="32px" Height="Auto" Click="Close_Click" Margin="3px, 0px, 0px, 0px" FontSize="12px" FontWeight="Black"/>
+                <Button Content="X" Width="32px" Height="Auto" Click="Close_Click" Margin="3px, 0px, 0px, 0px" FontSize="12px" FontWeight="Black"/>
             </StackPanel>
         </Grid>
 
@@ -123,30 +123,38 @@
                         </Style>
                     </Grid.Resources>
 
-                    
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <StackPanel.Resources>
-                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                <Setter Property="Margin" Value="5px"/>
-                            </Style>
-                        </StackPanel.Resources>
-                        
-                        <Button Click="RefreshServer_Click">
-                            Refresh
-                        </Button>
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                        <Button Click="NewFolder_Click" Width="65px">
-                            New folder
-                        </Button>
+                        <CheckBox Grid.Column="0" HorizontalAlignment="Left" Margin="10px, 0, 0, 0" VerticalAlignment="Center" Foreground="#c2c2c2" Content="File transport encryption" x:Name="CheckBoxServerEncryption"/>
 
-                        <Button Click="Upload_Click">
-                            Upload
-                        </Button>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <StackPanel.Resources>
+                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Setter Property="Margin" Value="5px"/>
+                                </Style>
+                            </StackPanel.Resources>
 
-                        <Button Click="Delete_Click">
-                            Delete
-                        </Button>
-                    </StackPanel>
+                            <Button Click="RefreshServer_Click">
+                                Refresh
+                            </Button>
+
+                            <Button Click="NewFolder_Click" Width="65px">
+                                New folder
+                            </Button>
+
+                            <Button Click="Upload_Click">
+                                Upload
+                            </Button>
+
+                            <Button Click="Delete_Click">
+                                Delete
+                            </Button>
+                        </StackPanel>
+                    </Grid>
 
                     <TreeView x:Name="TreeViewFiles" Background="#333333" Grid.Row="1"/>
                 </Grid>

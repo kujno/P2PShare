@@ -2,6 +2,7 @@
 using P2PShare.Libs.Models.FileSytem;
 using P2PShare.Libs.Models.Requests;
 using P2PShare.Models;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 
@@ -107,6 +108,24 @@ namespace P2PShare.Connection
                 My = unit.My,
                 Unit = unit.Unit
             }.ToJSON());
+        }
+
+        public async Task<bool> UploadAsync(string path, bool my, bool encrypted, FileInfo file)
+        {
+            var fileName = $"{(path != String.Empty ? $"{path}\\" : String.Empty)}{file.Name}";
+            var check = await SendRequestYNAsync(new Request()
+            {
+                Tag = Tag.Upload,
+                FileName = fileName,
+                My = my,
+                FileSize = file.Length,
+                Encrypted = encrypted
+            }.ToJSON());
+
+            if (check)
+                await SendFilesAsync([file], encrypted);
+
+            return check;
         }
     }
 }

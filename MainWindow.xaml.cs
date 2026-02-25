@@ -26,7 +26,7 @@ namespace P2PShare
         private Task _auth;
         private CancellationTokenSource? _cancellationTokenSource;
         private NetworkInterface? _interface;
-        private int _lastPercentage = -1;
+        private int _lastPercentage = -1, _curFile;
         private ConnectionToServerHandler? _serverConnection;
         private SolidColorBrush _textColor = new(Color.FromRgb(194, 194, 194));
         private BitmapImage _fileIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/file.png"), UriKind.Absolute)), _folderIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/folder.png"), UriKind.Absolute));
@@ -140,6 +140,7 @@ namespace P2PShare
 
             if (e.CurrentFile == e.AmountOfFiles && e.Part == 100)
             {
+                _messageBox?.ClosedOnPurpose = true;
                 _messageBox?.Close();
                 _messageBox = null;
                 return;
@@ -147,7 +148,7 @@ namespace P2PShare
 
             file = _files!.ElementAt(e.CurrentFile - 1);
 
-            if (_messageBox is null) NewMessageBox(e, file, false);
+            if (_messageBox is null) NewMessageBox(e, file, false, ButtonContent.Cancel);
             else
             {
                 if (_lastPercentage != e.Part) _messageBox.ChangeContent(e, file);
@@ -205,6 +206,7 @@ namespace P2PShare
             }
             finally
             {
+                _messageBox?.ClosedOnPurpose = true;
                 _messageBox?.Close();
                 _messageBox = null;
 
@@ -330,6 +332,7 @@ namespace P2PShare
                 {
                 }
 
+                _messageBox?.ClosedOnPurpose = true;
                 _messageBox?.Close();
                 _messageBox = null;
 
@@ -366,9 +369,9 @@ namespace P2PShare
             ShowMessageBox(modal);
         }
 
-        private void NewMessageBox(FilePartTransportedEventArgs transportInfo, KeyValuePair<string, long> file, bool modal)
+        private void NewMessageBox(FilePartTransportedEventArgs transportInfo, KeyValuePair<string, long> file, bool modal, ButtonContent buttonContent)
         {
-            _messageBox = new(transportInfo, file, this);
+            _messageBox = new(transportInfo, file, buttonContent, this);
             ShowMessageBox(modal);
         }
 
@@ -590,15 +593,21 @@ namespace P2PShare
         private void CheckBoxChanged(object sender, RoutedEventArgs e)
         {
             var checkBox = (CheckBox)sender;
-            var isChecked = checkBox.IsChecked;
-            var items = ((TreeViewItem)((Grid)checkBox.Parent).Parent).Items
+            var isChecked = checkBox.IsChecked ?? false;
+            var treeViewItem = (TreeViewItem)((Grid)checkBox.Parent).Parent;
+            var items = treeViewItem.Items
                 .Cast<TreeViewItem>()
                 .ToArray();
 
-            foreach (var item in items)
-                ((Grid)item.Header).Children
-                    .OfType<CheckBox>()
-                    .First().IsChecked = isChecked;
+            if (isChecked)
+            {
+                foreach (var item in items)
+                    ((Grid)item.Header).Children
+                        .OfType<CheckBox>()
+                        .First().IsChecked = isChecked;
+            }
+            else
+                UncheckParents(treeViewItem);
         }
 
         private string GetPath(TreeViewItem item, out bool my)
@@ -612,9 +621,64 @@ namespace P2PShare
             return my ? (containsSeparator ? path.Substring(indexOfSeparator + 1) : String.Empty) : path;
         }
 
-        private void Upload_Click(object sender, RoutedEventArgs e)
+        private async void Upload_Click(object sender, RoutedEventArgs e)
         {
+            bool my, check = true, encrypted;
+            string[]? files;
+            List<FileInfo> fileInfos = [];
 
+            try
+            {
+                if ((files = FileDialogs.SelectFiles()) is null)
+                    return;
+
+                _lastPercentage = -1;
+                if (_files is null)
+                    _files = [];
+                _curFile = -1;
+                ConnectionHandler.FilePartTransported -= OnFilePartTransported;
+                ConnectionHandler.FilePartTransported += OnFilePartSent;
+
+                Array.ForEach(files, x =>
+                {
+                    FileInfo fileInfo = new(x);
+
+                    fileInfos.Add(fileInfo);
+                    _files.Add(x, fileInfo.Length);
+                });
+
+                encrypted = CheckBoxServerEncryption.IsChecked ?? true;
+                _messageBox = null;
+
+                foreach (var fileInfo in fileInfos)
+                {
+                    _curFile++;
+
+                    if (!await _serverConnection!.UploadAsync(GetPath((TreeViewItem)TreeViewFiles.SelectedItem, out my), my, encrypted, fileInfo))
+                        check = false;
+                }
+
+                if (check)
+                    await RefreshFilesAsync();
+                else
+                    NewMessageBox("Couldn't upload all of the selected files.", ButtonContent.OK, true);
+            }
+            catch
+            {
+                _messageBox?.ClosedOnPurpose = true;
+                _messageBox?.Close();
+
+                _messageBox = null;
+
+                CloseIfServerDisconnected();
+            }
+            finally
+            {
+                ConnectionHandler.FilePartTransported += OnFilePartTransported;
+                ConnectionHandler.FilePartTransported -= OnFilePartSent;
+
+                _lastPercentage = -1;
+            }
         }
 
         private FileUnit[] GetAllUnits(TreeViewItem[] items)
@@ -633,7 +697,7 @@ namespace P2PShare
             var header = (Grid)item.Header;
 
 
-            if (header.Children.OfType<CheckBox>().First().IsChecked ?? false)
+            if ((header.Children.OfType<CheckBox>().First().IsChecked ?? false) && header.Children.OfType<TextBlock>().All(x => x.Text.Trim() != _serverConnection?.UserInfo?.User.Username))
             {
                 var path = GetPath(item, out bool my);
 
@@ -653,6 +717,42 @@ namespace P2PShare
                 output.AddRange(GetUnits(subItem));
 
             return output.ToArray();
+        }
+
+        private void OnFilePartSent(object? sender, FilePartTransportedEventArgs e)
+        {
+            KeyValuePair<string, long> file;
+
+            if (_curFile == _files?.Count - 1 && e.Part == 100)
+            {
+                _messageBox?.ClosedOnPurpose = true;
+                _messageBox?.Close();
+                _messageBox = null;
+                return;
+            }
+
+            file = _files!.ElementAt(_curFile);
+
+            if (_messageBox is null)
+                NewMessageBox(e, file, false, ButtonContent.None);
+            else
+            {
+                if (_lastPercentage != e.Part) _messageBox.ChangeContent(e, file);
+            }
+
+            _lastPercentage = e.Part;
+        }
+
+        private void UncheckParents(TreeViewItem item)
+        {
+            if (item.Parent is TreeViewItem parent)
+            {
+                ((Grid)parent.Header).Children
+                    .OfType<CheckBox>()
+                    .First().IsChecked = false;
+
+                UncheckParents(parent);
+            }
         }
     }
 }
