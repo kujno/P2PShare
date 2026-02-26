@@ -37,7 +37,7 @@ namespace P2PShare
 
                 if (String.IsNullOrEmpty(username) || String.IsNullOrEmpty(password))
                 {
-                    new CustomMessageBox("Fill in all fields!", ButtonContent.OK, this, false)
+                    new CustomMessageBox("Fill in all of the fields!", ButtonContent.OK, this, false)
                         .ShowDialog();
                 }
                 else

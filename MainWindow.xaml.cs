@@ -44,8 +44,14 @@ namespace P2PShare
 
             ConnectionHandler.FilePartTransported += OnFilePartTransported;
             ConnectionTranscieverHandler.Contacted += OnContacted;
+            SharingWindow.ErrorOccured += (s, e) => OnSharingWindowErrorOccured();
 
             _auth = AuthAsync();
+        }
+
+        private void OnSharingWindowErrorOccured()
+        {
+            Sh
         }
 
         private async Task AuthAsync()
@@ -575,7 +581,7 @@ namespace P2PShare
             }
         }
 
-        private T SetColumnAndReturnTheSameElement<T>(T element, int column) where T : UIElement
+        public static T SetColumnAndReturnTheSameElement<T>(T element, int column) where T : UIElement
         {
             Grid.SetColumn(element, column);
 
@@ -815,6 +821,34 @@ namespace P2PShare
             }
 
             _lastPercentage = e.Part;
+        }
+
+        private void Share_Click(object sender, RoutedEventArgs e)
+        {
+            var item = (TreeViewItem)TreeViewFiles.SelectedItem;
+            var grid = (Grid)item.Header;
+            Dir curDir = _serverConnection!.UserInfo!.MyDir;
+            string[] pathParts = ((TreeNodeTag)item.Tag).Path.Split('\\');
+
+            if (pathParts.First() != _serverConnection?.UserInfo?.User.Username)
+            {
+                NewMessageBox("You can share only your files.", ButtonContent.OK, true);
+                return;
+            }
+
+            if (pathParts.Length == 1)
+            {
+                NewMessageBox("You can't share your root folder.", ButtonContent.OK, true);
+                return;
+            }
+
+            var isFile = grid.Children.OfType<Image>().First().Source == _fileIcon;
+            for (var i = 1; i < pathParts.Length - 1; i++)
+            {
+                curDir = curDir.Dirs!.First(x => x.Name == pathParts[i]);
+            }
+
+            SharingWindow sharingWindow = new(isFile ? Unit.File : Unit.Directory, grid.Children.OfType<TextBlock>().First().Text, _serverConnection.UserInfo.Users, _serverConnection.UserInfo.UserGroups);
         }
 
         private void OnFilePartReceived(object? sender, FilePartTransportedEventArgs e)

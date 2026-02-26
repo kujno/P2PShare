@@ -142,6 +142,10 @@
                                 Refresh
                             </Button>
 
+                            <Button Click="Share_Click">
+                                Share
+                            </Button>
+
                             <Button Click="NewFolder_Click" Width="65px">
                                 New folder
                             </Button>
