@@ -599,14 +599,14 @@ namespace P2PShare
                 .Cast<TreeViewItem>()
                 .ToArray();
 
-            if (isChecked)
+            if (isChecked && treeViewItem.IsExpanded)
             {
                 foreach (var item in items)
                     ((Grid)item.Header).Children
                         .OfType<CheckBox>()
                         .First().IsChecked = isChecked;
             }
-            else
+            else if (!isChecked)
                 UncheckParents(treeViewItem);
         }
 
@@ -636,6 +636,7 @@ namespace P2PShare
                 if (_files is null)
                     _files = [];
                 _curFile = -1;
+                _files.Clear();
                 ConnectionHandler.FilePartTransported -= OnFilePartTransported;
                 ConnectionHandler.FilePartTransported += OnFilePartSent;
 
@@ -644,7 +645,7 @@ namespace P2PShare
                     FileInfo fileInfo = new(x);
 
                     fileInfos.Add(fileInfo);
-                    _files.Add(x, fileInfo.Length);
+                    _files.Add(fileInfo.Name, fileInfo.Length);
                 });
 
                 encrypted = CheckBoxServerEncryption.IsChecked ?? true;
@@ -689,6 +690,79 @@ namespace P2PShare
                 output.AddRange(GetUnits(item));
 
             return output.ToArray();
+        }
+
+        private async void Download_Click(object sender, RoutedEventArgs e)
+        {
+            ConnectionHandler.FilePartTransported -= OnFilePartTransported;
+            ConnectionHandler.FilePartTransported += OnFilePartReceived;
+
+            try
+            {
+                var units = GetAllUnits(TreeViewFiles.Items
+                .Cast<TreeViewItem>()
+                .ToArray());
+                var names = new string[units.Length];
+                var folder = FileDialogs.SelectFolder();
+                var originalMessage = $"Saved to {@folder}:\n";
+                var message = originalMessage;
+                bool check = true;
+
+                if (folder is null)
+                    return;
+
+                for (var i = 0; i < units.Length; i++)
+                {
+                    names[i] = GetFileNameFromPath(units[i].Path);
+                }
+
+                _files = new(names.Select(x => new KeyValuePair<string, long>(x, 0)));
+                _curFile = -1;
+                _lastPercentage = -1;
+
+                foreach (var unit in units)
+                {
+                    _curFile++;
+
+                    var downloadedFile = await _serverConnection!.DownloadAsync(unit, folder, CheckBoxServerEncryption.IsChecked ?? true);
+
+                    if (downloadedFile is null)
+                        check = false;
+                    else
+                        message += $"{downloadedFile}\n";
+                }
+
+                if (!check)
+                {
+                    if (message == originalMessage)
+                        message = "Couldn't download any of the files.";
+                    else
+                        message += "Couldn't download some of the files.";
+                }
+                else
+                {
+                    message = message.Trim();
+
+                    await RefreshFilesAsync();
+                }
+
+                NewMessageBox(message, ButtonContent.OK, true);
+            }
+            catch
+            {
+                _messageBox?.ClosedOnPurpose = true;
+                _messageBox?.Close();
+                _messageBox = null;
+
+                CloseIfServerDisconnected();
+            }
+            finally
+            {
+                ConnectionHandler.FilePartTransported += OnFilePartTransported;
+                ConnectionHandler.FilePartTransported -= OnFilePartReceived;
+
+                _lastPercentage = -1;
+            }
         }
 
         private FileUnit[] GetUnits(TreeViewItem item)
@@ -743,6 +817,33 @@ namespace P2PShare
             _lastPercentage = e.Part;
         }
 
+        private void OnFilePartReceived(object? sender, FilePartTransportedEventArgs e)
+        {
+            KeyValuePair<string, long> file;
+
+            e.AmountOfFiles = _files!.Count;
+            e.CurrentFile = _curFile + 1;
+
+            if (_curFile == _files?.Count - 1 && e.Part == 100)
+            {
+                _messageBox?.ClosedOnPurpose = true;
+                _messageBox?.Close();
+                _messageBox = null;
+                return;
+            }
+
+            file = _files!.ElementAt(_curFile);
+
+            if (_messageBox is null)
+                NewMessageBox(e, file, false, ButtonContent.None);
+            else
+            {
+                if (_lastPercentage != e.Part) _messageBox.ChangeContent(e, file);
+            }
+
+            _lastPercentage = e.Part;
+        }
+
         private void UncheckParents(TreeViewItem item)
         {
             if (item.Parent is TreeViewItem parent)
@@ -753,6 +854,13 @@ namespace P2PShare
 
                 UncheckParents(parent);
             }
+        }
+
+        private string GetFileNameFromPath(string path)
+        {
+            var indexOfSeparator = path.LastIndexOf('\\');
+
+            return indexOfSeparator != -1 ? path.Substring(indexOfSeparator + 1) : path;
         }
     }
 }

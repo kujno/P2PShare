@@ -127,5 +127,31 @@ namespace P2PShare.Connection
 
             return check;
         }
+
+        public async Task<string?> DownloadAsync(FileUnit unit, string dirPath, bool encrypted)
+        {
+            var check = await SendRequestYNAsync(new Request()
+            {
+                Tag = Tag.Download,
+                FileName = unit.Path,
+                My = unit.My,
+                FileSize = unit.Size,
+                Encrypted = encrypted,
+                Unit = unit.Unit
+            }.ToJSON());
+            var indexOfSeparator = unit.Path.LastIndexOf('\\');
+            string? downloadedFile = null;
+
+            if (check)
+            {
+                var fileToDownload = await ReceiveInviteAsync<Dictionary<string, long>>(true);
+
+                await YNSendAsync(true);
+
+                downloadedFile = (await ReceiveFilesAsync(fileToDownload, dirPath, encrypted)).First();
+            }
+
+            return downloadedFile;
+        }
     }
 }

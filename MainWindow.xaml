@@ -150,6 +150,10 @@
                                 Upload
                             </Button>
 
+                            <Button Click="Download_Click">
+                                Download
+                            </Button>
+
                             <Button Click="Delete_Click">
                                 Delete
                             </Button>
