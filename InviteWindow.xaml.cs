@@ -8,15 +8,7 @@ namespace P2PShare
     /// </summary>
     public partial class InviteWindow : Window
     {
-        private bool _accepted;
-        
-        public bool Accepted 
-        {
-            get 
-            { 
-                return _accepted; 
-            }
-        }
+        public bool Accepted { get; private set; }
 
         public InviteWindow(string text, Window window)
         {
@@ -27,14 +19,14 @@ namespace P2PShare
 
         private void No_Click(object sender, RoutedEventArgs e)
         {
-            _accepted = false;
+            Accepted = false;
 
             Close();
         }
 
         private void Yes_Click(object sender, RoutedEventArgs e)
         {
-            _accepted = true;
+            Accepted = true;
 
             Close();
         }

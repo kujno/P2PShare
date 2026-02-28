@@ -3,6 +3,7 @@
     public enum ButtonContent
     {
         OK,
-        Cancel
+        Cancel,
+        None
     }
 }

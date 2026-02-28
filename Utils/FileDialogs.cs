@@ -2,7 +2,7 @@
 
 namespace P2PShare.Utils
 {
-    public class FileDialogs
+    public static class FileDialogs
     {
         public static string? SelectFolder()
         {

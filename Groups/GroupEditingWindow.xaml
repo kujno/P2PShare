@@ -1,0 +1,67 @@
+﻿<Window x:Class="P2PShare.Groups.GroupEditingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:P2PShare.Groups"
+        mc:Ignorable="d"
+        Title="GroupEditingWindow"
+        WindowStyle="None"
+        Background="#333333"
+        BorderThickness="1px"
+        Height="550px" Width="450px" MinHeight="400px" MinWidth="450px"
+        MouseDown="Window_MouseDown">
+
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#292929"/>
+            <Setter Property="Foreground" Value="#c2c2c2"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="Height" Value="22px"/>
+            <Setter Property="Width" Value="60px"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#c2c2c2"/>
+                    <Setter Property="Foreground" Value="#292929"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="Foreground" Value="#c2c2c2"/>
+        </Style>
+        <Style TargetType="Grid">
+            <Setter Property="Background" Value="#222222"/>
+            <Setter Property="Margin" Value="2px"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="#333333">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Margin="5px" HorizontalAlignment="Center" x:Name="TextBlockGroup" FontSize="16px"/>
+
+        <ScrollViewer Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10px" Background="#333333" VerticalScrollBarVisibility="Auto">
+            <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" x:Name="StackPanelUsers"/>
+        </ScrollViewer>
+
+        <StackPanel HorizontalAlignment="Right" Margin="0, 0, 10px, 10px" Orientation="Horizontal" Grid.Row="2">
+            <Button Margin="0, 0, 10px, 0" Click="Cancel_Click">
+                Cancel
+            </Button>
+
+            <Button Margin="0, 0, 10px, 0" Click="Rename_Click">
+                Rename
+            </Button>
+
+            <Button Click="OK_Click">
+                OK
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>
