@@ -192,5 +192,17 @@ namespace P2PShare.Connection
                 Group = group
             }.ToJSON());
         }
+
+        public async Task<bool> RenameAsync(string oldName, string newName, Unit unit, bool my)
+        {
+            return await SendRequestYNAsync(new Request()
+            {
+                Tag = Tag.RenameFile,
+                FileName = oldName,
+                NewFileName = newName,
+                Unit = unit,
+                My = my
+            }.ToJSON());
+        }
     }
 }

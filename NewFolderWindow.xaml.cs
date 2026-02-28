@@ -27,7 +27,7 @@ namespace P2PShare
             if (e.ChangedButton == MouseButton.Left) DragMove();
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e)
+        private async void OK_Click(object sender, RoutedEventArgs e)
         {
             string name = TextBoxFolderName.Text.Trim();
             var invalidChars = Path.GetInvalidFileNameChars();

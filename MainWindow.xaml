@@ -74,14 +74,13 @@
 
         <TabControl Grid.Row="1" Margin="10px" Background="#333333">
             <TabItem Header="P2P">
-                <Grid>
+                <Grid Margin="0, 5px, 0, 0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Orientation="Vertical" Grid.Column="0">
-
                         <GroupBox Header="Connection type:" Foreground="#c2c2c2" BorderThickness="0px" VerticalAlignment="Top" FontFamily="Arial">
                             <ComboBox x:Name="Interface" SelectionChanged="Interface_SelectionChanged"/>
                         </GroupBox>
@@ -111,11 +110,11 @@
                 </Grid>
             </TabItem>
             <TabItem x:Name="TabItemServer" Visibility="Hidden" Header="Server">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+                <Grid Margin="0, 1px, 0, 0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="165px"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
                     <Grid.Resources>
                         <Style TargetType="TextBlock">
@@ -123,52 +122,50 @@
                         </Style>
                     </Grid.Resources>
 
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Left" Orientation="Vertical">
+                        <StackPanel.Resources>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="Margin" Value="5px"/>
+                                <Setter Property="Width" Value="140px"/>
+                            </Style>
+                        </StackPanel.Resources>
 
-                        <CheckBox Grid.Column="0" HorizontalAlignment="Left" Margin="10px, 0, 0, 0" VerticalAlignment="Center" Foreground="#c2c2c2" Content="File transport encryption" x:Name="CheckBoxServerEncryption"/>
+                        <CheckBox Margin="6px, 5px, 0, 8px" Width="155px" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" Foreground="#c2c2c2" Content="File transport encryption" x:Name="CheckBoxServerEncryption"/>
 
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                            <StackPanel.Resources>
-                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Setter Property="Margin" Value="5px"/>
-                                </Style>
-                            </StackPanel.Resources>
+                        <Button Click="RefreshServer_Click">
+                            Refresh
+                        </Button>
 
-                            <Button Click="RefreshServer_Click">
-                                Refresh
-                            </Button>
+                        <Button Click="ManageGroups_Click">
+                            Manage groups
+                        </Button>
 
-                            <Button Width="120px"  Click="ManageGroups_Click">
-                                Manage groups
-                            </Button>
+                        <Button Click="Share_Click">
+                            Share
+                        </Button>
 
-                            <Button Click="Share_Click">
-                                Share
-                            </Button>
+                        <Button Click="NewFolder_Click">
+                            New folder
+                        </Button>
 
-                            <Button Click="NewFolder_Click" Width="65px">
-                                New folder
-                            </Button>
+                        <Button Click="Download_Click">
+                            Download
+                        </Button>
 
-                            <Button Click="Upload_Click">
-                                Upload
-                            </Button>
+                        <Button Click="Upload_Click">
+                            Upload
+                        </Button>
 
-                            <Button Click="Download_Click">
-                                Download
-                            </Button>
+                        <Button Click="Rename_Click">
+                            Rename
+                        </Button>
 
-                            <Button Click="Delete_Click">
-                                Delete
-                            </Button>
-                        </StackPanel>
-                    </Grid>
+                        <Button Click="Delete_Click">
+                            Delete
+                        </Button>
+                    </StackPanel>
 
-                    <TreeView x:Name="TreeViewFiles" Background="#333333" Grid.Row="1"/>
+                    <TreeView x:Name="TreeViewFiles" Padding="0, 5px, 0, 0" Background="#333333" Grid.Column="1"/>
                 </Grid>
             </TabItem>
         </TabControl>

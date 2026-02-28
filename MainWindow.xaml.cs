@@ -933,6 +933,42 @@ namespace P2PShare
             RefreshTreeView(_serverConnection?.UserInfo!);
         }
 
+        private async void Rename_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var item = (TreeViewItem?)TreeViewFiles.SelectedItem;
+
+                if (item is not null)
+                {
+                    var path = GetPath(item, out bool my);
+                    var pathParts = path.Split('\\');
+                    NewFolderWindow newNameWindow = new($"Rename {pathParts.Last()} to:")
+                    {
+                        BadNameMessage = "File name contains invalid character(s)."
+                    };
+
+                    newNameWindow.ShowDialog();
+
+                    if (newNameWindow.FolderName is not null)
+                    {
+                        if (await _serverConnection!.RenameAsync(path, string.Join('\\', pathParts[0..(pathParts.Length - 1)].Concat([newNameWindow.FolderName])), ((Grid)item.Header).Children.OfType<Image>().First().Source == _fileIcon ? Unit.File : Unit.Directory, my))
+                        {
+                            await RefreshFilesAsync();
+                        }
+                        else
+                        {
+                            NewMessageBox("Couldn't rename the item.", ButtonContent.OK, true);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                CloseIfServerDisconnected();
+            }
+        }
+
         private void UncheckParents(TreeViewItem item)
         {
             if (item.Parent is TreeViewItem parent)

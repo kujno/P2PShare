@@ -165,14 +165,17 @@ namespace P2PShare.Groups
 
                 nameWindow.ShowDialog();
 
-                if (await _connectionHandler.CreateGroupAsync(nameWindow.FolderName!))
+                if (nameWindow.FolderName is not null)
                 {
-                    new CustomMessageBox("Group created successfully.", ButtonContent.OK).ShowDialog();
+                    if (await _connectionHandler.CreateGroupAsync(nameWindow.FolderName))
+                    {
+                        new CustomMessageBox("Group created successfully.", ButtonContent.OK).ShowDialog();
 
-                    await UpdateGroupsAsync();
+                        await UpdateGroupsAsync();
+                    }
+                    else
+                        new CustomMessageBox("Group creation failed.", ButtonContent.OK).ShowDialog();
                 }
-                else
-                    new CustomMessageBox("Group creation failed.", ButtonContent.OK).ShowDialog();
             }
             catch
             {
