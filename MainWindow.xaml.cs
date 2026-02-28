@@ -139,7 +139,11 @@ namespace P2PShare
 
             YourIP.Text = $"Your IP address:" + (ip is not null ? $" {ip}" : String.Empty);
 
-            _cancellationTokenSource?.Cancel();
+            try
+            {
+                _cancellationTokenSource?.Cancel();
+            }
+            catch { }
         }
 
         private void OnFilePartTransported(object? sender, FilePartTransportedEventArgs e)
