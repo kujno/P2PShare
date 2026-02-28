@@ -30,7 +30,7 @@ namespace P2PShare
         private int _lastPercentage = -1, _curFile;
         private ConnectionToServerHandler? _serverConnection;
         private SolidColorBrush _textColor = new(Color.FromRgb(194, 194, 194));
-        private BitmapImage _fileIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/file.png"), UriKind.Absolute)), _folderIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/folder.png"), UriKind.Absolute));
+        private BitmapImage _fileIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/file.png"), UriKind.Absolute)), _folderIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/folder.png"), UriKind.Absolute)), _userIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/User.png"), UriKind.Absolute));
         private SharingWindow? _sharingWindow;
 
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -425,23 +425,23 @@ namespace P2PShare
             Array.ForEach(CreateFromSharedDirsAndFiles(userInfo.SharedDirs ?? [], userInfo.SharedFils ?? []), x => TreeViewFiles.Items.Add(x));
         }
 
-        private sealed record TreeNodeTag(string Owner, string Path);
+        private sealed record TreeNodeTag(string Owner, string Path, int? id = null);
 
-        private TreeViewItem CreateFromDir(Dir dir, string? previousName = null)
+        private TreeViewItem CreateFromDir(Dir dir, string? previousName = null, bool my = true)
         {
             var curDirName = previousName is null ? dir.Name : $"{previousName}\\{dir.Name}";
 
             TreeViewItem item = new()
             {
-                Header = CreateTreeViewItemHeader(true, dir.Name),
-                Tag = new TreeNodeTag(dir.Owner, curDirName),
+                Header = CreateTreeViewItemHeader(true, $"{dir.Name}{(my ? String.Empty : $" | Shared with rights: (can download){(dir.CanRename ? " (can rename)" : String.Empty)}{(dir.CanDelete ? " (can delete)" : String.Empty)}{(dir.CanAdd ? " (can add)" : String.Empty)}")}"),
+                Tag = new TreeNodeTag(dir.Owner, curDirName, dir.ID),
                 Foreground = _textColor
             };
 
             if (dir.Dirs is not null)
             {
                 foreach (var subDir in dir.Dirs)
-                    item.Items.Add(CreateFromDir(subDir, curDirName));
+                    item.Items.Add(CreateFromDir(subDir, curDirName, my));
             }
 
             if (dir.Fils is not null)
@@ -449,8 +449,8 @@ namespace P2PShare
                 foreach (var fil in dir.Fils)
                     item.Items.Add(new TreeViewItem()
                     {
-                        Header = CreateTreeViewItemHeader(false, fil.Name, fil.Size),
-                        Tag = new TreeNodeTag(fil.Owner, $"{curDirName}\\{fil.Name}"),
+                        Header = CreateTreeViewItemHeader(false, $"{fil.Name}{(my ? String.Empty : $" | Shared with rights: (can download){(fil.CanRename ? " (can rename)" : String.Empty)}{(fil.CanDelete ? " (can delete)" : String.Empty)}")}", fil.Size),
+                        Tag = new TreeNodeTag(fil.Owner, $"{curDirName}\\{fil.Name}", fil.ID),
                         Foreground = _textColor
                     });
             }
@@ -464,21 +464,21 @@ namespace P2PShare
 
             foreach (var dir in sharedDirs)
             {
-                CreateTreeViewItemIfOwnerNotThere(ref items, dir.Owner);
+                CreateTreeViewItemIfOwnerNotThere(ref items, dir.Owner, dir.ID);
 
-                items.First(x => ((TreeNodeTag)x.Tag).Owner == dir.Owner).Items.Add(CreateFromDir(dir, dir.Owner));
+                items.First(x => ((TreeNodeTag)x.Tag).Owner == dir.Owner).Items.Add(CreateFromDir(dir, dir.Owner, false));
             }
 
             foreach (var fil in sharedFils)
             {
-                CreateTreeViewItemIfOwnerNotThere(ref items, fil.Owner);
+                CreateTreeViewItemIfOwnerNotThere(ref items, fil.Owner, fil.ID);
 
                 var item = items.First(x => ((TreeNodeTag)x.Tag).Owner == fil.Owner);
 
                 item.Items.Add(new TreeViewItem()
                 {
-                    Header = CreateTreeViewItemHeader(false, fil.Name, fil.Size),
-                    Tag = new TreeNodeTag(fil.Owner, $"{fil.Owner}\\{fil.Name}"),
+                    Header = CreateTreeViewItemHeader(false, $"{fil.Name} | Shared with rights: (can download){(fil.CanRename ? " (can rename)" : String.Empty)}{(fil.CanDelete ? " (can delete)" : String.Empty)}", fil.Size),
+                    Tag = new TreeNodeTag(fil.Owner, $"{fil.Owner}\\{fil.Name}", fil.ID),
                     Foreground = _textColor,
                 });
             }
@@ -486,13 +486,13 @@ namespace P2PShare
             return items.ToArray();
         }
 
-        private void CreateTreeViewItemIfOwnerNotThere(ref List<TreeViewItem> items, string owner)
+        private void CreateTreeViewItemIfOwnerNotThere(ref List<TreeViewItem> items, string owner, int? id)
         {
             if (items.All(x => ((TreeNodeTag)x.Tag).Owner != owner))
                 items.Add(new()
                 {
-                    Header = CreateTreeViewItemHeader(true, owner),
-                    Tag = new TreeNodeTag(owner, owner)
+                    Header = CreateTreeViewItemHeader(true, $"{owner} (Shared)"),
+                    Tag = new TreeNodeTag(owner, owner, id)
                 });
         }
 
@@ -500,16 +500,20 @@ namespace P2PShare
         {
             NewFolderWindow newFolderWindow = new();
             bool my;
+            var item = (TreeViewItem?)TreeViewFiles.SelectedItem;
 
             try
             {
+                if (item is null)
+                    return;
+
                 newFolderWindow.ShowDialog();
                 if (newFolderWindow.FolderName is null)
                     return;
 
-                var path = GetPath((TreeViewItem)TreeViewFiles.SelectedItem, out my);
+                var path = GetPath(item, out my, out int? id);
 
-                if (await _serverConnection!.NewFolderAsync($"{(path != String.Empty ? $"{path}\\" : String.Empty)}{newFolderWindow.FolderName}", my))
+                if (await _serverConnection!.NewFolderAsync($"{(path != String.Empty ? $"{path}\\" : String.Empty)}{newFolderWindow.FolderName}", my, id))
                     await RefreshFilesAsync();
                 else
                     NewMessageBox("Couldn't create the folder.", ButtonContent.OK, true);
@@ -520,12 +524,13 @@ namespace P2PShare
             }
         }
 
-        private UIElement CreateTreeViewItemHeader(bool folder, string name, long? fileSize = null)
+        private UIElement CreateTreeViewItemHeader(bool folder, string name, long? fileSize = null, bool user = false)
         {
             var fileSizeNotNull = fileSize is not null;
             CheckBox checkBox = new()
             {
-                Margin = new Thickness(20, 0, 0, 0),
+                Margin = new Thickness(10, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center
             };
 
             checkBox.Checked += CheckBoxChanged;
@@ -538,8 +543,8 @@ namespace P2PShare
                 ColumnDefinitions =
                 {
                     new ColumnDefinition() { Width = GridLength.Auto },
-                    new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) },
                     new ColumnDefinition() { Width = GridLength.Auto },
+                    new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) },
                     new ColumnDefinition() { Width = GridLength.Auto },
                 },
 
@@ -548,21 +553,26 @@ namespace P2PShare
                     SetColumnAndReturnTheSameElement(new Image()
                     {
                         Source = folder ? _folderIcon : _fileIcon,
+                        VerticalAlignment = VerticalAlignment.Center
                     }, 0),
 
                     SetColumnAndReturnTheSameElement(new TextBlock()
                     {
                         Text = name,
-                        Margin = new Thickness(10, 0, 0, 0),
-                    }, 1),
+                        Margin = new Thickness(8, 0, 0, 0),
+                        Foreground = Brushes.White,
+                        VerticalAlignment = VerticalAlignment.Center
+                    }, 2),
 
                     SetColumnAndReturnTheSameElement(new TextBlock()
                     {
                         Text = fileSizeNotNull ? $"{fileSize} Bytes" : String.Empty,
                         Margin = new Thickness(fileSizeNotNull ? 20 : 0, 0, 0, 0),
-                    }, 2),
+                        Foreground = Brushes.White,
+                        VerticalAlignment = VerticalAlignment.Center
+                    }, 3),
 
-                    SetColumnAndReturnTheSameElement(checkBox, 3)
+                    SetColumnAndReturnTheSameElement(checkBox, 1)
                 }
             };
         }
@@ -632,11 +642,14 @@ namespace P2PShare
                 UncheckParents(treeViewItem);
         }
 
-        private string GetPath(TreeViewItem item, out bool my)
+        private string GetPath(TreeViewItem item, out bool my, out int? id)
         {
-            var path = ((TreeNodeTag)item.Tag).Path;
+            var tag = (TreeNodeTag)item.Tag;
+            var path = (tag).Path;
             var indexOfSeparator = path.IndexOf('\\');
             bool containsSeparator = indexOfSeparator != -1;
+
+            id = tag.id;
 
             my = (containsSeparator ? path.Substring(0, indexOfSeparator) : path) == _serverConnection?.UserInfo?.User.Username;
 
@@ -648,9 +661,13 @@ namespace P2PShare
             bool my, check = true, encrypted;
             string[]? files;
             List<FileInfo> fileInfos = [];
+            var item = (TreeViewItem?)TreeViewFiles.SelectedItem;
 
             try
             {
+                if (item is null)
+                    return;
+
                 if ((files = FileDialogs.SelectFiles()) is null)
                     return;
 
@@ -677,7 +694,7 @@ namespace P2PShare
                 {
                     _curFile++;
 
-                    if (!await _serverConnection!.UploadAsync(GetPath((TreeViewItem)TreeViewFiles.SelectedItem, out my), my, encrypted, fileInfo))
+                    if (!await _serverConnection!.UploadAsync(GetPath(item, out my, out int? id), my, encrypted, fileInfo, id))
                         check = false;
                 }
 
@@ -793,7 +810,7 @@ namespace P2PShare
 
             if ((header.Children.OfType<CheckBox>().First().IsChecked ?? false) && header.Children.OfType<TextBlock>().All(x => x.Text.Trim() != _serverConnection?.UserInfo?.User.Username && _serverConnection!.UserInfo!.Users.All(y => y.Username != x.Text.Trim())))
             {
-                var path = GetPath(item, out bool my);
+                var path = GetPath(item, out bool my, out int? id);
 
                 output.Add(new()
                 {
@@ -801,7 +818,8 @@ namespace P2PShare
                     My = my,
                     Unit = header.Children
                                 .OfType<Image>()
-                                .First().Source == _fileIcon ? Unit.File : Unit.Directory
+                                .First().Source == _fileIcon ? Unit.File : Unit.Directory,
+                    ID = id
                 });
 
                 return output.ToArray();
@@ -843,7 +861,10 @@ namespace P2PShare
 
             try
             {
-                var item = (TreeViewItem)TreeViewFiles.SelectedItem;
+                var item = (TreeViewItem?)TreeViewFiles.SelectedItem;
+                if (item is null)
+                    return;
+
                 var grid = (Grid)item.Header;
                 Dir curDir = _serverConnection!.UserInfo!.MyDir;
                 TreeNodeTag tag = (TreeNodeTag)item.Tag;
@@ -884,7 +905,7 @@ namespace P2PShare
                     return;
                 }
 
-                if (!await _serverConnection.EditSharesAsync(_sharingWindow.Shares!, GetPath(item, out my), my, unit))
+                if (!await _serverConnection.EditSharesAsync(_sharingWindow.Shares!, GetPath(item, out my, out _), my, unit))
                     success = false;
                 else
                     await RefreshFilesAsync();
@@ -938,29 +959,40 @@ namespace P2PShare
             try
             {
                 var item = (TreeViewItem?)TreeViewFiles.SelectedItem;
+                var check = true;
 
                 if (item is not null)
                 {
-                    var path = GetPath(item, out bool my);
-                    var pathParts = path.Split('\\');
-                    NewFolderWindow newNameWindow = new($"Rename {pathParts.Last()} to:")
+                    var path = GetPath(item, out bool my, out int? id);
+                    if (!String.IsNullOrEmpty(path) && _serverConnection!.UserInfo!.Users.All(x => x.Username != path) && _serverConnection.UserInfo.User.Username != path)
                     {
-                        BadNameMessage = "File name contains invalid character(s)."
-                    };
-
-                    newNameWindow.ShowDialog();
-
-                    if (newNameWindow.FolderName is not null)
-                    {
-                        if (await _serverConnection!.RenameAsync(path, string.Join('\\', pathParts[0..(pathParts.Length - 1)].Concat([newNameWindow.FolderName])), ((Grid)item.Header).Children.OfType<Image>().First().Source == _fileIcon ? Unit.File : Unit.Directory, my))
+                        var pathParts = path.Split('\\');
+                        NewFolderWindow newNameWindow = new($"Rename \"{pathParts.Last()}\" to:")
                         {
-                            await RefreshFilesAsync();
-                        }
-                        else
+                            BadNameMessage = "File name contains invalid character(s)."
+                        };
+
+                        newNameWindow.ShowDialog();
+
+                        if (newNameWindow.FolderName is not null)
                         {
-                            NewMessageBox("Couldn't rename the item.", ButtonContent.OK, true);
+                            if (await _serverConnection!.RenameAsync(path, string.Join('\\', pathParts[0..(pathParts.Length - 1)].Concat([newNameWindow.FolderName])), ((Grid)item.Header).Children.OfType<Image>().First().Source == _fileIcon ? Unit.File : Unit.Directory, my, id))
+                            {
+                                await RefreshFilesAsync();
+                            }
+                            else
+                            {
+                                check = false;
+                            }
                         }
                     }
+                    else
+                    {
+                        check = false;
+                    }
+
+                    if (!check)
+                        NewMessageBox("Couldn't rename the item.", ButtonContent.OK, true);
                 }
             }
             catch

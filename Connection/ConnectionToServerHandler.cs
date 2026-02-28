@@ -88,14 +88,15 @@ namespace P2PShare.Connection
             await GetUserInfoAsync();
         }
 
-        public async Task<bool> NewFolderAsync(string folderName, bool my)
+        public async Task<bool> NewFolderAsync(string folderName, bool my, int? id)
         {
             return await SendRequestYNAsync(new Request()
             {
                 Tag = Tag.AddFolder,
                 FileName = folderName,
                 My = my,
-                Unit = Unit.Directory
+                Unit = Unit.Directory,
+                ID = id
             }.ToJSON());
         }
 
@@ -106,11 +107,12 @@ namespace P2PShare.Connection
                 Tag = Tag.DeleteFile,
                 FileName = unit.Path,
                 My = unit.My,
-                Unit = unit.Unit
+                Unit = unit.Unit,
+                ID = unit.ID
             }.ToJSON());
         }
 
-        public async Task<bool> UploadAsync(string path, bool my, bool encrypted, FileInfo file)
+        public async Task<bool> UploadAsync(string path, bool my, bool encrypted, FileInfo file, int? id)
         {
             var fileName = $"{(path != String.Empty ? $"{path}\\" : String.Empty)}{file.Name}";
             var check = await SendRequestYNAsync(new Request()
@@ -119,7 +121,8 @@ namespace P2PShare.Connection
                 FileName = fileName,
                 My = my,
                 FileSize = file.Length,
-                Encrypted = encrypted
+                Encrypted = encrypted,
+                ID = id,
             }.ToJSON());
 
             if (check)
@@ -137,7 +140,8 @@ namespace P2PShare.Connection
                 My = unit.My,
                 FileSize = unit.Size,
                 Encrypted = encrypted,
-                Unit = unit.Unit
+                Unit = unit.Unit,
+                ID = unit.ID
             }.ToJSON());
             var indexOfSeparator = unit.Path.LastIndexOf('\\');
             string? downloadedFile = null;
@@ -193,7 +197,7 @@ namespace P2PShare.Connection
             }.ToJSON());
         }
 
-        public async Task<bool> RenameAsync(string oldName, string newName, Unit unit, bool my)
+        public async Task<bool> RenameAsync(string oldName, string newName, Unit unit, bool my, int? id)
         {
             return await SendRequestYNAsync(new Request()
             {
@@ -201,7 +205,8 @@ namespace P2PShare.Connection
                 FileName = oldName,
                 NewFileName = newName,
                 Unit = unit,
-                My = my
+                My = my,
+                ID = id
             }.ToJSON());
         }
     }
