@@ -30,7 +30,7 @@ namespace P2PShare
         private int _lastPercentage = -1, _curFile;
         private ConnectionToServerHandler? _serverConnection;
         private SolidColorBrush _textColor = new(Color.FromRgb(194, 194, 194));
-        private BitmapImage _fileIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/file.png"), UriKind.Absolute)), _folderIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/folder.png"), UriKind.Absolute)), _userIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/User.png"), UriKind.Absolute));
+        private BitmapImage _fileIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/file.png"), UriKind.Absolute)), _folderIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/folder.png"), UriKind.Absolute)), _userIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/User.ico"), UriKind.Absolute));
         private SharingWindow? _sharingWindow;
 
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -421,19 +421,19 @@ namespace P2PShare
         {
             TreeViewFiles.Items.Clear();
 
-            TreeViewFiles.Items.Add(CreateFromDir(userInfo.MyDir));
+            TreeViewFiles.Items.Add(CreateFromDir(userInfo.MyDir, null, true, true));
             Array.ForEach(CreateFromSharedDirsAndFiles(userInfo.SharedDirs ?? [], userInfo.SharedFils ?? []), x => TreeViewFiles.Items.Add(x));
         }
 
         private sealed record TreeNodeTag(string Owner, string Path, int? id = null);
 
-        private TreeViewItem CreateFromDir(Dir dir, string? previousName = null, bool my = true)
+        private TreeViewItem CreateFromDir(Dir dir, string? previousName = null, bool my = true, bool first = false)
         {
             var curDirName = previousName is null ? dir.Name : $"{previousName}\\{dir.Name}";
 
             TreeViewItem item = new()
             {
-                Header = CreateTreeViewItemHeader(true, $"{dir.Name}{(my ? String.Empty : $" | Shared with rights: (can download){(dir.CanRename ? " (can rename)" : String.Empty)}{(dir.CanDelete ? " (can delete)" : String.Empty)}{(dir.CanAdd ? " (can add)" : String.Empty)}")}"),
+                Header = CreateTreeViewItemHeader(true, $"{dir.Name}{(my ? String.Empty : $" | Shared with rights: (can download){(dir.CanRename ? " (can rename)" : String.Empty)}{(dir.CanDelete ? " (can delete)" : String.Empty)}{(dir.CanAdd ? " (can add)" : String.Empty)}")}", null, first),
                 Tag = new TreeNodeTag(dir.Owner, curDirName, dir.ID),
                 Foreground = _textColor
             };
@@ -491,7 +491,7 @@ namespace P2PShare
             if (items.All(x => ((TreeNodeTag)x.Tag).Owner != owner))
                 items.Add(new()
                 {
-                    Header = CreateTreeViewItemHeader(true, $"{owner} (Shared)"),
+                    Header = CreateTreeViewItemHeader(true, $"{owner}", null, true),
                     Tag = new TreeNodeTag(owner, owner, id)
                 });
         }
@@ -552,7 +552,7 @@ namespace P2PShare
                 {
                     SetColumnAndReturnTheSameElement(new Image()
                     {
-                        Source = folder ? _folderIcon : _fileIcon,
+                        Source = user ? _userIcon : (folder ? _folderIcon : _fileIcon),
                         VerticalAlignment = VerticalAlignment.Center
                     }, 0),
 
