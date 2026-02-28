@@ -36,9 +36,9 @@
                 </Style>
             </StackPanel.Resources>
 
-            <TextBlock x:Name="TextBlockValid" Foreground="Red" Visibility="Collapsed"/>
+            <TextBlock x:Name="TextBlockValid" Margin="0, 0, 0, 10px" Foreground="Red" Visibility="Collapsed"/>
 
-            <Button Content="OK" Margin="0, 0, 0, 20px" Click="Button_Click"/>
+            <Button Content="OK" Margin="0, 0, 0, 20px" Click="OK_Click"/>
 
             <TextBlock x:Name="TextBlockExit" Foreground="#c2c2c2" Cursor="Hand" TextAlignment="Center" TextDecorations="Underline" MouseLeftButtonDown="TextBlockExit_MouseLeftButtonDown">
                 Cancel

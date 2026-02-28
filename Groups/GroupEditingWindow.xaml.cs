@@ -41,7 +41,7 @@ namespace P2PShare.Groups
         {
             NewFolderWindow newNameWindow = new("New name:")
             {
-                BadNameMessage = "Group name contain(s) invalid characters."
+                BadNameMessage = "Group name contain invalid characters(s)."
             };
 
             newNameWindow.ShowDialog();
