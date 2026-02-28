@@ -87,6 +87,7 @@
 
                         <Button x:Name="Refresh" Grid.Column="0" Height="24px" Width="80px" Margin="0, 4px" Click="Refresh_Click">Refresh</Button>
                         <CheckBox x:Name="CheckBoxEncryption" Content="Encryption" Foreground="#c2c2c2" Margin="6px, 8px, 0, 0"/>
+                        <CheckBox x:Name="CheckBoxOnline" Content="Online" IsChecked="False" Foreground="#c2c2c2" Margin="6px, 8px, 0, 0" Checked="CheckBoxOnline_Checked" Unchecked="CheckBoxOnline_Unchecked"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Vertical" HorizontalAlignment="Stretch" Margin="10px, 2px">

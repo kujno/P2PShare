@@ -32,6 +32,7 @@ namespace P2PShare
         private SolidColorBrush _textColor = new(Color.FromRgb(194, 194, 194));
         private BitmapImage _fileIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/file.png"), UriKind.Absolute)), _folderIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/folder.png"), UriKind.Absolute)), _userIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/User.ico"), UriKind.Absolute));
         private SharingWindow? _sharingWindow;
+        private bool _online = false;
 
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
@@ -102,9 +103,6 @@ namespace P2PShare
             }
 
             Visibility = Visibility.Visible;
-
-            if (_receiveLoop is null)
-                _receiveLoop = ReceiveLoopAsync();
         }
 
         private void Close_Click(object sender, RoutedEventArgs e)
@@ -174,8 +172,13 @@ namespace P2PShare
             string fileText = File.Text.Trim(), messageBoxContent = String.Empty;
             var encryption = CheckBoxEncryption.IsChecked;
 
-            _cancellationTokenSource?.Cancel();
-            await _receiveLoop!;
+            try
+            {
+                _cancellationTokenSource?.Cancel();
+            }
+            catch { }
+            if (_receiveLoop is not null)
+                await _receiveLoop;
 
             try
             {
@@ -222,7 +225,10 @@ namespace P2PShare
 
                 _lastPercentage = -1;
 
-                _receiveLoop = ReceiveLoopAsync();
+                if (_online)
+                {
+                    _receiveLoop = ReceiveLoopAsync();
+                }
             }
 
             NewMessageBox(messageBoxContent, ButtonContent.OK, true);
@@ -952,6 +958,32 @@ namespace P2PShare
             new GroupManagementWindow(_serverConnection!).ShowDialog();
 
             RefreshTreeView(_serverConnection?.UserInfo!);
+        }
+
+        private void CheckBoxOnline_Checked(object sender, RoutedEventArgs e)
+        {
+            _online = true;
+
+            if (_receiveLoop is null)
+                _receiveLoop = ReceiveLoopAsync();
+        }
+
+        private async void CheckBoxOnline_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _online = false;
+
+            try
+            {
+                _cancellationTokenSource?.Cancel();
+
+                if (_receiveLoop is not null)
+                    await _receiveLoop;
+
+                _receiveLoop = null;
+            }
+            catch
+            {
+            }
         }
 
         private async void Rename_Click(object sender, RoutedEventArgs e)
