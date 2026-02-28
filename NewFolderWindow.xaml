@@ -18,7 +18,7 @@
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
-        <GroupBox Header="New folder name:" Width="250px" Foreground="#c2c2c2" BorderThickness="0"  Grid.Row="0" VerticalAlignment="Bottom" Margin="0, 30px">
+        <GroupBox x:Name="GroupBoxHeader" Header="New folder name:" Width="250px" Foreground="#c2c2c2" BorderThickness="0"  Grid.Row="0" VerticalAlignment="Bottom" Margin="0, 30px">
             <TextBox x:Name="TextBoxFolderName" FontSize="18px" FontFamily="Arial"/>
         </GroupBox>
         <StackPanel VerticalAlignment="Bottom" Orientation="Vertical" HorizontalAlignment="Center" Grid.Row="1" Margin="0, 0, 0, 25px">

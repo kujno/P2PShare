@@ -153,5 +153,44 @@ namespace P2PShare.Connection
 
             return downloadedFile;
         }
+
+        public async Task<bool> EditSharesAsync(Share[] shares, string path, bool my, Unit unit)
+        {
+            return await SendRequestYNAsync(new Request()
+            {
+                Tag = Tag.ChangeSharing,
+                Shares = shares,
+                FileName = path,
+                My = my,
+                Unit = unit
+            }.ToJSON());
+        }
+
+        public async Task<bool> CreateGroupAsync(string name)
+        {
+            return await SendRequestYNAsync(new Request()
+            {
+                Tag = Tag.CreateGroup,
+                Name = name
+            }.ToJSON());
+        }
+
+        public async Task<bool> DeleteGroupAsync(Group group)
+        {
+            return await SendRequestYNAsync(new Request()
+            {
+                Tag = Tag.DeleteGroup,
+                Group = group
+            }.ToJSON());
+        }
+
+        public async Task<bool> EditGroupAsync(Group group)
+        {
+            return await SendRequestYNAsync(new Request()
+            {
+                Tag = Tag.EditGroup,
+                Group = group
+            }.ToJSON());
+        }
     }
 }

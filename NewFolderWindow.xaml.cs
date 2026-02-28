@@ -10,10 +10,14 @@ namespace P2PShare
     public partial class NewFolderWindow : Window
     {
         public string? FolderName { get; private set; } = null;
+        public string BadNameMessage { get; init; } = "Folder name contains invalid character(s).";
 
-        public NewFolderWindow()
+        public NewFolderWindow(string? header = null)
         {
             InitializeComponent();
+
+            if (header is not null)
+                GroupBoxHeader.Header = header;
         }
 
         private void TextBlockExit_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => Close();
@@ -26,8 +30,9 @@ namespace P2PShare
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
             string name = TextBoxFolderName.Text.Trim();
+            var invalidChars = Path.GetInvalidFileNameChars();
 
-            if (name.All(x => Path.GetInvalidFileNameChars().All(y => y != x)))
+            if (name.All(x => invalidChars.All(y => y != x)))
             {
                 FolderName = name;
 
@@ -35,7 +40,7 @@ namespace P2PShare
             }
             else
             {
-                TextBlockValid.Text = "Folder name contains invalid character(s).";
+                TextBlockValid.Text = $"{BadNameMessage}\nCan't contain: {string.Join(", ", invalidChars)}.";
                 TextBlockValid.Visibility = Visibility.Visible;
             }
         }

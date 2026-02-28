@@ -2,6 +2,7 @@
 using P2PShare.Libs.Models.Requests;
 using P2PShare.Models;
 using P2PShare.Utils;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -20,7 +21,7 @@ namespace P2PShare
             InitializeComponent();
         }
 
-        private void OnDisconnected(object? sender, EventArgs e) => AppHelper.CloseAppForServer(this);
+        private void OnDisconnected(object? sender, EventArgs e) => AppHelper.CloseAppForServer();
 
         private void TextBlock_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -37,8 +38,12 @@ namespace P2PShare
 
                 if (String.IsNullOrEmpty(username) || String.IsNullOrEmpty(password))
                 {
-                    new CustomMessageBox("Fill in all of the fields!", ButtonContent.OK, this, false)
+                    new CustomMessageBox("Fill in all of the fields!", ButtonContent.OK)
                         .ShowDialog();
+                }
+                else if (ContainsInvalidChars(username))
+                {
+                    ShowInvalidCharsMessage();
                 }
                 else
                 {
@@ -48,7 +53,7 @@ namespace P2PShare
                     }
                     else
                     {
-                        new CustomMessageBox("Wrong credentials or account not verified.", ButtonContent.OK, this, false)
+                        new CustomMessageBox("Wrong credentials or account not verified.", ButtonContent.OK)
                         .ShowDialog();
                     }
                 }
@@ -67,12 +72,20 @@ namespace P2PShare
 
                 if (String.IsNullOrEmpty(username) || String.IsNullOrEmpty(password) || String.IsNullOrEmpty(passwordRepeat) || String.IsNullOrEmpty(name) || String.IsNullOrEmpty(surename))
                 {
-                    new CustomMessageBox("Fill in all fields!", ButtonContent.OK, this, false)
+                    new CustomMessageBox("Fill in all fields!", ButtonContent.OK)
                         .ShowDialog();
+                }
+                else if (ContainsInvalidChars(username))
+                {
+                    ShowInvalidCharsMessage();
+                }
+                else if (DoesNotContainValidChars(name) || DoesNotContainValidChars(surename))
+                {
+                    new CustomMessageBox("Name & surename can only contain letters.", ButtonContent.OK).ShowDialog();
                 }
                 else if (password != passwordRepeat)
                 {
-                    new CustomMessageBox("Passwords do not match.", ButtonContent.OK, this, false)
+                    new CustomMessageBox("Passwords do not match.", ButtonContent.OK)
                         .ShowDialog();
                 }
                 else
@@ -86,12 +99,12 @@ namespace P2PShare
                         Surename = surename
                     }.ToJSON()))
                     {
-                        new CustomMessageBox("Registration successful. You can log in to this account after admin's verification.", ButtonContent.OK, this, false)
+                        new CustomMessageBox("Registration successful. You can log in to this account after admin's verification.", ButtonContent.OK)
                             .ShowDialog();
                     }
                     else
                     {
-                        new CustomMessageBox("Username already exists.", ButtonContent.OK, this, false)
+                        new CustomMessageBox("Username already exists.", ButtonContent.OK)
                         .ShowDialog();
                     }
                 }
@@ -129,10 +142,32 @@ namespace P2PShare
         {
             ConnectionHandler.UserInfo = null;
 
-            new CustomMessageBox("Couldn't authenticate.", ButtonContent.OK, this, true)
+            new CustomMessageBox("Couldn't authenticate.", ButtonContent.OK)
                 .ShowDialog();
 
             Close();
         }
+
+        private bool ContainsInvalidChars(string text)
+        {
+            var invalidChars = Path.GetInvalidFileNameChars();
+
+            return text.Any(c => invalidChars.Contains(c));
+        }
+
+        private bool DoesNotContainValidChars(string text)
+        {
+            return text.Any(x => !char.IsLetter(x));
+        }
+
+        private void ShowInvalidCharsMessage()
+        {
+            var invalidChars = Path.GetInvalidFileNameChars();
+            string invalidCharsString = string.Join(", ", invalidChars);
+
+            new CustomMessageBox($"Username can't contain characters: {invalidCharsString}.", ButtonContent.OK)
+                .ShowDialog();
+        }
+
     }
 }

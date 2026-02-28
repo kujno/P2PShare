@@ -14,40 +14,38 @@ namespace P2PShare
         private readonly ButtonContent _buttonContent;
 
         private int _part;
+        private Window? _owner;
         public bool ClosedOnPurpose { get; set; } = false;
 
         public event EventHandler<bool>? WindowClosed;
 
-        public CustomMessageBox(FilePartTransportedEventArgs transportInfo, KeyValuePair<string, long> file, ButtonContent buttonContent, Window window) : this(String.Empty, buttonContent, window, true) => ChangeContent(transportInfo, file);
+        public CustomMessageBox(FilePartTransportedEventArgs transportInfo, KeyValuePair<string, long> file, ButtonContent buttonContent, Window window) : this(String.Empty, buttonContent, window) => ChangeContent(transportInfo, file);
 
-        public CustomMessageBox(string content, ButtonContent buttonContent, Window window, bool modal)
+        public CustomMessageBox(string content, ButtonContent buttonContent, Window? window = null)
         {
             InitializeComponent();
 
             TextBlock_File.Text = content;
             _buttonContent = buttonContent;
-            if (buttonContent is ButtonContent.None)
+            _owner = window;
+            if (_buttonContent is ButtonContent.None)
                 Btn.Visibility = Visibility.Hidden;
             else
-                Btn.Content = buttonContent;
-            if (window.Dispatcher.CheckAccess())
-            {
-                Owner = window;
-                if (modal)
-                {
-                    Owner.Visibility = Visibility.Hidden;
-                    Closed += OnClosed;
-                }
-            }
+                Btn.Content = _buttonContent;
+
+            _owner?.Visibility = Visibility.Hidden;
+
+            Closed += OnClosed;
         }
 
         private void OnWindowClosed() => WindowClosed?.Invoke(this, _buttonContent is ButtonContent.Cancel ? true : false);
 
         private void OnClosed(object? sender, EventArgs e)
         {
-            Owner.Visibility = Visibility.Visible;
+            _owner?.Visibility = Visibility.Visible;
+
             if (!ClosedOnPurpose)
-                AppHelper.CloseAppForServer(this);
+                AppHelper.CloseAppForServer();
         }
 
         public void ChangeContent(FilePartTransportedEventArgs transportInfo, KeyValuePair<string, long> file)
@@ -68,7 +66,8 @@ namespace P2PShare
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left) DragMove();
+            if (e.ChangedButton == MouseButton.Left)
+                DragMove();
         }
     }
 }

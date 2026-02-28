@@ -1,4 +1,5 @@
 ﻿using P2PShare.Connection;
+using P2PShare.Groups;
 using P2PShare.Libs;
 using P2PShare.Libs.Models;
 using P2PShare.Libs.Models.FileSytem;
@@ -30,6 +31,7 @@ namespace P2PShare
         private ConnectionToServerHandler? _serverConnection;
         private SolidColorBrush _textColor = new(Color.FromRgb(194, 194, 194));
         private BitmapImage _fileIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/file.png"), UriKind.Absolute)), _folderIcon = new(new Uri(Path.Combine(AppContext.BaseDirectory, "images/folder.png"), UriKind.Absolute));
+        private SharingWindow? _sharingWindow;
 
         private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
         private void Refresh_Click(object sender, RoutedEventArgs e) => RefreshInterfaces();
@@ -51,7 +53,9 @@ namespace P2PShare
 
         private void OnSharingWindowErrorOccured()
         {
-            Sh
+            _sharingWindow?.Close();
+
+            NewMessageBox("An error occured.", ButtonContent.OK, true);
         }
 
         private async Task AuthAsync()
@@ -85,7 +89,7 @@ namespace P2PShare
                         {
                             TextBlockUser.Text = $"{_serverConnection!.UserInfo!.User.Name} {_serverConnection.UserInfo.User.Surename} ({_serverConnection.UserInfo.User.Username})";
                             TabItemServer.Visibility = Visibility.Visible;
-                            await RefreshFilesAsync();
+                            RefreshTreeView(_serverConnection.UserInfo);
                         }
                     }
                 }
@@ -154,7 +158,7 @@ namespace P2PShare
 
             file = _files!.ElementAt(e.CurrentFile - 1);
 
-            if (_messageBox is null) NewMessageBox(e, file, false, ButtonContent.Cancel);
+            if (_messageBox is null) NewMessageBox(e, file, ButtonContent.Cancel);
             else
             {
                 if (_lastPercentage != e.Part) _messageBox.ChangeContent(e, file);
@@ -371,14 +375,14 @@ namespace P2PShare
 
         private void NewMessageBox(string content, ButtonContent buttonContent, bool modal)
         {
-            _messageBox = new(content, buttonContent, this, modal);
+            _messageBox = new(content, buttonContent, modal ? null : this);
             ShowMessageBox(modal);
         }
 
-        private void NewMessageBox(FilePartTransportedEventArgs transportInfo, KeyValuePair<string, long> file, bool modal, ButtonContent buttonContent)
+        private void NewMessageBox(FilePartTransportedEventArgs transportInfo, KeyValuePair<string, long> file, ButtonContent buttonContent)
         {
             _messageBox = new(transportInfo, file, buttonContent, this);
-            ShowMessageBox(modal);
+            ShowMessageBox(false);
         }
 
         private void ShowMessageBox(bool modal)
@@ -405,15 +409,20 @@ namespace P2PShare
             {
                 await _serverConnection!.GetAsync();
 
-                TreeViewFiles.Items.Clear();
-
-                TreeViewFiles.Items.Add(CreateFromDir(_serverConnection.UserInfo!.MyDir));
-                Array.ForEach(CreateFromSharedDirsAndFiles(_serverConnection.UserInfo.SharedDirs ?? [], _serverConnection.UserInfo.SharedFils ?? []), x => TreeViewFiles.Items.Add(x));
+                RefreshTreeView(_serverConnection.UserInfo!);
             }
             catch
             {
                 CloseIfServerDisconnected();
             }
+        }
+
+        private void RefreshTreeView(AllUserInfo userInfo)
+        {
+            TreeViewFiles.Items.Clear();
+
+            TreeViewFiles.Items.Add(CreateFromDir(userInfo.MyDir));
+            Array.ForEach(CreateFromSharedDirsAndFiles(userInfo.SharedDirs ?? [], userInfo.SharedFils ?? []), x => TreeViewFiles.Items.Add(x));
         }
 
         private sealed record TreeNodeTag(string Owner, string Path);
@@ -457,7 +466,7 @@ namespace P2PShare
             {
                 CreateTreeViewItemIfOwnerNotThere(ref items, dir.Owner);
 
-                items.First(x => ((TreeNodeTag)x.Tag).Owner == dir.Owner).Items.Add(CreateFromDir(dir));
+                items.First(x => ((TreeNodeTag)x.Tag).Owner == dir.Owner).Items.Add(CreateFromDir(dir, dir.Owner));
             }
 
             foreach (var fil in sharedFils)
@@ -469,7 +478,7 @@ namespace P2PShare
                 item.Items.Add(new TreeViewItem()
                 {
                     Header = CreateTreeViewItemHeader(false, fil.Name, fil.Size),
-                    Tag = new TreeNodeTag(fil.Owner, $"{item.Name}\\{fil.Name}"),
+                    Tag = new TreeNodeTag(fil.Owner, $"{fil.Owner}\\{fil.Name}"),
                     Foreground = _textColor,
                 });
             }
@@ -479,8 +488,12 @@ namespace P2PShare
 
         private void CreateTreeViewItemIfOwnerNotThere(ref List<TreeViewItem> items, string owner)
         {
-            if (items.All(x => ((TreeNodeTag)x.Tag).Owner == owner))
-                items.Add(new() { Header = CreateTreeViewItemHeader(true, owner) });
+            if (items.All(x => ((TreeNodeTag)x.Tag).Owner != owner))
+                items.Add(new()
+                {
+                    Header = CreateTreeViewItemHeader(true, owner),
+                    Tag = new TreeNodeTag(owner, owner)
+                });
         }
 
         private async void NewFolder_Click(object sender, RoutedEventArgs e)
@@ -564,16 +577,19 @@ namespace P2PShare
                 var units = GetAllUnits(items);
                 bool check = true;
 
-                foreach (var unit in units)
+                if (units.Length > 0)
                 {
-                    if (!await _serverConnection!.DeleteAsync(unit))
-                        check = false;
-                }
+                    foreach (var unit in units)
+                    {
+                        if (!await _serverConnection!.DeleteAsync(unit))
+                            check = false;
+                    }
 
-                if (check)
+                    if (!check)
+                        NewMessageBox("Couldn't delete some of the selected items.", ButtonContent.OK, true);
+
                     await RefreshFilesAsync();
-                else
-                    NewMessageBox("Couldn't delete all of the selected items.", ButtonContent.OK, true);
+                }
             }
             catch
             {
@@ -591,7 +607,7 @@ namespace P2PShare
         private void CloseIfServerDisconnected()
         {
             if (!(_serverConnection?.IsConnected ?? false))
-                AppHelper.CloseAppForServer(this);
+                AppHelper.CloseAppForServer();
             else
                 NewMessageBox("An error occured.", ButtonContent.OK, true);
         }
@@ -748,8 +764,6 @@ namespace P2PShare
                 else
                 {
                     message = message.Trim();
-
-                    await RefreshFilesAsync();
                 }
 
                 NewMessageBox(message, ButtonContent.OK, true);
@@ -777,7 +791,7 @@ namespace P2PShare
             var header = (Grid)item.Header;
 
 
-            if ((header.Children.OfType<CheckBox>().First().IsChecked ?? false) && header.Children.OfType<TextBlock>().All(x => x.Text.Trim() != _serverConnection?.UserInfo?.User.Username))
+            if ((header.Children.OfType<CheckBox>().First().IsChecked ?? false) && header.Children.OfType<TextBlock>().All(x => x.Text.Trim() != _serverConnection?.UserInfo?.User.Username && _serverConnection!.UserInfo!.Users.All(y => y.Username != x.Text.Trim())))
             {
                 var path = GetPath(item, out bool my);
 
@@ -814,7 +828,7 @@ namespace P2PShare
             file = _files!.ElementAt(_curFile);
 
             if (_messageBox is null)
-                NewMessageBox(e, file, false, ButtonContent.None);
+                NewMessageBox(e, file, ButtonContent.None);
             else
             {
                 if (_lastPercentage != e.Part) _messageBox.ChangeContent(e, file);
@@ -823,32 +837,66 @@ namespace P2PShare
             _lastPercentage = e.Part;
         }
 
-        private void Share_Click(object sender, RoutedEventArgs e)
+        private async void Share_Click(object sender, RoutedEventArgs e)
         {
-            var item = (TreeViewItem)TreeViewFiles.SelectedItem;
-            var grid = (Grid)item.Header;
-            Dir curDir = _serverConnection!.UserInfo!.MyDir;
-            string[] pathParts = ((TreeNodeTag)item.Tag).Path.Split('\\');
+            bool success = true;
 
-            if (pathParts.First() != _serverConnection?.UserInfo?.User.Username)
+            try
             {
-                NewMessageBox("You can share only your files.", ButtonContent.OK, true);
+                var item = (TreeViewItem)TreeViewFiles.SelectedItem;
+                var grid = (Grid)item.Header;
+                Dir curDir = _serverConnection!.UserInfo!.MyDir;
+                TreeNodeTag tag = (TreeNodeTag)item.Tag;
+                string[] pathParts = tag.Path.Split('\\');
+                bool my;
+
+                if (tag.Owner != _serverConnection?.UserInfo?.User.Username)
+                {
+                    NewMessageBox("You can share only your files.", ButtonContent.OK, true);
+                    return;
+                }
+
+                if (pathParts.Length == 1)
+                {
+                    NewMessageBox("You can't share your root folder.", ButtonContent.OK, true);
+                    return;
+                }
+
+                var unit = grid.Children.OfType<Image>().First().Source == _fileIcon ? Unit.File : Unit.Directory;
+                for (var i = 1; i < pathParts.Length - 1; i++)
+                {
+                    curDir = curDir.Dirs!.First(x => x.Name == pathParts[i]);
+                }
+
+                _sharingWindow = new(unit, grid.Children.OfType<TextBlock>().First().Text, _serverConnection.UserInfo.Users, _serverConnection.UserInfo.UserGroups, GetShares(_serverConnection.UserInfo, pathParts, unit));
+
+                if (_sharingWindow.DidErrorOccur)
+                {
+                    return;
+                }
+
+                _sharingWindow.ShowDialog();
+
+                if (_sharingWindow.DidErrorOccur || !_sharingWindow.Changed)
+                {
+                    _sharingWindow = null;
+
+                    return;
+                }
+
+                if (!await _serverConnection.EditSharesAsync(_sharingWindow.Shares!, GetPath(item, out my), my, unit))
+                    success = false;
+                else
+                    await RefreshFilesAsync();
+            }
+            catch
+            {
+                CloseIfServerDisconnected();
+
                 return;
             }
 
-            if (pathParts.Length == 1)
-            {
-                NewMessageBox("You can't share your root folder.", ButtonContent.OK, true);
-                return;
-            }
-
-            var isFile = grid.Children.OfType<Image>().First().Source == _fileIcon;
-            for (var i = 1; i < pathParts.Length - 1; i++)
-            {
-                curDir = curDir.Dirs!.First(x => x.Name == pathParts[i]);
-            }
-
-            SharingWindow sharingWindow = new(isFile ? Unit.File : Unit.Directory, grid.Children.OfType<TextBlock>().First().Text, _serverConnection.UserInfo.Users, _serverConnection.UserInfo.UserGroups);
+            NewMessageBox(success ? "Shares changed." : "Couldn't change shares.", ButtonContent.OK, true);
         }
 
         private void OnFilePartReceived(object? sender, FilePartTransportedEventArgs e)
@@ -869,13 +917,20 @@ namespace P2PShare
             file = _files!.ElementAt(_curFile);
 
             if (_messageBox is null)
-                NewMessageBox(e, file, false, ButtonContent.None);
+                NewMessageBox(e, file, ButtonContent.None);
             else
             {
                 if (_lastPercentage != e.Part) _messageBox.ChangeContent(e, file);
             }
 
             _lastPercentage = e.Part;
+        }
+
+        private void ManageGroups_Click(object sender, RoutedEventArgs e)
+        {
+            new GroupManagementWindow(_serverConnection!).ShowDialog();
+
+            RefreshTreeView(_serverConnection?.UserInfo!);
         }
 
         private void UncheckParents(TreeViewItem item)
@@ -895,6 +950,26 @@ namespace P2PShare
             var indexOfSeparator = path.LastIndexOf('\\');
 
             return indexOfSeparator != -1 ? path.Substring(indexOfSeparator + 1) : path;
+        }
+
+        private Share[]? GetShares(AllUserInfo userInfo, string[] pathParts, Unit unit)
+        {
+            Dir curDir = userInfo.MyDir;
+            var isFile = unit == Unit.File;
+
+            for (var i = 1; i < (isFile ? pathParts.Length - 1 : pathParts.Length); i++)
+            {
+                curDir.Dirs?.ForEach(x =>
+                {
+                    if (x.Name == pathParts[i])
+                        curDir = x;
+                });
+            }
+
+            if (isFile)
+                return curDir.Fils?.First(x => x.Name == pathParts.Last()).Shares;
+            else
+                return curDir.Shares;
         }
     }
 }

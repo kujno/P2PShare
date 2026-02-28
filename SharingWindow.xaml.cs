@@ -2,7 +2,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace P2PShare
 {
@@ -17,6 +16,7 @@ namespace P2PShare
 
         public Share[]? Shares { get; private set; }
         public bool Changed { get; private set; } = false;
+        public bool DidErrorOccur { get; private set; } = false;
 
         public static event EventHandler? ErrorOccured;
 
@@ -25,7 +25,7 @@ namespace P2PShare
             try
             {
                 InitializeComponent();
-                TextBlockFile.Text = $"{(unit == Unit.File ? "File" : "Directory")}: unitName";
+                TextBlockFile.Text = $"{(unit == Unit.File ? "File" : "Directory")}: {unitName}";
 
                 _users = users;
                 _groups = groups;
@@ -33,10 +33,10 @@ namespace P2PShare
                 Shares = shares;
 
                 if (_users is not null)
-                    Array.ForEach(_users, x => StackPanelUsers.Children.Add(CreateRow($"{x.Name} {x.Surename} ({x.Username})", _unit, Shares?.FirstOrDefault(y => y.User?.Username == x.Username))));
+                    Array.ForEach(_users, x => StackPanelUsers.Children.Add(CreateRow($"{x.Name} {x.Surename}\n({x.Username})", _unit, x.Username, Shares?.FirstOrDefault(y => y.User?.Username == x.Username))));
 
                 if (_groups is not null)
-                    Array.ForEach(_groups, x => StackPanelGroups.Children.Add(CreateRow(x.Name, _unit, Shares?.FirstOrDefault(y => y.Group?.Name == x.Name))));
+                    Array.ForEach(_groups, x => StackPanelGroups.Children.Add(CreateRow($"{x.Name}\nAdmin: {x.Admin.Name}", _unit, x.ID.ToString(), Shares?.FirstOrDefault(y => y.Group?.Name == x.Name))));
             }
             catch
             {
@@ -69,13 +69,9 @@ namespace P2PShare
 
                     if (checkboxes.First(x => x.Name == "Shared").IsChecked ?? false)
                     {
-                        string username = child.Name.Substring(child.Name.IndexOf('(') + 1);
-
-                        username = username.Substring(0, username.LastIndexOf(')'));
-
                         shares.Add(new()
                         {
-                            User = _users?.First(x => x.Username == username),
+                            User = _users?.First(x => x.Username == (string)child.Tag),
                             Type = _unit,
                             CanDelete = checkboxes.First(x => x.Name == "CanDelete").IsChecked ?? false,
                             CanRename = checkboxes.First(x => x.Name == "CanRename").IsChecked ?? false,
@@ -92,7 +88,7 @@ namespace P2PShare
                     {
                         shares.Add(new()
                         {
-                            Group = _groups?.First(x => x.ID == (int)child.Tag),
+                            Group = _groups?.First(x => x.ID == int.Parse((string)child.Tag)),
                             Type = _unit,
                             CanDelete = checkboxes.First(x => x.Name == "CanDelete").IsChecked ?? false,
                             CanRename = checkboxes.First(x => x.Name == "CanRename").IsChecked ?? false,
@@ -113,7 +109,7 @@ namespace P2PShare
             }
         }
 
-        private Grid CreateRow(string name, Unit unit, Share? share = null, string? idTag = null)
+        private Grid CreateRow(string name, Unit unit, string idTag, Share? share = null)
         {
             var shareNull = share is null;
             CheckBox sharedCheckBox = new()
@@ -128,9 +124,6 @@ namespace P2PShare
             Grid output = new()
             {
                 Height = 40,
-                Margin = new Thickness(1),
-                Background = Brushes.DarkGray,
-                Name = name,
                 Tag = idTag,
 
                 ColumnDefinitions =
@@ -149,7 +142,8 @@ namespace P2PShare
                     MainWindow.SetColumnAndReturnTheSameElement(new TextBlock()
                     {
                         Text = name,
-                        Margin = new Thickness(5)
+                        Margin = new Thickness(5),
+                        VerticalAlignment = VerticalAlignment.Center
                     }, 1),
 
                     MainWindow.SetColumnAndReturnTheSameElement(new CheckBox()
@@ -195,11 +189,22 @@ namespace P2PShare
                 .ToList()
                 .ForEach(y =>
                 {
-                    y.IsChecked = sender.IsChecked;
-                    y.IsEnabled = sender.IsChecked ?? false;
+                    bool isChecked = sender.IsChecked ?? false;
+
+
+                    y.IsEnabled = isChecked;
+                    if (!isChecked)
+                    {
+                        y.IsChecked = isChecked;
+                    }
                 });
         }
 
-        private void OnErrorOccured() => ErrorOccured?.Invoke(this, EventArgs.Empty);
+        private void OnErrorOccured()
+        {
+            DidErrorOccur = true;
+
+            ErrorOccured?.Invoke(this, EventArgs.Empty);
+        }
     }
 }
