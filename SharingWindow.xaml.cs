@@ -36,7 +36,7 @@ namespace P2PShare
                     Array.ForEach(_users, x => StackPanelUsers.Children.Add(CreateRow($"{x.Name} {x.Surename}\n({x.Username})", _unit, x.Username, Shares?.FirstOrDefault(y => y.User?.Username == x.Username))));
 
                 if (_groups is not null)
-                    Array.ForEach(_groups, x => StackPanelGroups.Children.Add(CreateRow($"{x.Name}\nAdmin: {x.Admin.Name}", _unit, x.ID.ToString(), Shares?.FirstOrDefault(y => y.Group?.Name == x.Name))));
+                    Array.ForEach(_groups, x => StackPanelGroups.Children.Add(CreateRow($"{x.Name}\nAdmin: {x.Admin?.Name} {x.Admin?.Surename} ({x.Admin?.Username})", _unit, x.ID.ToString(), Shares?.FirstOrDefault(y => y.Group?.Name == x.Name))));
             }
             catch
             {
