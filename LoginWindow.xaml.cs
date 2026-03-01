@@ -75,6 +75,11 @@ namespace P2PShare
                     new CustomMessageBox("Fill in all fields!", ButtonContent.OK)
                         .ShowDialog();
                 }
+                else if (username == "admin")
+                {
+                    new CustomMessageBox("Username can't be \"admin\".", ButtonContent.OK)
+                        .ShowDialog();
+                }
                 else if (ContainsInvalidChars(username))
                 {
                     ShowInvalidCharsMessage();
