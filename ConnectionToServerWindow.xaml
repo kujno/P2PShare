@@ -42,7 +42,7 @@
             <Button Visibility="Hidden" x:Name="ButtonChangeIP" Content="Change server IP" Width="110px" Margin="0" Click="ChangeIP_Click"/>
             <Button Visibility="Hidden" x:Name="ButtonTryAgain" Content="Try again" Margin="70px, 0, 0, 0" Click="TryAgain_Click"/>
         </StackPanel>
-s
+
         <TextBlock Grid.Row="2" HorizontalAlignment="Center" Margin="5px" TextDecorations="Underline" Cursor="Hand" MouseLeftButtonDown="TextBlock_MouseLeftButtonDown">
             Continue without server
         </TextBlock>
