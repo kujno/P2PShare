@@ -47,7 +47,7 @@ namespace P2PShare
                 }
                 else
                 {
-                    if (await ConnectionHandler.LogInAsync(username, password))
+                    if (await ConnectionHandler.LogInAsync(username, password) && username != "admin")
                     {
                         Close();
                     }

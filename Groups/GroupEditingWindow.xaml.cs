@@ -23,6 +23,16 @@ namespace P2PShare.Groups
             Group = group;
 
             TextBlockGroup.Text = Group.Name;
+            var adminInUsers = users.FirstOrDefault(x => x.Username == Group.Admin?.Username);
+            if (adminInUsers != default(User))
+            {
+                StackPanelUsers.Children.Add(CreateRow(new()
+                {
+                    Username = adminInUsers.Username,
+                    Name = adminInUsers.Name,
+                    Surename = adminInUsers.Surename + " (Admin)"
+                }, true));
+            }
             Array.ForEach(users, x => StackPanelUsers.Children.Add(CreateRow(x)));
         }
 
@@ -69,7 +79,7 @@ namespace P2PShare.Groups
             Close();
         }
 
-        private Grid CreateRow(User user)
+        private Grid CreateRow(User user, bool isAdmin = false)
         {
             return new()
             {
@@ -87,7 +97,7 @@ namespace P2PShare.Groups
                     MainWindow.SetColumnAndReturnTheSameElement(new CheckBox()
                     {
                         Margin = new Thickness(5),
-                        IsChecked = Group.Users.Any(x => x.Username == user.Username)
+                        IsChecked = Group.Users.Any(x => x.Username == user.Username) || isAdmin
                     }, 0),
 
                     MainWindow.SetColumnAndReturnTheSameElement(new TextBlock()

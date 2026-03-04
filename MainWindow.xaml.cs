@@ -289,7 +289,7 @@ namespace P2PShare
 
         private async Task ReceiveAsync()
         {
-            IPAddress? localIP = _interface is not null ? InterfaceHandling.GetLocalIP(_interface) : null; // maybe refresh UI element if local IP changed
+            IPAddress? localIP = _interface is not null ? InterfaceHandling.GetLocalIP(_interface) : null;
             InviteWindow inviteWindow;
             ConnectionReceiverHandler connectionHandler;
             string invite = String.Empty;
