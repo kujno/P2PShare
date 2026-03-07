@@ -704,6 +704,16 @@ namespace P2PShare
                 {
                     _curFile++;
 
+                    try 
+                    {
+                        (new FileStream(fileInfo.FullName, FileMode.Open)).Dispose();
+                    }
+                    catch 
+                    {
+                        check = false;
+                        continue;
+                    }
+
                     if (!await _serverConnection!.UploadAsync(GetPath(item, out my, out int? id), my, encrypted, fileInfo, id))
                         check = false;
                 }
