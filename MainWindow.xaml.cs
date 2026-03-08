@@ -706,7 +706,7 @@ namespace P2PShare
 
                     try 
                     {
-                        (new FileStream(fileInfo.FullName, FileMode.Open)).Dispose();
+                        new FileStream(fileInfo.FullName, FileMode.Open).Dispose();
                     }
                     catch 
                     {
