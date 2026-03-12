@@ -76,7 +76,7 @@
                         <GroupBox Header="Name:">
                             <TextBox x:Name="TextBoxNameRegistration" Margin="0, 0, 0, 10px"/>
                         </GroupBox>
-                        <GroupBox Header="Surename:">
+                        <GroupBox Header="Surname:">
                             <TextBox x:Name="TextBoxSurenameRegistration" Margin="0, 0, 0, 10px"/>
                         </GroupBox>
                         <GroupBox Header="Password:">
