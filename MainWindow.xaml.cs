@@ -196,6 +196,9 @@ namespace P2PShare
                     .Select(x => new FileInfo(x))
                     .ToArray();
 
+                if (!Files.CheckAccess(files))
+                    throw new Exception("Couldn't access all of the files.");
+
                 _files = files
                     .Select(x => new KeyValuePair<string, long>(x.Name, x.Length))
                     .ToDictionary();
